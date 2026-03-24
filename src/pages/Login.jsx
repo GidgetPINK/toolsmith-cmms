@@ -1,20 +1,29 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 
+const forgotLinkStyle = {
+  display: 'block',
+  textAlign: 'center',
+  color: '#9a9db5',
+  fontSize: '0.85rem',
+  textDecoration: 'none',
+  marginTop: '0.5rem'
+}
+
+const registerLinkStyle = {
+  display: 'block',
+  textAlign: 'center',
+  color: '#c9a84c',
+  fontSize: '0.85rem',
+  textDecoration: 'none',
+  marginTop: '0.75rem'
+}
+
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
-
-  const forgotLinkStyle = {
-    display: 'block',
-    textAlign: 'center',
-    color: '#9a9db5',
-    fontSize: '0.85rem',
-    textDecoration: 'none',
-    marginTop: '0.5rem'
-  }
 
   async function handleLogin(e) {
     e.preventDefault()
@@ -170,6 +179,10 @@ export default function Login() {
 
           <a href="/reset-password" style={forgotLinkStyle}>
             Forgot your password?
+          </a>
+
+          <a href="/register" style={registerLinkStyle}>
+            Don't have an account? Start your free trial
           </a>
 
         </form>
