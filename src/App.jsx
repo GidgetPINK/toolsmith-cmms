@@ -8,6 +8,9 @@ import WorkOrderForm from './pages/WorkOrderForm'
 import Team from './pages/Team'
 import ResetPassword from './pages/ResetPassword'
 import ChangePassword from './pages/ChangePassword'
+import Register from './pages/Register'
+import Success from './pages/Success'
+import Upgrade from './pages/Upgrade'
 
 function DisabledScreen() {
   async function handleSignOut() {
@@ -116,7 +119,6 @@ function App() {
     }
   }, [session])
 
-  // Still resolving session or profile
   if (session === undefined || profile === undefined) {
     return (
       <div style={{
@@ -132,7 +134,6 @@ function App() {
     )
   }
 
-  // Session exists but profile is inactive
   if (session && profile && profile.is_active === false) {
     return <DisabledScreen />
   }
@@ -144,6 +145,32 @@ function App() {
           path="/login"
           element={
             session ? <Navigate to="/" replace /> : <Login />
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            session ? <Navigate to="/" replace /> : <Register />
+          }
+        />
+        <Route
+          path="/success"
+          element={
+            !session ? (
+              <Navigate to="/login" replace />
+            ) : (
+              <Success profile={profile} />
+            )
+          }
+        />
+        <Route
+          path="/upgrade"
+          element={
+            !session ? (
+              <Navigate to="/login" replace />
+            ) : (
+              <Upgrade profile={profile} />
+            )
           }
         />
         <Route
