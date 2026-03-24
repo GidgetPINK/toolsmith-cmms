@@ -76,6 +76,19 @@ export default function Team({ profile }) {
     }
   }
 
+  async function handleToggleActive(memberId, currentStatus) {
+    const { error } = await supabase
+      .from('profiles')
+      .update({ is_active: !currentStatus })
+      .eq('id', memberId)
+
+    if (error) {
+      setError(error.message)
+    } else {
+      fetchMembers()
+    }
+  }
+
   const inputStyle = {
     width: '100%',
     background: 'rgba(255,255,255,0.05)',
@@ -218,7 +231,8 @@ export default function Team({ profile }) {
                     ? '1px solid rgba(201,168,76,0.08)'
                     : 'none',
                   flexWrap: 'wrap',
-                  gap: '1rem'
+                  gap: '1rem',
+                  opacity: member.is_active ? 1 : 0.5
                 }}
               >
                 <div style={{
@@ -230,18 +244,24 @@ export default function Team({ profile }) {
                     width: '38px',
                     height: '38px',
                     borderRadius: '50%',
-                    background: member.role === 'manager'
-                      ? 'rgba(201,168,76,0.15)'
-                      : 'rgba(154,157,181,0.15)',
-                    border: '1px solid ' + (member.role === 'manager'
-                      ? 'rgba(201,168,76,0.4)'
-                      : 'rgba(154,157,181,0.3)'),
+                    background: member.is_active
+                      ? member.role === 'manager'
+                        ? 'rgba(201,168,76,0.15)'
+                        : 'rgba(154,157,181,0.15)'
+                      : 'rgba(100,100,100,0.15)',
+                    border: '1px solid ' + (member.is_active
+                      ? member.role === 'manager'
+                        ? 'rgba(201,168,76,0.4)'
+                        : 'rgba(154,157,181,0.3)'
+                      : 'rgba(100,100,100,0.3)'),
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontSize: '0.9rem',
                     fontWeight: '700',
-                    color: member.role === 'manager' ? '#c9a84c' : '#9a9db5',
+                    color: member.is_active
+                      ? member.role === 'manager' ? '#c9a84c' : '#9a9db5'
+                      : '#666',
                     flexShrink: 0
                   }}>
                     {member.full_name?.charAt(0).toUpperCase()}
@@ -250,7 +270,7 @@ export default function Team({ profile }) {
                     <p style={{
                       fontWeight: '500',
                       fontSize: '0.95rem',
-                      color: '#f8f6f1',
+                      color: member.is_active ? '#f8f6f1' : '#666',
                       marginBottom: '0.15rem'
                     }}>
                       {member.full_name}
@@ -264,55 +284,89 @@ export default function Team({ profile }) {
                           (you)
                         </span>
                       )}
+                      {!member.is_active && (
+                        <span style={{
+                          marginLeft: '0.5rem',
+                          fontSize: '0.7rem',
+                          color: '#e06c75',
+                          fontWeight: '400'
+                        }}>
+                          Disabled
+                        </span>
+                      )}
                     </p>
                     {member.id === profile.id && (
                       <p style={{ fontSize: '0.8rem', color: '#9a9db5' }}>
-                        Cannot change your own role
+                        Cannot change your own role or status
                       </p>
                     )}
                   </div>
                 </div>
 
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '1rem'
-                }}>
-                  {member.id !== profile.id ? (
-                    <select
-                      value={member.role}
-                      onChange={e => handleRoleChange(member.id, e.target.value)}
+                {member.id !== profile.id && (
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.75rem',
+                    flexWrap: 'wrap'
+                  }}>
+                    {member.is_active && (
+                      <select
+                        value={member.role}
+                        onChange={e => handleRoleChange(member.id, e.target.value)}
+                        style={{
+                          background: 'rgba(255,255,255,0.05)',
+                          border: '1px solid rgba(201,168,76,0.18)',
+                          borderRadius: '6px',
+                          padding: '0.35rem 0.75rem',
+                          color: '#f8f6f1',
+                          fontSize: '0.82rem',
+                          cursor: 'pointer',
+                          fontFamily: 'Inter, sans-serif',
+                          outline: 'none'
+                        }}
+                      >
+                        <option value="technician">Technician</option>
+                        <option value="manager">Manager</option>
+                      </select>
+                    )}
+                    <button
+                      onClick={() => handleToggleActive(member.id, member.is_active)}
                       style={{
-                        background: 'rgba(255,255,255,0.05)',
-                        border: '1px solid rgba(201,168,76,0.18)',
+                        background: 'none',
+                        border: '1px solid ' + (member.is_active
+                          ? 'rgba(224,108,117,0.4)'
+                          : 'rgba(152,195,121,0.4)'),
+                        color: member.is_active ? '#e06c75' : '#98c379',
                         borderRadius: '6px',
                         padding: '0.35rem 0.75rem',
-                        color: '#f8f6f1',
-                        fontSize: '0.82rem',
+                        fontSize: '0.78rem',
                         cursor: 'pointer',
-                        fontFamily: 'Inter, sans-serif',
-                        outline: 'none'
+                        letterSpacing: '0.05em',
+                        textTransform: 'uppercase',
+                        fontFamily: 'Inter, sans-serif'
                       }}
                     >
-                      <option value="technician">Technician</option>
-                      <option value="manager">Manager</option>
-                    </select>
-                  ) : (
-                    <span style={{
-                      padding: '0.35rem 0.75rem',
-                      borderRadius: '20px',
-                      fontSize: '0.75rem',
-                      fontWeight: '600',
-                      letterSpacing: '0.08em',
-                      textTransform: 'capitalize',
-                      color: '#c9a84c',
-                      border: '1px solid rgba(201,168,76,0.3)',
-                      background: 'rgba(201,168,76,0.08)'
-                    }}>
-                      {member.role}
-                    </span>
-                  )}
-                </div>
+                      {member.is_active ? 'Disable' : 'Re-enable'}
+                    </button>
+                  </div>
+                )}
+
+                {member.id === profile.id && (
+                  <span style={{
+                    padding: '0.35rem 0.75rem',
+                    borderRadius: '20px',
+                    fontSize: '0.75rem',
+                    fontWeight: '600',
+                    letterSpacing: '0.08em',
+                    textTransform: 'capitalize',
+                    color: '#c9a84c',
+                    border: '1px solid rgba(201,168,76,0.3)',
+                    background: 'rgba(201,168,76,0.08)'
+                  }}>
+                    {member.role}
+                  </span>
+                )}
               </div>
             ))
           )}

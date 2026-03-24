@@ -9,6 +9,84 @@ import Team from './pages/Team'
 import ResetPassword from './pages/ResetPassword'
 import ChangePassword from './pages/ChangePassword'
 
+function DisabledScreen() {
+  async function handleSignOut() {
+    await supabase.auth.signOut()
+  }
+
+  return (
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: '#1a1a2e',
+      fontFamily: 'Inter, sans-serif',
+      padding: '2rem'
+    }}>
+      <div style={{
+        background: '#1e2245',
+        border: '1px solid rgba(224,108,117,0.3)',
+        borderRadius: '12px',
+        padding: '2.5rem',
+        width: '100%',
+        maxWidth: '460px',
+        textAlign: 'center'
+      }}>
+        <div style={{
+          width: '56px',
+          height: '56px',
+          borderRadius: '50%',
+          background: 'rgba(224,108,117,0.12)',
+          border: '1px solid rgba(224,108,117,0.3)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '1.5rem',
+          margin: '0 auto 1.5rem'
+        }}>
+          ⚠
+        </div>
+        <h1 style={{
+          fontFamily: 'Georgia, serif',
+          color: '#c9a84c',
+          fontSize: '1.5rem',
+          fontWeight: '600',
+          marginBottom: '1rem'
+        }}>
+          The Toolsmith CMMS
+        </h1>
+        <p style={{
+          color: '#f8f6f1',
+          fontSize: '0.98rem',
+          lineHeight: '1.75',
+          marginBottom: '2rem'
+        }}>
+          Your account has been deactivated. If you have questions, please
+          contact your administrator or manager. Thank you.
+        </p>
+        <button
+          onClick={handleSignOut}
+          style={{
+            background: 'none',
+            border: '1px solid rgba(201,168,76,0.3)',
+            color: '#9a9db5',
+            borderRadius: '8px',
+            padding: '0.75rem 2rem',
+            fontSize: '0.85rem',
+            letterSpacing: '0.06em',
+            textTransform: 'uppercase',
+            cursor: 'pointer',
+            fontFamily: 'Inter, sans-serif'
+          }}
+        >
+          Sign Out
+        </button>
+      </div>
+    </div>
+  )
+}
+
 function App() {
   const [session, setSession] = useState(undefined)
   const [profile, setProfile] = useState(undefined)
@@ -38,6 +116,7 @@ function App() {
     }
   }, [session])
 
+  // Still resolving session or profile
   if (session === undefined || profile === undefined) {
     return (
       <div style={{
@@ -51,6 +130,11 @@ function App() {
         <p style={{ color: '#9a9db5' }}>Loading...</p>
       </div>
     )
+  }
+
+  // Session exists but profile is inactive
+  if (session && profile && profile.is_active === false) {
+    return <DisabledScreen />
   }
 
   return (
