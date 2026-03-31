@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
 
 export default function Success({ profile }) {
   const [countdown, setCountdown] = useState(5)
@@ -68,8 +67,8 @@ export default function Success({ profile }) {
           lineHeight: '1.75',
           marginBottom: '0.75rem'
         }}>
-          Your 14-day free trial has started. Welcome to The Toolsmith CMMS,{' '}
-          {profile?.full_name?.split(' ')[0]}.
+          Your 14-day free trial has started. Welcome to The Toolsmith
+          CMMS{profile?.full_name ? ', ' + profile.full_name.split(' ')[0] : ''}.
         </p>
         <p style={{
           color: '#9a9db5',

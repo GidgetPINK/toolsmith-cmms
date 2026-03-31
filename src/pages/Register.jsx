@@ -92,61 +92,67 @@ export default function Register() {
   const selectedPlan = plans.find(p => p.id === plan)
 
   async function handleRegister(e) {
-    e.preventDefault()
-    setError(null)
+  e.preventDefault()
+  setError(null)
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters.')
-      return
-    }
-
-    if (password !== confirm) {
-      setError('Passwords do not match.')
-      return
-    }
-
-    setLoading(true)
-
-    try {
-      // Step 1 — create manager account and organization
-      // via database function so session is not affected
-      const { data, error: fnError } = await supabase.rpc(
-        'create_manager_account',
-        {
-          manager_email: email,
-          manager_password: password,
-          manager_name: fullName,
-          org_name: orgName
-        }
-      )
-
-      if (fnError) throw fnError
-      if (!data) throw new Error('Account creation failed.')
-
-      const organizationId = data.organization_id
-
-      // Step 2 — create Stripe checkout session
-      const response = await fetch('/api/create-checkout-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          priceId: selectedPlan.priceId,
-          organizationId,
-          email
-        })
-      })
-
-      const { url, error: stripeError } = await response.json()
-      if (stripeError) throw new Error(stripeError)
-
-      // Step 3 — redirect to Stripe checkout
-      window.location.href = url
-
-    } catch (err) {
-      setError(err.message)
-      setLoading(false)
-    }
+  if (password.length < 6) {
+    setError('Password must be at least 6 characters.')
+    return
   }
+
+  if (password !== confirm) {
+    setError('Passwords do not match.')
+    return
+  }
+
+  setLoading(true)
+
+  try {
+    // Step 1 — create account via serverless function
+    const accountResponse = await fetch('/api/create-account', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email,
+        password,
+        fullName,
+        orgName
+      })
+    })
+
+    const accountData = await accountResponse.json()
+    if (accountData.error) throw new Error(accountData.error)
+
+    // Step 2 — sign the user in immediately
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    })
+
+    if (signInError) throw signInError
+
+    // Step 3 — create Stripe checkout session
+    const stripeResponse = await fetch('/api/create-checkout-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        priceId: selectedPlan.priceId,
+        organizationId: accountData.organizationId,
+        email
+      })
+    })
+
+    const { url, error: stripeError } = await stripeResponse.json()
+    if (stripeError) throw new Error(stripeError)
+
+    // Step 4 — redirect to Stripe checkout
+    window.location.href = url
+
+  } catch (err) {
+    setError(err.message)
+    setLoading(false)
+  }
+}
 
   return (
     <div style={{
