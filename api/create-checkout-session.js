@@ -13,11 +13,12 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Price ID is required' })
   }
 
+  const appUrl = process.env.VITE_APP_URL || 'https://toolsmith-cmms.vercel.app'
+
   try {
-    const session = await stripe.checkout.sessions.create({
+    const sessionConfig = {
       mode: 'subscription',
       payment_method_types: ['card'],
-      customer_email: email,
       line_items: [
         {
           price: priceId,
@@ -33,9 +34,17 @@ export default async function handler(req, res) {
       metadata: {
         organization_id: organizationId
       },
-      success_url: process.env.VITE_APP_URL + '/success?session_id={CHECKOUT_SESSION_ID}',
-      cancel_url: process.env.VITE_APP_URL + '/register'
-    })
+      // Require card upfront but do not charge until trial ends
+      payment_method_collection: 'always',
+      success_url: appUrl + '/success?session_id={CHECKOUT_SESSION_ID}',
+      cancel_url: appUrl + '/register'
+    }
+
+    if (email) {
+      sessionConfig.customer_email = email
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionConfig)
 
     return res.status(200).json({ url: session.url })
   } catch (error) {
