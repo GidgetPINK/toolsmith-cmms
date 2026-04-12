@@ -26,9 +26,9 @@ export default function Dashboard({ profile }) {
   const [workOrders, setWorkOrders] = useState([])
   const [profiles, setProfiles] = useState([])
   const [assets, setAssets] = useState([])
+  const [organization, setOrganization] = useState(null)
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('all')
-  const [organization, setOrganization] = useState(null)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -36,19 +36,27 @@ export default function Dashboard({ profile }) {
   }, [])
 
   async function fetchAll() {
-  setLoading(true)
-  const [woRes, profRes, assetRes, orgRes] = await Promise.all([
-    supabase.from('work_orders').select('*').neq('status', 'closed').order('created_at', { ascending: false }),
-    supabase.from('profiles').select('*'),
-    supabase.from('assets').select('*'),
-    supabase.from('organizations').select('*').eq('id', profile.organization_id).single()
-  ])
-  setWorkOrders(woRes.data || [])
-  setProfiles(profRes.data || [])
-  setAssets(assetRes.data || [])
-  setOrganization(orgRes.data || null)
-  setLoading(false)
-}
+    setLoading(true)
+    const [woRes, profRes, assetRes, orgRes] = await Promise.all([
+      supabase
+        .from('work_orders')
+        .select('*')
+        .neq('status', 'closed')
+        .order('created_at', { ascending: false }),
+      supabase.from('profiles').select('*'),
+      supabase.from('assets').select('*'),
+      supabase
+        .from('organizations')
+        .select('*')
+        .eq('id', profile.organization_id)
+        .single()
+    ])
+    setWorkOrders(woRes.data || [])
+    setProfiles(profRes.data || [])
+    setAssets(assetRes.data || [])
+    setOrganization(orgRes.data || null)
+    setLoading(false)
+  }
 
   async function handleSignOut() {
     await supabase.auth.signOut()
@@ -72,6 +80,7 @@ export default function Dashboard({ profile }) {
     critical: workOrders.filter(wo => wo.priority === 'critical').length,
     high: workOrders.filter(wo => wo.priority === 'high').length,
     standard: workOrders.filter(wo => wo.priority === 'standard').length,
+    routine: workOrders.filter(wo => wo.priority === 'routine').length,
     total: workOrders.length
   }
 
@@ -122,6 +131,23 @@ export default function Dashboard({ profile }) {
             Team
           </button>
           <button
+            onClick={() => navigate('/change-password')}
+            style={{
+              background: 'none',
+              border: '1px solid rgba(201,168,76,0.18)',
+              color: '#9a9db5',
+              padding: '0.4rem 1rem',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '0.82rem',
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
+              fontFamily: 'Inter, sans-serif'
+            }}
+          >
+            Change Password
+          </button>
+          <button
             onClick={() => navigate('/work-order/new')}
             style={{
               background: 'linear-gradient(135deg, #c9a84c, #e8c97a)',
@@ -154,72 +180,53 @@ export default function Dashboard({ profile }) {
           >
             Sign Out
           </button>
-
-        <button
-  onClick={() => navigate('/change-password')}
-  style={{
-    background: 'none',
-    border: '1px solid rgba(201,168,76,0.18)',
-    color: '#9a9db5',
-    padding: '0.4rem 1rem',
-    borderRadius: '6px',
-    cursor: 'pointer',
-    fontSize: '0.82rem',
-    letterSpacing: '0.06em',
-    textTransform: 'uppercase',
-    fontFamily: 'Inter, sans-serif'
-  }}
->
-  Change Password
-</button>  
         </div>
       </nav>
 
       <div style={{ padding: '2.5rem 5%' }}>
 
-      {/* PAYMENT SETUP BANNER */}
-  {!organization?.stripe_subscription_id && (
-    <div style={{
-      background: 'rgba(232,201,122,0.08)',
-      border: '1px solid rgba(232,201,122,0.4)',
-      borderRadius: '10px',
-      padding: '1rem 1.5rem',
-      marginBottom: '2rem',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      flexWrap: 'wrap',
-      gap: '1rem'
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        <span style={{ fontSize: '1.1rem' }}>⚠</span>
-        <p style={{ color: '#e8c97a', fontSize: '0.88rem', lineHeight: '1.6' }}>
-          Your payment setup is incomplete. Add a payment method to keep
-          access after your trial ends.
-        </p>
-      </div>
-      <button
-        onClick={() => navigate('/upgrade')}
-        style={{
-          background: 'linear-gradient(135deg, #c9a84c, #e8c97a)',
-          color: '#1a1a2e',
-          border: 'none',
-          borderRadius: '6px',
-          padding: '0.5rem 1.25rem',
-          fontSize: '0.82rem',
-          fontWeight: '700',
-          letterSpacing: '0.06em',
-          textTransform: 'uppercase',
-          cursor: 'pointer',
-          fontFamily: 'Inter, sans-serif',
-          whiteSpace: 'nowrap'
-        }}
-      >
-        Complete Setup
-      </button>
-    </div>
-  )}
-
+        {/* PAYMENT SETUP BANNER */}
+        {!organization?.stripe_subscription_id && (
+          <div style={{
+            background: 'rgba(232,201,122,0.08)',
+            border: '1px solid rgba(232,201,122,0.4)',
+            borderRadius: '10px',
+            padding: '1rem 1.5rem',
+            marginBottom: '2rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '1rem'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <span style={{ fontSize: '1.1rem' }}>⚠</span>
+              <p style={{ color: '#e8c97a', fontSize: '0.88rem', lineHeight: '1.6' }}>
+                Your payment setup is incomplete. Add a payment method to
+                keep access after your trial ends.
+              </p>
+            </div>
+            <button
+              onClick={() => navigate('/upgrade')}
+              style={{
+                background: 'linear-gradient(135deg, #c9a84c, #e8c97a)',
+                color: '#1a1a2e',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '0.5rem 1.25rem',
+                fontSize: '0.82rem',
+                fontWeight: '700',
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                cursor: 'pointer',
+                fontFamily: 'Inter, sans-serif',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              Complete Setup
+            </button>
+          </div>
+        )}
 
         {/* HEADER */}
         <div style={{ marginBottom: '2rem' }}>
@@ -254,7 +261,8 @@ export default function Dashboard({ profile }) {
             { label: 'Total Open', value: counts.total, color: '#c9a84c' },
             { label: 'Critical', value: counts.critical, color: '#e06c75' },
             { label: 'High', value: counts.high, color: '#e8c97a' },
-            { label: 'Standard', value: counts.standard, color: '#9a9db5' }
+            { label: 'Standard', value: counts.standard, color: '#9a9db5' },
+            { label: 'Routine', value: counts.routine, color: '#6a6d85' }
           ].map(stat => (
             <div key={stat.label} style={{
               background: '#1e2245',
@@ -284,7 +292,12 @@ export default function Dashboard({ profile }) {
         </div>
 
         {/* FILTERS */}
-        <div style={{ display: 'flex', gap: '0.65rem', marginBottom: '1.75rem', flexWrap: 'wrap' }}>
+        <div style={{
+          display: 'flex',
+          gap: '0.65rem',
+          marginBottom: '1.75rem',
+          flexWrap: 'wrap'
+        }}>
           {['all', 'critical', 'high', 'standard', 'routine'].map(f => (
             <button
               key={f}
@@ -292,8 +305,12 @@ export default function Dashboard({ profile }) {
               style={{
                 padding: '0.4rem 1.1rem',
                 borderRadius: '20px',
-                border: `1px solid ${filter === f ? '#c9a84c' : 'rgba(201,168,76,0.18)'}`,
-                background: filter === f ? 'rgba(201,168,76,0.08)' : 'none',
+                border: `1px solid ${filter === f
+                  ? '#c9a84c'
+                  : 'rgba(201,168,76,0.18)'}`,
+                background: filter === f
+                  ? 'rgba(201,168,76,0.08)'
+                  : 'none',
                 color: filter === f ? '#c9a84c' : '#9a9db5',
                 fontSize: '0.82rem',
                 cursor: 'pointer',
@@ -319,7 +336,9 @@ export default function Dashboard({ profile }) {
             textAlign: 'center',
             color: '#9a9db5'
           }}>
-            No open work orders{filter !== 'all' ? ` with ${filter} priority` : ''}.
+            No open work orders{filter !== 'all'
+              ? ` with ${filter} priority`
+              : ''}.
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -349,7 +368,13 @@ export default function Dashboard({ profile }) {
                 }}
               >
                 <div>
-                  <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
+                  <div style={{
+                    display: 'flex',
+                    gap: '0.65rem',
+                    alignItems: 'center',
+                    marginBottom: '0.5rem',
+                    flexWrap: 'wrap'
+                  }}>
                     <span style={{
                       padding: '0.2rem 0.65rem',
                       borderRadius: '20px',
@@ -397,15 +422,22 @@ export default function Dashboard({ profile }) {
                         : wo.description}
                     </p>
                   )}
-                  <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
+                  <div style={{
+                    display: 'flex',
+                    gap: '1.5rem',
+                    flexWrap: 'wrap'
+                  }}>
                     <span style={{ fontSize: '0.8rem', color: '#9a9db5' }}>
-                      <span style={{ color: '#c9a84c' }}>Asset:</span> {getAssetName(wo.asset_id)}
+                      <span style={{ color: '#c9a84c' }}>Asset:</span>{' '}
+                      {getAssetName(wo.asset_id)}
                     </span>
                     <span style={{ fontSize: '0.8rem', color: '#9a9db5' }}>
-                      <span style={{ color: '#c9a84c' }}>Assigned:</span> {getTechName(wo.assigned_to)}
+                      <span style={{ color: '#c9a84c' }}>Assigned:</span>{' '}
+                      {getTechName(wo.assigned_to)}
                     </span>
                     <span style={{ fontSize: '0.8rem', color: '#9a9db5' }}>
-                      <span style={{ color: '#c9a84c' }}>Created:</span> {new Date(wo.created_at).toLocaleDateString()}
+                      <span style={{ color: '#c9a84c' }}>Created:</span>{' '}
+                      {new Date(wo.created_at).toLocaleDateString()}
                     </span>
                   </div>
                 </div>
