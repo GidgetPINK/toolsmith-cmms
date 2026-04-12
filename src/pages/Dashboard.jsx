@@ -713,40 +713,54 @@ export default function Dashboard({ profile }) {
 
           {/* STAT CARDS */}
           <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
-            gap: '0.75rem',
-            marginBottom: '2rem'
-          }} className="stat-grid-inner">
-            {[
-              { label: 'Total Open', value: counts.total, color: '#c9a84c' },
-              { label: 'Critical', value: counts.critical, color: '#e06c75' },
-              { label: 'High', value: counts.high, color: '#e8c97a' },
-              { label: 'Standard', value: counts.standard, color: '#9a9db5' },
-              { label: 'Routine', value: counts.routine, color: '#6a6d85' }
-            ].map(stat => (
-              <div key={stat.label} style={{
-                background: '#1e2245',
-                border: '1px solid rgba(201,168,76,0.18)',
-                borderRadius: '12px',
-                padding: '1rem',
-                textAlign: 'center'
-              }}>
-                <p style={{
-                  fontSize: '1.8rem', fontWeight: '700',
-                  color: stat.color, marginBottom: '0.2rem'
-                }}>
-                  {stat.value}
-                </p>
-                <p style={{
-                  fontSize: '0.7rem', color: '#9a9db5',
-                  letterSpacing: '0.08em', textTransform: 'uppercase'
-                }}>
-                  {stat.label}
-                </p>
-              </div>
-            ))}
-          </div>
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+  gap: '0.75rem',
+  marginBottom: '2rem'
+}} className="stat-grid-inner">
+  {[
+    { label: 'Total Open', value: counts.total, color: '#c9a84c', filterKey: 'all' },
+    { label: 'Critical', value: counts.critical, color: '#e06c75', filterKey: 'critical' },
+    { label: 'High', value: counts.high, color: '#e8c97a', filterKey: 'high' },
+    { label: 'Standard', value: counts.standard, color: '#9a9db5', filterKey: 'standard' },
+    { label: 'Routine', value: counts.routine, color: '#6a6d85', filterKey: 'routine' }
+  ].map(stat => (
+    <div
+      key={stat.label}
+      onClick={() => setFilter(stat.filterKey)}
+      style={{
+        background: filter === stat.filterKey ? 'rgba(201,168,76,0.08)' : '#1e2245',
+        border: `1px solid ${filter === stat.filterKey ? '#c9a84c' : 'rgba(201,168,76,0.18)'}`,
+        borderRadius: '12px',
+        padding: '1rem',
+        textAlign: 'center',
+        cursor: 'pointer',
+        transition: 'all 0.2s'
+      }}
+      onMouseEnter={e => {
+        e.currentTarget.style.transform = 'translateY(-2px)'
+        e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.3)'
+      }}
+      onMouseLeave={e => {
+        e.currentTarget.style.transform = 'translateY(0)'
+        e.currentTarget.style.boxShadow = 'none'
+      }}
+    >
+      <p style={{
+        fontSize: '1.8rem', fontWeight: '700',
+        color: stat.color, marginBottom: '0.2rem'
+      }}>
+        {stat.value}
+      </p>
+      <p style={{
+        fontSize: '0.7rem', color: '#9a9db5',
+        letterSpacing: '0.08em', textTransform: 'uppercase'
+      }}>
+        {stat.label}
+      </p>
+    </div>
+  ))}
+</div>
 
           {/* FILTERS + NEW WO BUTTON */}
           <div style={{

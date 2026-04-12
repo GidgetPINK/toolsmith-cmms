@@ -240,7 +240,7 @@ export default function WorkOrderForm({ profile }) {
         </button>
       </nav>
 
-      <div style={{ padding: '2.5rem 5%', maxWidth: '680px' }}>
+      <div style={{ padding: '2.5rem 5%', maxWidth: '680px', margin: '0 auto' }}>
 
         {/* HEADER */}
         <div style={{ marginBottom: '2rem' }}>

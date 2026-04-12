@@ -159,7 +159,7 @@ export default function Team({ profile }) {
         </button>
       </nav>
 
-      <div style={{ padding: '2.5rem 5%', maxWidth: '780px' }}>
+      <div style={{ padding: '2.5rem 5%', maxWidth: '780px', margin: '0 auto' }}>
 
         {/* HEADER */}
         <div style={{ marginBottom: '2.5rem' }}>
@@ -295,78 +295,55 @@ export default function Team({ profile }) {
                         </span>
                       )}
                     </p>
-                    {member.id === profile.id && (
-                      <p style={{ fontSize: '0.8rem', color: '#9a9db5' }}>
-                        Cannot change your own role or status
-                      </p>
-                    )}
                   </div>
                 </div>
 
-                {member.id !== profile.id && (
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.75rem',
-                    flexWrap: 'wrap'
-                  }}>
-                    {member.is_active && (
-                      <select
-                        value={member.role}
-                        onChange={e => handleRoleChange(member.id, e.target.value)}
-                        style={{
-                          background: 'rgba(255,255,255,0.05)',
-                          border: '1px solid rgba(201,168,76,0.18)',
-                          borderRadius: '6px',
-                          padding: '0.35rem 0.75rem',
-                          color: '#f8f6f1',
-                          fontSize: '0.82rem',
-                          cursor: 'pointer',
-                          fontFamily: 'Inter, sans-serif',
-                          outline: 'none'
-                        }}
-                      >
-                        <option value="technician">Technician</option>
-                        <option value="manager">Manager</option>
-                      </select>
-                    )}
-                    <button
-                      onClick={() => handleToggleActive(member.id, member.is_active)}
-                      style={{
-                        background: 'none',
-                        border: '1px solid ' + (member.is_active
-                          ? 'rgba(224,108,117,0.4)'
-                          : 'rgba(152,195,121,0.4)'),
-                        color: member.is_active ? '#e06c75' : '#98c379',
-                        borderRadius: '6px',
-                        padding: '0.35rem 0.75rem',
-                        fontSize: '0.78rem',
-                        cursor: 'pointer',
-                        letterSpacing: '0.05em',
-                        textTransform: 'uppercase',
-                        fontFamily: 'Inter, sans-serif'
-                      }}
-                    >
-                      {member.is_active ? 'Disable' : 'Re-enable'}
-                    </button>
-                  </div>
-                )}
-
-                {member.id === profile.id && (
-                  <span style={{
-                    padding: '0.35rem 0.75rem',
-                    borderRadius: '20px',
-                    fontSize: '0.75rem',
-                    fontWeight: '600',
-                    letterSpacing: '0.08em',
-                    textTransform: 'capitalize',
-                    color: '#c9a84c',
-                    border: '1px solid rgba(201,168,76,0.3)',
-                    background: 'rgba(201,168,76,0.08)'
-                  }}>
-                    {member.role}
-                  </span>
-                )}
+                <div style={{
+  display: 'flex',
+  alignItems: 'center',
+  gap: '0.75rem',
+  flexWrap: 'wrap'
+}}>
+  {member.is_active && (
+    <select
+      value={member.role}
+      onChange={e => handleRoleChange(member.id, e.target.value)}
+      style={{
+        background: 'rgba(255,255,255,0.05)',
+        border: '1px solid rgba(201,168,76,0.18)',
+        borderRadius: '6px',
+        padding: '0.35rem 0.75rem',
+        color: '#f8f6f1',
+        fontSize: '0.82rem',
+        cursor: 'pointer',
+        fontFamily: 'Inter, sans-serif',
+        outline: 'none'
+      }}
+    >
+      <option value="technician">Technician</option>
+      <option value="manager">Manager</option>
+    </select>
+  )}
+  <button
+    onClick={() => handleToggleActive(member.id, member.is_active)}
+    style={{
+      background: 'none',
+      border: '1px solid ' + (member.is_active
+        ? 'rgba(224,108,117,0.4)'
+        : 'rgba(152,195,121,0.4)'),
+      color: member.is_active ? '#e06c75' : '#98c379',
+      borderRadius: '6px',
+      padding: '0.35rem 0.75rem',
+      fontSize: '0.78rem',
+      cursor: 'pointer',
+      letterSpacing: '0.05em',
+      textTransform: 'uppercase',
+      fontFamily: 'Inter, sans-serif'
+    }}
+  >
+    {member.is_active ? 'Disable' : 'Re-enable'}
+  </button>
+</div>
               </div>
             ))
           )}
