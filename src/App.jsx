@@ -11,6 +11,7 @@ import ChangePassword from './pages/ChangePassword'
 import Register from './pages/Register'
 import Success from './pages/Success'
 import Upgrade from './pages/Upgrade'
+import Assets from './pages/Assets'
 
 function DisabledScreen() {
   async function handleSignOut() {
@@ -228,6 +229,18 @@ function App() {
               <Navigate to="/" replace />
             ) : (
               <Team profile={profile} />
+            )
+          }
+        />
+        <Route
+          path="/assets"
+          element={
+            !session ? (
+              <Navigate to="/login" replace />
+            ) : profile?.role !== 'manager' ? (
+              <Navigate to="/" replace />
+            ) : (
+              <Assets profile={profile} />
             )
           }
         />

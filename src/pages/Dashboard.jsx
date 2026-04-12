@@ -145,6 +145,25 @@ export default function Dashboard({ profile }) {
               fontFamily: 'Inter, sans-serif'
             }}
           >
+
+          <button
+  onClick={() => navigate('/assets')}
+  style={{
+    background: 'none',
+    border: '1px solid rgba(201,168,76,0.18)',
+    color: '#9a9db5',
+    padding: '0.4rem 1rem',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    fontSize: '0.82rem',
+    letterSpacing: '0.06em',
+    textTransform: 'uppercase',
+    fontFamily: 'Inter, sans-serif'
+  }}
+>
+  Assets
+</button>
+
             Change Password
           </button>
           <button
