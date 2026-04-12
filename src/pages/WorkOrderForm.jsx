@@ -15,9 +15,17 @@ export default function WorkOrderForm({ profile }) {
   const [assignedTo, setAssignedTo] = useState('')
   const [assets, setAssets] = useState([])
   const [technicians, setTechnicians] = useState([])
+  const [organization, setOrganization] = useState(null)
   const [loading, setLoading] = useState(false)
   const [fetching, setFetching] = useState(!isNew)
   const [error, setError] = useState(null)
+
+  const [showAddAsset, setShowAddAsset] = useState(false)
+  const [newAssetName, setNewAssetName] = useState('')
+  const [newAssetLocation, setNewAssetLocation] = useState('')
+  const [newAssetCategory, setNewAssetCategory] = useState('')
+  const [addAssetError, setAddAssetError] = useState(null)
+  const [addAssetSubmitting, setAddAssetSubmitting] = useState(false)
 
   useEffect(() => {
     fetchSelectData()
@@ -28,17 +36,23 @@ export default function WorkOrderForm({ profile }) {
   }, [id])
 
   async function fetchSelectData() {
-    const [assetRes, profRes] = await Promise.all([
+    const [assetRes, profRes, orgRes] = await Promise.all([
       supabase.from('assets').select('*').order('name'),
-      supabase.from('profiles').select('*').eq('role', 'technician')
+      supabase.from('profiles').select('*').eq('role', 'technician'),
+      supabase
+        .from('organizations')
+        .select('*')
+        .eq('id', profile.organization_id)
+        .single()
     ])
     setAssets(assetRes.data || [])
     setTechnicians(profRes.data || [])
+    setOrganization(orgRes.data || null)
   }
 
   async function fetchWorkOrder() {
     setFetching(true)
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('work_orders')
       .select('*')
       .eq('id', id)
@@ -52,6 +66,37 @@ export default function WorkOrderForm({ profile }) {
       setAssignedTo(data.assigned_to || '')
     }
     setFetching(false)
+  }
+
+  async function handleAddAsset(e) {
+    e.preventDefault()
+    setAddAssetSubmitting(true)
+    setAddAssetError(null)
+
+    const { data, error } = await supabase
+      .from('assets')
+      .insert({
+        name: newAssetName,
+        location: newAssetLocation,
+        category: newAssetCategory,
+        organization_id: profile.organization_id
+      })
+      .select()
+      .single()
+
+    if (error) {
+      setAddAssetError(error.message)
+      setAddAssetSubmitting(false)
+      return
+    }
+
+    setAssets(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)))
+    setAssetId(data.id)
+    setNewAssetName('')
+    setNewAssetLocation('')
+    setNewAssetCategory('')
+    setShowAddAsset(false)
+    setAddAssetSubmitting(false)
   }
 
   async function handleSubmit(e) {
@@ -115,8 +160,13 @@ export default function WorkOrderForm({ profile }) {
 
   const fieldStyle = { marginBottom: '1.5rem' }
 
+  const isPro = organization?.is_upgraded === true
+
   if (fetching) return (
-    <div style={{ minHeight: '100vh', background: '#1a1a2e', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div style={{
+      minHeight: '100vh', background: '#1a1a2e',
+      display: 'flex', alignItems: 'center', justifyContent: 'center'
+    }}>
       <p style={{ color: '#9a9db5', fontFamily: 'Inter, sans-serif' }}>Loading...</p>
     </div>
   )
@@ -233,7 +283,7 @@ export default function WorkOrderForm({ profile }) {
             </select>
           </div>
 
-          {/* STATUS — only show on edit */}
+          {/* STATUS — only on edit */}
           {!isNew && (
             <div style={fieldStyle}>
               <label style={labelStyle}>Status</label>
@@ -254,14 +304,136 @@ export default function WorkOrderForm({ profile }) {
             <label style={labelStyle}>Asset</label>
             <select
               value={assetId}
-              onChange={e => setAssetId(e.target.value)}
+              onChange={e => {
+                const val = e.target.value
+                if (val === '__add_new__') {
+                  if (!isPro) {
+                    navigate('/upgrade')
+                  } else {
+                    setShowAddAsset(true)
+                    setAssetId('')
+                  }
+                } else {
+                  setAssetId(val)
+                  setShowAddAsset(false)
+                }
+              }}
               style={{ ...inputStyle, cursor: 'pointer' }}
             >
               <option value="">No asset selected</option>
+              <option value="__add_new__">
+                {isPro ? '+ Add New Asset' : '🔒 Add New Asset — Pro feature'}
+              </option>
               {assets.map(a => (
                 <option key={a.id} value={a.id}>{a.name}</option>
               ))}
             </select>
+
+            {/* INLINE ADD ASSET FORM — PRO ONLY */}
+            {showAddAsset && isPro && (
+              <div style={{
+                marginTop: '1rem',
+                background: '#16213e',
+                border: '1px solid rgba(201,168,76,0.2)',
+                borderRadius: '10px',
+                padding: '1.25rem'
+              }}>
+                <p style={{
+                  fontSize: '0.78rem',
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                  color: '#c9a84c',
+                  marginBottom: '1rem',
+                  fontWeight: '500'
+                }}>
+                  New Asset
+                </p>
+                <form onSubmit={handleAddAsset}>
+                  <div style={{ marginBottom: '0.75rem' }}>
+                    <label style={labelStyle}>Asset Name</label>
+                    <input
+                      type="text"
+                      value={newAssetName}
+                      onChange={e => setNewAssetName(e.target.value)}
+                      required
+                      placeholder="Air Compressor Unit 1"
+                      style={inputStyle}
+                    />
+                  </div>
+                  <div style={{ marginBottom: '0.75rem' }}>
+                    <label style={labelStyle}>Location</label>
+                    <input
+                      type="text"
+                      value={newAssetLocation}
+                      onChange={e => setNewAssetLocation(e.target.value)}
+                      required
+                      placeholder="Building A"
+                      style={inputStyle}
+                    />
+                  </div>
+                  <div style={{ marginBottom: '1rem' }}>
+                    <label style={labelStyle}>Category</label>
+                    <select
+                      value={newAssetCategory}
+                      onChange={e => setNewAssetCategory(e.target.value)}
+                      required
+                      style={{ ...inputStyle, cursor: 'pointer', background: '#1e2245' }}
+                    >
+                      <option value="">Select category</option>
+                      <option value="Mechanical">Mechanical</option>
+                      <option value="Electrical">Electrical</option>
+                      <option value="HVAC">HVAC</option>
+                      <option value="Plumbing">Plumbing</option>
+                      <option value="Vehicle">Vehicle</option>
+                      <option value="Safety">Safety</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                  {addAssetError && (
+                    <p style={{
+                      color: '#e06c75', fontSize: '0.85rem',
+                      marginBottom: '0.75rem', padding: '0.6rem',
+                      background: 'rgba(224,108,117,0.1)',
+                      borderRadius: '6px',
+                      border: '1px solid rgba(224,108,117,0.2)'
+                    }}>
+                      {addAssetError}
+                    </p>
+                  )}
+                  <div style={{ display: 'flex', gap: '0.75rem' }}>
+                    <button
+                      type="submit"
+                      disabled={addAssetSubmitting}
+                      style={{
+                        flex: 1,
+                        background: 'linear-gradient(135deg, #c9a84c, #e8c97a)',
+                        color: '#1a1a2e', border: 'none', borderRadius: '8px',
+                        padding: '0.75rem', fontSize: '0.85rem', fontWeight: '700',
+                        letterSpacing: '0.06em', textTransform: 'uppercase',
+                        cursor: addAssetSubmitting ? 'not-allowed' : 'pointer',
+                        opacity: addAssetSubmitting ? 0.7 : 1,
+                        fontFamily: 'Inter, sans-serif'
+                      }}
+                    >
+                      {addAssetSubmitting ? 'Saving...' : 'Save Asset'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowAddAsset(false)}
+                      style={{
+                        flex: 1, background: 'none',
+                        border: '1px solid rgba(201,168,76,0.18)',
+                        color: '#9a9db5', borderRadius: '8px',
+                        padding: '0.75rem', fontSize: '0.85rem',
+                        cursor: 'pointer', fontFamily: 'Inter, sans-serif'
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
           </div>
 
           {/* ASSIGNED TO */}
@@ -283,21 +455,15 @@ export default function WorkOrderForm({ profile }) {
                 type="text"
                 value={profile?.full_name || ''}
                 disabled
-                style={{
-                  ...inputStyle,
-                  opacity: 0.5,
-                  cursor: 'not-allowed'
-                }}
+                style={{ ...inputStyle, opacity: 0.5, cursor: 'not-allowed' }}
               />
             )}
           </div>
 
           {error && (
             <p style={{
-              color: '#e06c75',
-              fontSize: '0.85rem',
-              marginBottom: '1rem',
-              padding: '0.75rem',
+              color: '#e06c75', fontSize: '0.85rem',
+              marginBottom: '1rem', padding: '0.75rem',
               background: 'rgba(224,108,117,0.1)',
               borderRadius: '6px',
               border: '1px solid rgba(224,108,117,0.2)'
@@ -313,14 +479,9 @@ export default function WorkOrderForm({ profile }) {
               disabled={loading}
               style={{
                 background: 'linear-gradient(135deg, #c9a84c, #e8c97a)',
-                color: '#1a1a2e',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '0.9rem 2rem',
-                fontSize: '0.9rem',
-                fontWeight: '700',
-                letterSpacing: '0.06em',
-                textTransform: 'uppercase',
+                color: '#1a1a2e', border: 'none', borderRadius: '8px',
+                padding: '0.9rem 2rem', fontSize: '0.9rem', fontWeight: '700',
+                letterSpacing: '0.06em', textTransform: 'uppercase',
                 cursor: loading ? 'not-allowed' : 'pointer',
                 opacity: loading ? 0.7 : 1,
                 fontFamily: 'Inter, sans-serif'
@@ -336,14 +497,10 @@ export default function WorkOrderForm({ profile }) {
                 style={{
                   background: 'none',
                   border: '1px solid rgba(224,108,117,0.4)',
-                  color: '#e06c75',
-                  borderRadius: '8px',
-                  padding: '0.9rem 2rem',
-                  fontSize: '0.9rem',
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
-                  cursor: 'pointer',
-                  fontFamily: 'Inter, sans-serif'
+                  color: '#e06c75', borderRadius: '8px',
+                  padding: '0.9rem 2rem', fontSize: '0.9rem',
+                  letterSpacing: '0.06em', textTransform: 'uppercase',
+                  cursor: 'pointer', fontFamily: 'Inter, sans-serif'
                 }}
               >
                 Delete
