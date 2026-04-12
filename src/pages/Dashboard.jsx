@@ -701,10 +701,11 @@ export default function Dashboard({ profile }) {
               </span>
             </div>
             <h1 style={{
-              fontFamily: 'Georgia, serif',
-              fontSize: '2rem',
-              fontWeight: '600',
-              color: '#f8f6f1'
+              fontFamily: 'Inter, sans-serif',
+              fontSize: '1.4rem',
+              fontWeight: '400',
+              color: '#f8f6f1',
+              letterSpacing: '0.01em'
             }}>
               Hi, {firstName}!
             </h1>
