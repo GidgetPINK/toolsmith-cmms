@@ -28,6 +28,7 @@ export default function Dashboard({ profile }) {
   const [assets, setAssets] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('all')
+  const [organization, setOrganization] = useState(null)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -35,17 +36,19 @@ export default function Dashboard({ profile }) {
   }, [])
 
   async function fetchAll() {
-    setLoading(true)
-    const [woRes, profRes, assetRes] = await Promise.all([
-      supabase.from('work_orders').select('*').neq('status', 'closed').order('created_at', { ascending: false }),
-      supabase.from('profiles').select('*'),
-      supabase.from('assets').select('*')
-    ])
-    setWorkOrders(woRes.data || [])
-    setProfiles(profRes.data || [])
-    setAssets(assetRes.data || [])
-    setLoading(false)
-  }
+  setLoading(true)
+  const [woRes, profRes, assetRes, orgRes] = await Promise.all([
+    supabase.from('work_orders').select('*').neq('status', 'closed').order('created_at', { ascending: false }),
+    supabase.from('profiles').select('*'),
+    supabase.from('assets').select('*'),
+    supabase.from('organizations').select('*').eq('id', profile.organization_id).single()
+  ])
+  setWorkOrders(woRes.data || [])
+  setProfiles(profRes.data || [])
+  setAssets(assetRes.data || [])
+  setOrganization(orgRes.data || null)
+  setLoading(false)
+}
 
   async function handleSignOut() {
     await supabase.auth.signOut()
@@ -173,6 +176,50 @@ export default function Dashboard({ profile }) {
       </nav>
 
       <div style={{ padding: '2.5rem 5%' }}>
+
+      {/* PAYMENT SETUP BANNER */}
+  {!organization?.stripe_subscription_id && (
+    <div style={{
+      background: 'rgba(232,201,122,0.08)',
+      border: '1px solid rgba(232,201,122,0.4)',
+      borderRadius: '10px',
+      padding: '1rem 1.5rem',
+      marginBottom: '2rem',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      flexWrap: 'wrap',
+      gap: '1rem'
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <span style={{ fontSize: '1.1rem' }}>⚠</span>
+        <p style={{ color: '#e8c97a', fontSize: '0.88rem', lineHeight: '1.6' }}>
+          Your payment setup is incomplete. Add a payment method to keep
+          access after your trial ends.
+        </p>
+      </div>
+      <button
+        onClick={() => navigate('/upgrade')}
+        style={{
+          background: 'linear-gradient(135deg, #c9a84c, #e8c97a)',
+          color: '#1a1a2e',
+          border: 'none',
+          borderRadius: '6px',
+          padding: '0.5rem 1.25rem',
+          fontSize: '0.82rem',
+          fontWeight: '700',
+          letterSpacing: '0.06em',
+          textTransform: 'uppercase',
+          cursor: 'pointer',
+          fontFamily: 'Inter, sans-serif',
+          whiteSpace: 'nowrap'
+        }}
+      >
+        Complete Setup
+      </button>
+    </div>
+  )}
+
 
         {/* HEADER */}
         <div style={{ marginBottom: '2rem' }}>
