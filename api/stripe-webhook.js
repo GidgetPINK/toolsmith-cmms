@@ -1,26 +1,46 @@
+import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 
 const supabase = createClient(
   process.env.VITE_SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 )
 
+export const config = {
+  api: {
+    bodyParser: false
+  }
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
+  const sig = req.headers['stripe-signature']
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
+
+  let event
+
   try {
-    const event = req.body
-
-    if (!event || !event.type) {
-      return res.status(400).json({ error: 'Invalid event' })
+    const chunks = []
+    for await (const chunk of req) {
+      chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk)
     }
+    const rawBody = Buffer.concat(chunks)
+    event = stripe.webhooks.constructEvent(rawBody, sig, webhookSecret)
+  } catch (error) {
+    console.error('Webhook signature error:', error.message)
+    return res.status(400).json({ error: error.message })
+  }
 
-    const organizationId = event.data?.object?.metadata?.organization_id
+  const organizationId = event.data?.object?.metadata?.organization_id
 
-    console.log('Webhook received:', event.type, 'org:', organizationId)
+  console.log('Webhook received:', event.type, 'org:', organizationId)
 
+  try {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object
@@ -38,8 +58,6 @@ export default async function handler(req, res) {
             console.error('Supabase error:', error)
             return res.status(500).json({ error: error.message })
           }
-
-          console.log('Organization updated successfully')
         }
         break
       }
