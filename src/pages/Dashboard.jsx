@@ -154,6 +154,9 @@ export default function Dashboard({ profile }) {
     return workOrders.filter(wo => wo.asset_id === assetId).length
   }
 
+  const firstName = profile?.full_name?.split(' ')[0] || 'there'
+  const isPro = organization?.is_upgraded === true
+
   const filtered = filter === 'all'
     ? workOrders
     : workOrders.filter(wo => wo.priority === filter)
@@ -185,12 +188,14 @@ export default function Dashboard({ profile }) {
           type="text"
           value={sidebarAssetLocation}
           onChange={e => setSidebarAssetLocation(e.target.value)}
-          placeholder="Location (optional)"
+          required
+          placeholder="Location"
           style={sidebarInputStyle}
         />
         <select
           value={sidebarAssetCategory}
           onChange={e => setSidebarAssetCategory(e.target.value)}
+          required
           style={{
             ...sidebarInputStyle,
             background: '#1e2245',
@@ -198,7 +203,7 @@ export default function Dashboard({ profile }) {
             marginBottom: '0.75rem'
           }}
         >
-          <option value="">Category (optional)</option>
+          <option value="">Select category</option>
           <option value="Mechanical">Mechanical</option>
           <option value="Electrical">Electrical</option>
           <option value="HVAC">HVAC</option>
@@ -219,12 +224,8 @@ export default function Dashboard({ profile }) {
             style={{
               flex: 1,
               background: 'linear-gradient(135deg, #c9a84c, #e8c97a)',
-              color: '#1a1a2e',
-              border: 'none',
-              borderRadius: '6px',
-              padding: '0.5rem',
-              fontSize: '0.75rem',
-              fontWeight: '700',
+              color: '#1a1a2e', border: 'none', borderRadius: '6px',
+              padding: '0.5rem', fontSize: '0.75rem', fontWeight: '700',
               cursor: sidebarAssetSubmitting ? 'not-allowed' : 'pointer',
               opacity: sidebarAssetSubmitting ? 0.7 : 1,
               fontFamily: 'Inter, sans-serif'
@@ -236,21 +237,111 @@ export default function Dashboard({ profile }) {
             type="button"
             onClick={() => setShowSidebarAddAsset(false)}
             style={{
-              flex: 1,
-              background: 'none',
+              flex: 1, background: 'none',
               border: '1px solid rgba(201,168,76,0.18)',
-              color: '#9a9db5',
-              borderRadius: '6px',
-              padding: '0.5rem',
-              fontSize: '0.75rem',
-              cursor: 'pointer',
-              fontFamily: 'Inter, sans-serif'
+              color: '#9a9db5', borderRadius: '6px',
+              padding: '0.5rem', fontSize: '0.75rem',
+              cursor: 'pointer', fontFamily: 'Inter, sans-serif'
             }}
           >
             Cancel
           </button>
         </div>
       </form>
+    )
+  }
+
+  function LiteUpgradePrompt({ compact }) {
+    return compact ? (
+      <div style={{
+        border: '1px dashed rgba(201,168,76,0.2)',
+        borderRadius: '8px',
+        padding: '1rem',
+        textAlign: 'center',
+        marginTop: '1rem'
+      }}>
+        <p style={{ fontSize: '1rem', marginBottom: '0.4rem' }}>🔒</p>
+        <p style={{
+          fontSize: '0.8rem', color: '#9a9db5',
+          marginBottom: '0.75rem', lineHeight: '1.5'
+        }}>
+          Full asset management is a Pro feature
+        </p>
+        <button
+          onClick={() => navigate('/upgrade')}
+          style={{
+            background: 'linear-gradient(135deg, #c9a84c, #e8c97a)',
+            color: '#1a1a2e', border: 'none', borderRadius: '6px',
+            padding: '0.45rem 0.9rem', fontSize: '0.78rem',
+            fontWeight: '700', letterSpacing: '0.06em',
+            textTransform: 'uppercase', cursor: 'pointer',
+            fontFamily: 'Inter, sans-serif'
+          }}
+        >
+          Upgrade to Pro
+        </button>
+      </div>
+    ) : (
+      <div style={{
+        background: 'rgba(201,168,76,0.05)',
+        border: '1px solid rgba(201,168,76,0.2)',
+        borderRadius: '10px',
+        padding: '1.25rem 1rem',
+        textAlign: 'center'
+      }}>
+        <div style={{
+          width: '44px', height: '44px', borderRadius: '50%',
+          background: 'rgba(201,168,76,0.1)',
+          border: '1px solid rgba(201,168,76,0.2)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          margin: '0 auto 0.75rem', fontSize: '1.2rem'
+        }}>
+          🔒
+        </div>
+        <p style={{
+          fontSize: '0.88rem', fontWeight: '500',
+          color: '#f8f6f1', marginBottom: '0.75rem', lineHeight: '1.4'
+        }}>
+          Unlock Asset Management
+        </p>
+        <div style={{
+          display: 'flex', flexDirection: 'column',
+          gap: '0.5rem', marginBottom: '1.1rem', textAlign: 'left'
+        }}>
+          {[
+            'Full asset registry with search and filtering',
+            'Link assets to work orders and PM schedules',
+            'Asset health reports and cost tracking',
+            'Attach OEM spec sheets and documents'
+          ].map((f, i) => (
+            <div key={i} style={{ display: 'flex', gap: '7px', alignItems: 'flex-start' }}>
+              <div style={{
+                width: '6px', height: '6px', borderRadius: '50%',
+                background: 'rgba(201,168,76,0.4)',
+                flexShrink: 0, marginTop: '5px'
+              }} />
+              <p style={{ fontSize: '0.78rem', color: '#9a9db5', lineHeight: '1.5' }}>{f}</p>
+            </div>
+          ))}
+        </div>
+        <button
+          onClick={() => navigate('/upgrade')}
+          style={{
+            width: '100%',
+            background: 'linear-gradient(135deg, #c9a84c, #e8c97a)',
+            color: '#1a1a2e', border: 'none', borderRadius: '6px',
+            padding: '0.6rem', fontSize: '0.78rem', fontWeight: '700',
+            letterSpacing: '0.06em', textTransform: 'uppercase',
+            cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+            marginBottom: '0.4rem'
+          }}
+        >
+          Upgrade to Pro — $49/mo
+        </button>
+        <p style={{ fontSize: '0.72rem', color: '#9a9db5' }}>
+          Cancel any time. No contracts.
+        </p>
+      </div>
     )
   }
 
@@ -284,7 +375,10 @@ export default function Dashboard({ profile }) {
           }}>
             The Toolsmith CMMS
           </span>
-          <div className="desktop-nav" style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+          <div
+            className="desktop-nav"
+            style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}
+          >
             <button onClick={() => navigate('/team')} style={navBtnStyle}>Team</button>
             <button onClick={() => navigate('/change-password')} style={navBtnStyle}>Change Password</button>
             <button onClick={handleSignOut} style={navBtnStyle}>Sign Out</button>
@@ -325,9 +419,21 @@ export default function Dashboard({ profile }) {
               borderTop: '1px solid rgba(201,168,76,0.12)'
             }}
           >
-            <button onClick={() => { navigate('/team'); setMobileNavOpen(false) }} style={mobileNavBtnStyle}>Team</button>
-            <button onClick={() => { navigate('/change-password'); setMobileNavOpen(false) }} style={mobileNavBtnStyle}>Change Password</button>
-            <button onClick={handleSignOut} style={mobileNavBtnStyle}>Sign Out</button>
+            <button
+              onClick={() => { navigate('/team'); setMobileNavOpen(false) }}
+              style={mobileNavBtnStyle}
+            >
+              Team
+            </button>
+            <button
+              onClick={() => { navigate('/change-password'); setMobileNavOpen(false) }}
+              style={mobileNavBtnStyle}
+            >
+              Change Password
+            </button>
+            <button onClick={handleSignOut} style={mobileNavBtnStyle}>
+              Sign Out
+            </button>
           </div>
         )}
       </nav>
@@ -368,144 +474,90 @@ export default function Dashboard({ profile }) {
             Assets
           </p>
 
-          {assets.length === 0 ? (
-            organization?.is_upgraded ? (
+          {!isPro ? (
 
-              /* PRO EMPTY STATE */
-              <div>
-                <div style={{ textAlign: 'center', padding: '0.75rem 0.5rem 1rem' }}>
-                  <p style={{ fontSize: '1.6rem', marginBottom: '0.6rem', opacity: 0.5 }}>🏭</p>
-                  <p style={{ fontSize: '0.88rem', fontWeight: '500', color: '#f8f6f1', marginBottom: '0.4rem' }}>
-                    No assets yet
-                  </p>
-                  <p style={{ fontSize: '0.8rem', color: '#9a9db5', lineHeight: '1.6', marginBottom: '1rem' }}>
-                    Add assets from the work order form or build your registry here first.
-                  </p>
-                </div>
-                <div style={{
-                  background: 'rgba(201,168,76,0.06)',
-                  border: '1px solid rgba(201,168,76,0.15)',
-                  borderRadius: '8px',
-                  padding: '0.85rem',
-                  marginBottom: '1rem'
-                }}>
-                  {[
-                    { n: 1, parts: ['Click ', { gold: '+ New Work Order' }, ' and select ', { gold: '+ Add New Asset' }] },
-                    { n: 2, parts: ['Or click ', { gold: '+ Add Asset' }, ' below to build your registry first'] },
-                    { n: 3, parts: ['Click any asset here to filter work orders by that asset'] }
-                  ].map((step, i) => (
-                    <div key={i} style={{
-                      display: 'flex',
-                      gap: '8px',
-                      alignItems: 'flex-start',
-                      marginBottom: i < 2 ? '0.6rem' : 0
-                    }}>
-                      <div style={{
-                        width: '16px', height: '16px', borderRadius: '50%',
-                        background: 'rgba(201,168,76,0.15)',
-                        border: '1px solid rgba(201,168,76,0.3)',
-                        color: '#c9a84c', fontSize: '0.65rem', fontWeight: '700',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        flexShrink: 0, marginTop: '2px'
-                      }}>
-                        {step.n}
-                      </div>
-                      <p style={{ fontSize: '0.78rem', color: '#9a9db5', lineHeight: '1.5' }}>
-                        {step.parts.map((part, pi) =>
-                          typeof part === 'string'
-                            ? part
-                            : <span key={pi} style={{ color: '#c9a84c' }}>{part.gold}</span>
-                        )}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-                {!showSidebarAddAsset ? (
-                  <button
-                    onClick={() => setShowSidebarAddAsset(true)}
-                    style={{
-                      width: '100%',
-                      background: 'linear-gradient(135deg, #c9a84c, #e8c97a)',
-                      color: '#1a1a2e', border: 'none', borderRadius: '6px',
-                      padding: '0.6rem', fontSize: '0.78rem', fontWeight: '700',
-                      letterSpacing: '0.06em', textTransform: 'uppercase',
-                      cursor: 'pointer', fontFamily: 'Inter, sans-serif'
-                    }}
-                  >
-                    + Add Asset
-                  </button>
-                ) : (
-                  <SidebarAddAssetForm />
-                )}
-              </div>
+            /* LITE PLAN — ALWAYS SHOW UPGRADE PROMPT */
+            <LiteUpgradePrompt compact={false} />
 
-            ) : (
+          ) : assets.length === 0 ? (
 
-              /* LITE EMPTY STATE */
-              <div style={{
-                background: 'rgba(201,168,76,0.05)',
-                border: '1px solid rgba(201,168,76,0.2)',
-                borderRadius: '10px',
-                padding: '1.25rem 1rem',
-                textAlign: 'center'
-              }}>
-                <div style={{
-                  width: '44px', height: '44px', borderRadius: '50%',
-                  background: 'rgba(201,168,76,0.1)',
-                  border: '1px solid rgba(201,168,76,0.2)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  margin: '0 auto 0.75rem', fontSize: '1.2rem'
-                }}>
-                  🔒
-                </div>
+            /* PRO PLAN — EMPTY STATE */
+            <div>
+              <div style={{ textAlign: 'center', padding: '0.75rem 0.5rem 1rem' }}>
+                <p style={{ fontSize: '1.6rem', marginBottom: '0.6rem', opacity: 0.5 }}>🏭</p>
                 <p style={{
                   fontSize: '0.88rem', fontWeight: '500',
-                  color: '#f8f6f1', marginBottom: '0.75rem', lineHeight: '1.4'
+                  color: '#f8f6f1', marginBottom: '0.4rem'
                 }}>
-                  Unlock Asset Management
+                  No assets yet
                 </p>
-                <div style={{
-                  display: 'flex', flexDirection: 'column',
-                  gap: '0.5rem', marginBottom: '1.1rem', textAlign: 'left'
+                <p style={{
+                  fontSize: '0.8rem', color: '#9a9db5',
+                  lineHeight: '1.6', marginBottom: '1rem'
                 }}>
-                  {[
-                    'Full asset registry with search and filtering',
-                    'Link assets to work orders and PM schedules',
-                    'Asset health reports and cost tracking',
-                    'Attach OEM spec sheets and documents'
-                  ].map((f, i) => (
-                    <div key={i} style={{ display: 'flex', gap: '7px', alignItems: 'flex-start' }}>
-                      <div style={{
-                        width: '6px', height: '6px', borderRadius: '50%',
-                        background: 'rgba(201,168,76,0.4)',
-                        flexShrink: 0, marginTop: '5px'
-                      }} />
-                      <p style={{ fontSize: '0.78rem', color: '#9a9db5', lineHeight: '1.5' }}>{f}</p>
+                  Add assets from the work order form or build your registry here first.
+                </p>
+              </div>
+              <div style={{
+                background: 'rgba(201,168,76,0.06)',
+                border: '1px solid rgba(201,168,76,0.15)',
+                borderRadius: '8px',
+                padding: '0.85rem',
+                marginBottom: '1rem'
+              }}>
+                {[
+                  { n: 1, parts: ['Click ', { gold: '+ New Work Order' }, ' and select ', { gold: '+ Add New Asset' }] },
+                  { n: 2, parts: ['Or click ', { gold: '+ Add Asset' }, ' below to build your registry first'] },
+                  { n: 3, parts: ['Click any asset here to filter work orders by that asset'] }
+                ].map((step, i) => (
+                  <div key={i} style={{
+                    display: 'flex',
+                    gap: '8px',
+                    alignItems: 'flex-start',
+                    marginBottom: i < 2 ? '0.6rem' : 0
+                  }}>
+                    <div style={{
+                      width: '16px', height: '16px', borderRadius: '50%',
+                      background: 'rgba(201,168,76,0.15)',
+                      border: '1px solid rgba(201,168,76,0.3)',
+                      color: '#c9a84c', fontSize: '0.65rem', fontWeight: '700',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      flexShrink: 0, marginTop: '2px'
+                    }}>
+                      {step.n}
                     </div>
-                  ))}
-                </div>
+                    <p style={{ fontSize: '0.78rem', color: '#9a9db5', lineHeight: '1.5' }}>
+                      {step.parts.map((part, pi) =>
+                        typeof part === 'string'
+                          ? part
+                          : <span key={pi} style={{ color: '#c9a84c' }}>{part.gold}</span>
+                      )}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              {!showSidebarAddAsset ? (
                 <button
-                  onClick={() => navigate('/upgrade')}
+                  onClick={() => setShowSidebarAddAsset(true)}
                   style={{
                     width: '100%',
                     background: 'linear-gradient(135deg, #c9a84c, #e8c97a)',
                     color: '#1a1a2e', border: 'none', borderRadius: '6px',
                     padding: '0.6rem', fontSize: '0.78rem', fontWeight: '700',
                     letterSpacing: '0.06em', textTransform: 'uppercase',
-                    cursor: 'pointer', fontFamily: 'Inter, sans-serif',
-                    marginBottom: '0.4rem'
+                    cursor: 'pointer', fontFamily: 'Inter, sans-serif'
                   }}
                 >
-                  Upgrade to Pro — $49/mo
+                  + Add Asset
                 </button>
-                <p style={{ fontSize: '0.72rem', color: '#9a9db5' }}>
-                  Cancel any time. No contracts.
-                </p>
-              </div>
-            )
+              ) : (
+                <SidebarAddAssetForm />
+              )}
+            </div>
+
           ) : (
 
-            /* ASSET LIST */
+            /* PRO PLAN — ASSET LIST */
             <div>
               {assets.map(asset => {
                 const woCount = getAssetWorkOrderCount(asset.id)
@@ -551,66 +603,27 @@ export default function Dashboard({ profile }) {
                 )
               })}
 
-              {/* PRO ADD ASSET BUTTON */}
-              {organization?.is_upgraded && (
-                <div style={{ marginTop: '0.75rem' }}>
-                  {!showSidebarAddAsset ? (
-                    <button
-                      onClick={() => setShowSidebarAddAsset(true)}
-                      style={{
-                        width: '100%',
-                        background: 'none',
-                        border: '1px solid rgba(201,168,76,0.25)',
-                        color: '#c9a84c',
-                        borderRadius: '6px',
-                        padding: '0.5rem',
-                        fontSize: '0.78rem',
-                        fontWeight: '500',
-                        letterSpacing: '0.05em',
-                        textTransform: 'uppercase',
-                        cursor: 'pointer',
-                        fontFamily: 'Inter, sans-serif'
-                      }}
-                    >
-                      + Add Asset
-                    </button>
-                  ) : (
-                    <SidebarAddAssetForm />
-                  )}
-                </div>
-              )}
-
-              {/* LITE UPGRADE PROMPT */}
-              {!organization?.is_upgraded && (
-                <div style={{
-                  border: '1px dashed rgba(201,168,76,0.2)',
-                  borderRadius: '8px',
-                  padding: '1rem',
-                  textAlign: 'center',
-                  marginTop: '1rem'
-                }}>
-                  <p style={{ fontSize: '1rem', marginBottom: '0.4rem' }}>🔒</p>
-                  <p style={{
-                    fontSize: '0.8rem', color: '#9a9db5',
-                    marginBottom: '0.75rem', lineHeight: '1.5'
-                  }}>
-                    Full asset management is a Pro feature
-                  </p>
+              <div style={{ marginTop: '0.75rem' }}>
+                {!showSidebarAddAsset ? (
                   <button
-                    onClick={() => navigate('/upgrade')}
+                    onClick={() => setShowSidebarAddAsset(true)}
                     style={{
-                      background: 'linear-gradient(135deg, #c9a84c, #e8c97a)',
-                      color: '#1a1a2e', border: 'none', borderRadius: '6px',
-                      padding: '0.45rem 0.9rem', fontSize: '0.78rem',
-                      fontWeight: '700', letterSpacing: '0.06em',
+                      width: '100%',
+                      background: 'none',
+                      border: '1px solid rgba(201,168,76,0.25)',
+                      color: '#c9a84c', borderRadius: '6px',
+                      padding: '0.5rem', fontSize: '0.78rem',
+                      fontWeight: '500', letterSpacing: '0.05em',
                       textTransform: 'uppercase', cursor: 'pointer',
                       fontFamily: 'Inter, sans-serif'
                     }}
                   >
-                    Upgrade to Pro
+                    + Add Asset
                   </button>
-                </div>
-              )}
+                ) : (
+                  <SidebarAddAssetForm />
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -650,20 +663,50 @@ export default function Dashboard({ profile }) {
             </div>
           )}
 
-          {/* HEADER */}
+          {/* HEADER WITH GREETING AND PLAN BADGE */}
           <div style={{ marginBottom: '1.75rem' }}>
-            <p style={{
-              fontSize: '0.72rem', letterSpacing: '0.22em',
-              textTransform: 'uppercase', color: '#c9a84c',
-              marginBottom: '0.35rem', fontWeight: '500'
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              marginBottom: '0.35rem',
+              flexWrap: 'wrap'
             }}>
-              Manager Dashboard
-            </p>
+              <p style={{
+                fontSize: '0.72rem',
+                letterSpacing: '0.22em',
+                textTransform: 'uppercase',
+                color: '#c9a84c',
+                fontWeight: '500'
+              }}>
+                Manager Dashboard
+              </p>
+              {/* PLAN BADGE */}
+              <span style={{
+                padding: '0.15rem 0.65rem',
+                borderRadius: '20px',
+                fontSize: '0.68rem',
+                fontWeight: '700',
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                background: isPro
+                  ? 'rgba(201,168,76,0.15)'
+                  : 'rgba(180,180,180,0.15)',
+                border: isPro
+                  ? '1px solid rgba(201,168,76,0.5)'
+                  : '1px solid rgba(180,180,180,0.4)',
+                color: isPro ? '#c9a84c' : '#b0b0b0'
+              }}>
+                {isPro ? 'Pro' : 'Lite'}
+              </span>
+            </div>
             <h1 style={{
-              fontFamily: 'Georgia, serif', fontSize: '2rem',
-              fontWeight: '600', color: '#f8f6f1'
+              fontFamily: 'Georgia, serif',
+              fontSize: '2rem',
+              fontWeight: '600',
+              color: '#f8f6f1'
             }}>
-              Open Work Orders
+              Hi, {firstName}!
             </h1>
           </div>
 
