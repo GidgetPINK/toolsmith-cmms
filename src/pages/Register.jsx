@@ -6,6 +6,19 @@ const inputStyle = {
   background: 'rgba(255,255,255,0.05)',
   border: '1px solid rgba(201,168,76,0.18)',
   borderRadius: '8px',
+  padding: '0.8rem 3rem 0.8rem 1rem',
+  color: '#f8f6f1',
+  fontSize: '0.9rem',
+  outline: 'none',
+  fontFamily: 'Inter, sans-serif',
+  boxSizing: 'border-box'
+}
+
+const inputStylePlain = {
+  width: '100%',
+  background: 'rgba(255,255,255,0.05)',
+  border: '1px solid rgba(201,168,76,0.18)',
+  borderRadius: '8px',
   padding: '0.8rem 1rem',
   color: '#f8f6f1',
   fontSize: '0.9rem',
@@ -24,6 +37,22 @@ const labelStyle = {
   fontWeight: '500'
 }
 
+const showBtnStyle = {
+  position: 'absolute',
+  right: '0.75rem',
+  top: '50%',
+  transform: 'translateY(-50%)',
+  background: 'none',
+  border: 'none',
+  cursor: 'pointer',
+  color: '#9a9db5',
+  fontSize: '0.78rem',
+  letterSpacing: '0.05em',
+  textTransform: 'uppercase',
+  fontFamily: 'Inter, sans-serif',
+  padding: '0'
+}
+
 export default function Register() {
   const [step, setStep] = useState(1)
   const [fullName, setFullName] = useState('')
@@ -32,6 +61,8 @@ export default function Register() {
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [plan, setPlan] = useState('lite_monthly')
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
 
@@ -92,67 +123,58 @@ export default function Register() {
   const selectedPlan = plans.find(p => p.id === plan)
 
   async function handleRegister(e) {
-  e.preventDefault()
-  setError(null)
+    e.preventDefault()
+    setError(null)
 
-  if (password.length < 6) {
-    setError('Password must be at least 6 characters.')
-    return
-  }
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters.')
+      return
+    }
 
-  if (password !== confirm) {
-    setError('Passwords do not match.')
-    return
-  }
+    if (password !== confirm) {
+      setError('Passwords do not match.')
+      return
+    }
 
-  setLoading(true)
+    setLoading(true)
 
-  try {
-    // Step 1 — create account via serverless function
-    const accountResponse = await fetch('/api/create-account', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    try {
+      const accountResponse = await fetch('/api/create-account', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, fullName, orgName })
+      })
+
+      const accountData = await accountResponse.json()
+      if (accountData.error) throw new Error(accountData.error)
+
+      const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
-        password,
-        fullName,
-        orgName
+        password
       })
-    })
 
-    const accountData = await accountResponse.json()
-    if (accountData.error) throw new Error(accountData.error)
+      if (signInError) throw signInError
 
-    // Step 2 — sign the user in immediately
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    })
-
-    if (signInError) throw signInError
-
-    // Step 3 — create Stripe checkout session
-    const stripeResponse = await fetch('/api/create-checkout-session', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        priceId: selectedPlan.priceId,
-        organizationId: accountData.organizationId,
-        email
+      const stripeResponse = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          priceId: selectedPlan.priceId,
+          organizationId: accountData.organizationId,
+          email
+        })
       })
-    })
 
-    const { url, error: stripeError } = await stripeResponse.json()
-    if (stripeError) throw new Error(stripeError)
+      const { url, error: stripeError } = await stripeResponse.json()
+      if (stripeError) throw new Error(stripeError)
 
-    // Step 4 — redirect to Stripe checkout
-    window.location.href = url
+      window.location.href = url
 
-  } catch (err) {
-    setError(err.message)
-    setLoading(false)
+    } catch (err) {
+      setError(err.message)
+      setLoading(false)
+    }
   }
-}
 
   return (
     <div style={{
@@ -296,9 +318,7 @@ export default function Register() {
                         gap: '0.5rem',
                         alignItems: 'flex-start'
                       }}>
-                        <span style={{ color: '#c9a84c', flexShrink: 0 }}>
-                          ✓
-                        </span>
+                        <span style={{ color: '#c9a84c', flexShrink: 0 }}>✓</span>
                         {f}
                       </p>
                     ))}
@@ -376,7 +396,7 @@ export default function Register() {
                   required
                   placeholder="Jane Smith"
                   autoComplete="new-password"
-                  style={inputStyle}
+                  style={inputStylePlain}
                 />
               </div>
 
@@ -389,7 +409,7 @@ export default function Register() {
                   required
                   placeholder="Acme Maintenance Co."
                   autoComplete="new-password"
-                  style={inputStyle}
+                  style={inputStylePlain}
                 />
               </div>
 
@@ -402,34 +422,52 @@ export default function Register() {
                   required
                   placeholder="jane@company.com"
                   autoComplete="new-password"
-                  style={inputStyle}
+                  style={inputStylePlain}
                 />
               </div>
 
               <div style={{ marginBottom: '1.25rem' }}>
                 <label style={labelStyle}>Password</label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  required
-                  placeholder="Min 6 characters"
-                  autoComplete="new-password"
-                  style={inputStyle}
-                />
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    required
+                    placeholder="Min 6 characters"
+                    autoComplete="new-password"
+                    style={inputStyle}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    style={showBtnStyle}
+                  >
+                    {showPassword ? 'Hide' : 'Show'}
+                  </button>
+                </div>
               </div>
 
               <div style={{ marginBottom: '1.5rem' }}>
                 <label style={labelStyle}>Confirm Password</label>
-                <input
-                  type="password"
-                  value={confirm}
-                  onChange={e => setConfirm(e.target.value)}
-                  required
-                  placeholder="Repeat your password"
-                  autoComplete="new-password"
-                  style={inputStyle}
-                />
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={showConfirm ? 'text' : 'password'}
+                    value={confirm}
+                    onChange={e => setConfirm(e.target.value)}
+                    required
+                    placeholder="Repeat your password"
+                    autoComplete="new-password"
+                    style={inputStyle}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirm(!showConfirm)}
+                    style={showBtnStyle}
+                  >
+                    {showConfirm ? 'Hide' : 'Show'}
+                  </button>
+                </div>
               </div>
 
               {error && (

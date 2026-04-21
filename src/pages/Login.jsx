@@ -19,9 +19,32 @@ const registerLinkStyle = {
   marginTop: '0.75rem'
 }
 
+const inputStyle = {
+  width: '100%',
+  background: 'rgba(255,255,255,0.05)',
+  border: '1px solid rgba(201,168,76,0.18)',
+  borderRadius: '8px',
+  padding: '0.8rem 3rem 0.8rem 1rem',
+  color: '#f8f6f1',
+  fontSize: '0.9rem',
+  outline: 'none',
+  fontFamily: 'Inter, sans-serif',
+  boxSizing: 'border-box'
+}
+
+const labelStyle = {
+  display: 'block',
+  color: '#9a9db5',
+  fontSize: '0.8rem',
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase',
+  marginBottom: '0.5rem'
+}
+
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
 
@@ -79,65 +102,48 @@ export default function Login() {
 
         <form onSubmit={handleLogin}>
           <div style={{ marginBottom: '1.25rem' }}>
-            <label style={{
-              display: 'block',
-              color: '#9a9db5',
-              fontSize: '0.8rem',
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              marginBottom: '0.5rem'
-            }}>
-              Email
-            </label>
+            <label style={labelStyle}>Email</label>
             <input
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
               required
-              style={{
-                width: '100%',
-                background: 'rgba(255,255,255,0.05)',
-                border: '1px solid rgba(201,168,76,0.18)',
-                borderRadius: '8px',
-                padding: '0.8rem 1rem',
-                color: '#f8f6f1',
-                fontSize: '0.9rem',
-                outline: 'none',
-                fontFamily: 'Inter, sans-serif',
-                boxSizing: 'border-box'
-              }}
+              style={inputStyle}
             />
           </div>
 
           <div style={{ marginBottom: '1.5rem' }}>
-            <label style={{
-              display: 'block',
-              color: '#9a9db5',
-              fontSize: '0.8rem',
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              marginBottom: '0.5rem'
-            }}>
-              Password
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              required
-              style={{
-                width: '100%',
-                background: 'rgba(255,255,255,0.05)',
-                border: '1px solid rgba(201,168,76,0.18)',
-                borderRadius: '8px',
-                padding: '0.8rem 1rem',
-                color: '#f8f6f1',
-                fontSize: '0.9rem',
-                outline: 'none',
-                fontFamily: 'Inter, sans-serif',
-                boxSizing: 'border-box'
-              }}
-            />
+            <label style={labelStyle}>Password</label>
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+                style={inputStyle}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '0.75rem',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: '#9a9db5',
+                  fontSize: '0.78rem',
+                  letterSpacing: '0.05em',
+                  textTransform: 'uppercase',
+                  fontFamily: 'Inter, sans-serif',
+                  padding: '0'
+                }}
+              >
+                {showPassword ? 'Hide' : 'Show'}
+              </button>
+            </div>
           </div>
 
           {error && (
@@ -184,7 +190,6 @@ export default function Login() {
           <a href="/register" style={registerLinkStyle}>
             Don't have an account? Start your free trial
           </a>
-
         </form>
       </div>
     </div>

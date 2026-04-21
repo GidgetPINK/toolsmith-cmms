@@ -9,6 +9,7 @@ export default function Team({ profile }) {
   const [inviteName, setInviteName] = useState('')
   const [inviteRole, setInviteRole] = useState('technician')
   const [invitePassword, setInvitePassword] = useState('')
+  const [showInvitePassword, setShowInvitePassword] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(null)
   const [submitting, setSubmitting] = useState(false)
@@ -102,6 +103,11 @@ export default function Team({ profile }) {
     boxSizing: 'border-box'
   }
 
+  const passwordInputStyle = {
+    ...inputStyle,
+    padding: '0.8rem 3rem 0.8rem 1rem'
+  }
+
   const labelStyle = {
     display: 'block',
     color: '#9a9db5',
@@ -110,6 +116,22 @@ export default function Team({ profile }) {
     textTransform: 'uppercase',
     marginBottom: '0.5rem',
     fontWeight: '500'
+  }
+
+  const showBtnStyle = {
+    position: 'absolute',
+    right: '0.75rem',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    color: '#9a9db5',
+    fontSize: '0.78rem',
+    letterSpacing: '0.05em',
+    textTransform: 'uppercase',
+    fontFamily: 'Inter, sans-serif',
+    padding: '0'
   }
 
   return (
@@ -235,11 +257,7 @@ export default function Team({ profile }) {
                   opacity: member.is_active ? 1 : 0.5
                 }}
               >
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '1rem'
-                }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                   <div style={{
                     width: '38px',
                     height: '38px',
@@ -299,51 +317,51 @@ export default function Team({ profile }) {
                 </div>
 
                 <div style={{
-  display: 'flex',
-  alignItems: 'center',
-  gap: '0.75rem',
-  flexWrap: 'wrap'
-}}>
-  {member.is_active && (
-    <select
-      value={member.role}
-      onChange={e => handleRoleChange(member.id, e.target.value)}
-      style={{
-        background: 'rgba(255,255,255,0.05)',
-        border: '1px solid rgba(201,168,76,0.18)',
-        borderRadius: '6px',
-        padding: '0.35rem 0.75rem',
-        color: '#f8f6f1',
-        fontSize: '0.82rem',
-        cursor: 'pointer',
-        fontFamily: 'Inter, sans-serif',
-        outline: 'none'
-      }}
-    >
-      <option value="technician">Technician</option>
-      <option value="manager">Manager</option>
-    </select>
-  )}
-  <button
-    onClick={() => handleToggleActive(member.id, member.is_active)}
-    style={{
-      background: 'none',
-      border: '1px solid ' + (member.is_active
-        ? 'rgba(224,108,117,0.4)'
-        : 'rgba(152,195,121,0.4)'),
-      color: member.is_active ? '#e06c75' : '#98c379',
-      borderRadius: '6px',
-      padding: '0.35rem 0.75rem',
-      fontSize: '0.78rem',
-      cursor: 'pointer',
-      letterSpacing: '0.05em',
-      textTransform: 'uppercase',
-      fontFamily: 'Inter, sans-serif'
-    }}
-  >
-    {member.is_active ? 'Disable' : 'Re-enable'}
-  </button>
-</div>
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  flexWrap: 'wrap'
+                }}>
+                  {member.is_active && (
+                    <select
+                      value={member.role}
+                      onChange={e => handleRoleChange(member.id, e.target.value)}
+                      style={{
+                        background: 'rgba(255,255,255,0.05)',
+                        border: '1px solid rgba(201,168,76,0.18)',
+                        borderRadius: '6px',
+                        padding: '0.35rem 0.75rem',
+                        color: '#f8f6f1',
+                        fontSize: '0.82rem',
+                        cursor: 'pointer',
+                        fontFamily: 'Inter, sans-serif',
+                        outline: 'none'
+                      }}
+                    >
+                      <option value="technician">Technician</option>
+                      <option value="manager">Manager</option>
+                    </select>
+                  )}
+                  <button
+                    onClick={() => handleToggleActive(member.id, member.is_active)}
+                    style={{
+                      background: 'none',
+                      border: '1px solid ' + (member.is_active
+                        ? 'rgba(224,108,117,0.4)'
+                        : 'rgba(152,195,121,0.4)'),
+                      color: member.is_active ? '#e06c75' : '#98c379',
+                      borderRadius: '6px',
+                      padding: '0.35rem 0.75rem',
+                      fontSize: '0.78rem',
+                      cursor: 'pointer',
+                      letterSpacing: '0.05em',
+                      textTransform: 'uppercase',
+                      fontFamily: 'Inter, sans-serif'
+                    }}
+                  >
+                    {member.is_active ? 'Disable' : 'Re-enable'}
+                  </button>
+                </div>
               </div>
             ))
           )}
@@ -430,16 +448,25 @@ export default function Team({ profile }) {
             }}>
               <div>
                 <label style={labelStyle}>Temporary Password</label>
-                <input
-                  type="password"
-                  name="member-password"
-                  autoComplete="new-password"
-                  value={invitePassword}
-                  onChange={e => setInvitePassword(e.target.value)}
-                  required
-                  placeholder="Min 6 characters"
-                  style={inputStyle}
-                />
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={showInvitePassword ? 'text' : 'password'}
+                    name="member-password"
+                    autoComplete="new-password"
+                    value={invitePassword}
+                    onChange={e => setInvitePassword(e.target.value)}
+                    required
+                    placeholder="Min 6 characters"
+                    style={passwordInputStyle}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowInvitePassword(!showInvitePassword)}
+                    style={showBtnStyle}
+                  >
+                    {showInvitePassword ? 'Hide' : 'Show'}
+                  </button>
+                </div>
               </div>
               <div>
                 <label style={labelStyle}>Role</label>

@@ -2,9 +2,49 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
+const inputStyle = {
+  width: '100%',
+  background: 'rgba(255,255,255,0.05)',
+  border: '1px solid rgba(201,168,76,0.18)',
+  borderRadius: '8px',
+  padding: '0.8rem 3rem 0.8rem 1rem',
+  color: '#f8f6f1',
+  fontSize: '0.9rem',
+  outline: 'none',
+  fontFamily: 'Inter, sans-serif',
+  boxSizing: 'border-box'
+}
+
+const labelStyle = {
+  display: 'block',
+  color: '#9a9db5',
+  fontSize: '0.8rem',
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase',
+  marginBottom: '0.5rem'
+}
+
+const showBtnStyle = {
+  position: 'absolute',
+  right: '0.75rem',
+  top: '50%',
+  transform: 'translateY(-50%)',
+  background: 'none',
+  border: 'none',
+  cursor: 'pointer',
+  color: '#9a9db5',
+  fontSize: '0.78rem',
+  letterSpacing: '0.05em',
+  textTransform: 'uppercase',
+  fontFamily: 'Inter, sans-serif',
+  padding: '0'
+}
+
 export default function ChangePassword({ profile }) {
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -26,9 +66,7 @@ export default function ChangePassword({ profile }) {
 
     setLoading(true)
 
-    const { error } = await supabase.auth.updateUser({
-      password: password
-    })
+    const { error } = await supabase.auth.updateUser({ password })
 
     if (error) {
       setError(error.message)
@@ -84,11 +122,7 @@ export default function ChangePassword({ profile }) {
               padding: '1rem',
               marginBottom: '1.5rem'
             }}>
-              <p style={{
-                color: '#98c379',
-                fontSize: '0.9rem',
-                lineHeight: '1.6'
-              }}>
+              <p style={{ color: '#98c379', fontSize: '0.9rem', lineHeight: '1.6' }}>
                 Your password has been updated successfully.
               </p>
             </div>
@@ -115,69 +149,47 @@ export default function ChangePassword({ profile }) {
         ) : (
           <form onSubmit={handleChange}>
             <div style={{ marginBottom: '1.25rem' }}>
-              <label style={{
-                display: 'block',
-                color: '#9a9db5',
-                fontSize: '0.8rem',
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-                marginBottom: '0.5rem'
-              }}>
-                New Password
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                required
-                placeholder="Min 6 characters"
-                autoComplete="new-password"
-                style={{
-                  width: '100%',
-                  background: 'rgba(255,255,255,0.05)',
-                  border: '1px solid rgba(201,168,76,0.18)',
-                  borderRadius: '8px',
-                  padding: '0.8rem 1rem',
-                  color: '#f8f6f1',
-                  fontSize: '0.9rem',
-                  outline: 'none',
-                  fontFamily: 'Inter, sans-serif',
-                  boxSizing: 'border-box'
-                }}
-              />
+              <label style={labelStyle}>New Password</label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  required
+                  placeholder="Min 6 characters"
+                  autoComplete="new-password"
+                  style={inputStyle}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={showBtnStyle}
+                >
+                  {showPassword ? 'Hide' : 'Show'}
+                </button>
+              </div>
             </div>
 
             <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{
-                display: 'block',
-                color: '#9a9db5',
-                fontSize: '0.8rem',
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-                marginBottom: '0.5rem'
-              }}>
-                Confirm New Password
-              </label>
-              <input
-                type="password"
-                value={confirm}
-                onChange={e => setConfirm(e.target.value)}
-                required
-                placeholder="Repeat your new password"
-                autoComplete="new-password"
-                style={{
-                  width: '100%',
-                  background: 'rgba(255,255,255,0.05)',
-                  border: '1px solid rgba(201,168,76,0.18)',
-                  borderRadius: '8px',
-                  padding: '0.8rem 1rem',
-                  color: '#f8f6f1',
-                  fontSize: '0.9rem',
-                  outline: 'none',
-                  fontFamily: 'Inter, sans-serif',
-                  boxSizing: 'border-box'
-                }}
-              />
+              <label style={labelStyle}>Confirm New Password</label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  type={showConfirm ? 'text' : 'password'}
+                  value={confirm}
+                  onChange={e => setConfirm(e.target.value)}
+                  required
+                  placeholder="Repeat your new password"
+                  autoComplete="new-password"
+                  style={inputStyle}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirm(!showConfirm)}
+                  style={showBtnStyle}
+                >
+                  {showConfirm ? 'Hide' : 'Show'}
+                </button>
+              </div>
             </div>
 
             {error && (
