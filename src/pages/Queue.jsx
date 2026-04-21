@@ -24,11 +24,40 @@ const STATUS_COLOR = {
   closed: '#6a6d85'
 }
 
+const navBtnStyle = {
+  background: 'none',
+  border: '1px solid rgba(201,168,76,0.18)',
+  color: '#9a9db5',
+  padding: '0.4rem 1rem',
+  borderRadius: '6px',
+  cursor: 'pointer',
+  fontSize: '0.82rem',
+  letterSpacing: '0.06em',
+  textTransform: 'uppercase',
+  fontFamily: 'Inter, sans-serif'
+}
+
+const mobileNavBtnStyle = {
+  background: 'none',
+  border: '1px solid rgba(201,168,76,0.18)',
+  color: '#f8f6f1',
+  padding: '0.5rem 1rem',
+  borderRadius: '6px',
+  cursor: 'pointer',
+  fontSize: '0.78rem',
+  letterSpacing: '0.06em',
+  textTransform: 'uppercase',
+  fontFamily: 'Inter, sans-serif',
+  textAlign: 'left',
+  width: '100%'
+}
+
 export default function Queue({ profile }) {
   const [workOrders, setWorkOrders] = useState([])
   const [assets, setAssets] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('open')
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -60,6 +89,8 @@ export default function Queue({ profile }) {
     return asset ? asset.name : 'No asset'
   }
 
+  const firstName = profile?.full_name?.split(' ')[0] || 'there'
+
   const filtered = workOrders
     .filter(wo => {
       if (filter === 'open') return wo.status !== 'closed'
@@ -89,101 +120,120 @@ export default function Queue({ profile }) {
 
       {/* NAV */}
       <nav style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '1.25rem 5%',
         background: 'rgba(26,26,46,0.95)',
         borderBottom: '1px solid rgba(201,168,76,0.18)',
         position: 'sticky',
         top: 0,
         zIndex: 50
       }}>
-        <span style={{
-          fontFamily: 'Georgia, serif',
-          color: '#c9a84c',
-          fontSize: '1.3rem',
-          fontWeight: '600'
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '1.25rem 5%'
         }}>
-          The Toolsmith CMMS
-        </span>
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <button
-            onClick={() => navigate('/work-order/new')}
-            style={{
-              background: 'linear-gradient(135deg, #c9a84c, #e8c97a)',
-              border: 'none',
-              color: '#1a1a2e',
-              padding: '0.4rem 1rem',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '0.82rem',
-              fontWeight: '700',
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase',
-              fontFamily: 'Inter, sans-serif'
-            }}
+          <span style={{
+            fontFamily: 'Georgia, serif',
+            color: '#c9a84c',
+            fontSize: '1.3rem',
+            fontWeight: '600'
+          }}>
+            The Toolsmith CMMS
+          </span>
+          <div
+            className="desktop-nav"
+            style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}
           >
-            + New Work Order
-          </button>
+            <button
+              onClick={() => navigate('/change-password')}
+              style={navBtnStyle}
+            >
+              Change Password
+            </button>
+            <button onClick={handleSignOut} style={navBtnStyle}>
+              Sign Out
+            </button>
+          </div>
           <button
-            onClick={handleSignOut}
+            onClick={() => setMobileNavOpen(!mobileNavOpen)}
+            className="mobile-hamburger"
             style={{
+              display: 'none',
               background: 'none',
               border: 'none',
-              color: '#9a9db5',
               cursor: 'pointer',
-              fontSize: '0.82rem',
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase',
-              fontFamily: 'Inter, sans-serif'
+              flexDirection: 'column',
+              gap: '4px',
+              padding: '4px'
             }}
           >
-            Sign Out
+            {[0, 1, 2].map(i => (
+              <span key={i} style={{
+                display: 'block',
+                width: '20px',
+                height: '2px',
+                background: '#9a9db5',
+                borderRadius: '1px'
+              }} />
+            ))}
           </button>
-
-        <button
-  onClick={() => navigate('/change-password')}
-  style={{
-    background: 'none',
-    border: '1px solid rgba(201,168,76,0.18)',
-    color: '#9a9db5',
-    padding: '0.4rem 1rem',
-    borderRadius: '6px',
-    cursor: 'pointer',
-    fontSize: '0.82rem',
-    letterSpacing: '0.06em',
-    textTransform: 'uppercase',
-    fontFamily: 'Inter, sans-serif'
-  }}
->
-  Change Password
-</button>  
         </div>
+
+        {mobileNavOpen && (
+          <div
+            className="mobile-nav-dropdown"
+            style={{
+              display: 'none',
+              flexDirection: 'column',
+              gap: '6px',
+              padding: '0.75rem 5%',
+              borderTop: '1px solid rgba(201,168,76,0.12)'
+            }}
+          >
+            <button
+              onClick={() => { navigate('/change-password'); setMobileNavOpen(false) }}
+              style={mobileNavBtnStyle}
+            >
+              Change Password
+            </button>
+            <button onClick={handleSignOut} style={mobileNavBtnStyle}>
+              Sign Out
+            </button>
+          </div>
+        )}
       </nav>
 
-      <div style={{ padding: '2.5rem 5%' }}>
+      <style>{`
+        @media (max-width: 768px) {
+          .desktop-nav { display: none !important; }
+          .mobile-hamburger { display: flex !important; }
+          .mobile-nav-dropdown { display: flex !important; }
+          .queue-stat-grid { grid-template-columns: repeat(2, 1fr) !important; }
+        }
+      `}</style>
+
+      <div style={{ padding: '2rem 2.5rem' }}>
 
         {/* HEADER */}
-        <div style={{ marginBottom: '2rem' }}>
+        <div style={{ marginBottom: '1.75rem' }}>
           <p style={{
-            fontSize: '0.75rem',
+            fontSize: '0.72rem',
             letterSpacing: '0.22em',
             textTransform: 'uppercase',
             color: '#c9a84c',
-            marginBottom: '0.4rem',
+            marginBottom: '0.35rem',
             fontWeight: '500'
           }}>
             Technician Queue
           </p>
           <h1 style={{
-            fontFamily: 'Georgia, serif',
-            fontSize: '2rem',
-            fontWeight: '600',
+            fontFamily: 'Inter, sans-serif',
+            fontSize: '1.4rem',
+            fontWeight: '400',
             color: '#f8f6f1',
             marginBottom: '0.25rem'
           }}>
-            {profile?.full_name}
+            Hi, {firstName}!
           </h1>
           <p style={{ color: '#9a9db5', fontSize: '0.88rem' }}>
             Your assigned work orders, sorted by priority
@@ -193,10 +243,10 @@ export default function Queue({ profile }) {
         {/* STAT CARDS */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
-          gap: '1rem',
-          marginBottom: '2.5rem'
-        }}>
+          gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+          gap: '0.75rem',
+          marginBottom: '2rem'
+        }} className="queue-stat-grid">
           {[
             { label: 'Open', value: openCount, color: '#c9a84c' },
             { label: 'Critical', value: criticalCount, color: '#e06c75' },
@@ -206,19 +256,19 @@ export default function Queue({ profile }) {
               background: '#1e2245',
               border: '1px solid rgba(201,168,76,0.18)',
               borderRadius: '12px',
-              padding: '1.25rem',
+              padding: '1rem',
               textAlign: 'center'
             }}>
               <p style={{
-                fontSize: '2rem',
+                fontSize: '1.8rem',
                 fontWeight: '700',
                 color: stat.color,
-                marginBottom: '0.25rem'
+                marginBottom: '0.2rem'
               }}>
                 {stat.value}
               </p>
               <p style={{
-                fontSize: '0.75rem',
+                fontSize: '0.7rem',
                 color: '#9a9db5',
                 letterSpacing: '0.08em',
                 textTransform: 'uppercase'
@@ -229,40 +279,63 @@ export default function Queue({ profile }) {
           ))}
         </div>
 
-        {/* FILTERS */}
+        {/* FILTERS + NEW WO BUTTON */}
         <div style={{
           display: 'flex',
-          gap: '0.65rem',
-          marginBottom: '1.75rem',
-          flexWrap: 'wrap'
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: '1.25rem',
+          flexWrap: 'wrap',
+          gap: '0.75rem'
         }}>
-          {[
-            { value: 'open', label: 'Open' },
-            { value: 'closed', label: 'Completed' },
-            { value: 'all', label: 'All' }
-          ].map(f => (
-            <button
-              key={f.value}
-              onClick={() => setFilter(f.value)}
-              style={{
-                padding: '0.4rem 1.1rem',
-                borderRadius: '20px',
-                border: `1px solid ${filter === f.value
-                  ? '#c9a84c'
-                  : 'rgba(201,168,76,0.18)'}`,
-                background: filter === f.value
-                  ? 'rgba(201,168,76,0.08)'
-                  : 'none',
-                color: filter === f.value ? '#c9a84c' : '#9a9db5',
-                fontSize: '0.82rem',
-                cursor: 'pointer',
-                letterSpacing: '0.05em',
-                fontFamily: 'Inter, sans-serif'
-              }}
-            >
-              {f.label}
-            </button>
-          ))}
+          <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
+            {[
+              { value: 'open', label: 'Open' },
+              { value: 'closed', label: 'Completed' },
+              { value: 'all', label: 'All' }
+            ].map(f => (
+              <button
+                key={f.value}
+                onClick={() => setFilter(f.value)}
+                style={{
+                  padding: '0.35rem 0.9rem',
+                  borderRadius: '20px',
+                  border: `1px solid ${filter === f.value
+                    ? '#c9a84c'
+                    : 'rgba(201,168,76,0.18)'}`,
+                  background: filter === f.value
+                    ? 'rgba(201,168,76,0.08)'
+                    : 'none',
+                  color: filter === f.value ? '#c9a84c' : '#9a9db5',
+                  fontSize: '0.8rem',
+                  cursor: 'pointer',
+                  letterSpacing: '0.05em',
+                  fontFamily: 'Inter, sans-serif'
+                }}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={() => navigate('/work-order/new')}
+            style={{
+              background: 'linear-gradient(135deg, #c9a84c, #e8c97a)',
+              border: 'none',
+              color: '#1a1a2e',
+              padding: '0.5rem 1.25rem',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '0.85rem',
+              fontWeight: '700',
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
+              fontFamily: 'Inter, sans-serif',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            + New Work Order
+          </button>
         </div>
 
         {/* WORK ORDER LIST */}
@@ -284,7 +357,7 @@ export default function Queue({ profile }) {
               : 'No work orders found.'}
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
             {filtered.map(wo => (
               <div
                 key={wo.id}
@@ -295,7 +368,7 @@ export default function Queue({ profile }) {
                     ? 'rgba(224,108,117,0.4)'
                     : 'rgba(201,168,76,0.18)'}`,
                   borderRadius: '12px',
-                  padding: '1.5rem',
+                  padding: '1.25rem 1.5rem',
                   cursor: 'pointer',
                   transition: 'transform 0.2s, box-shadow 0.2s'
                 }}
@@ -353,10 +426,10 @@ export default function Queue({ profile }) {
 
                 <h3 style={{
                   fontFamily: 'Georgia, serif',
-                  fontSize: '1.1rem',
+                  fontSize: '1.05rem',
                   fontWeight: '600',
                   color: '#f8f6f1',
-                  marginBottom: '0.4rem'
+                  marginBottom: '0.35rem'
                 }}>
                   {wo.title}
                 </h3>
@@ -364,9 +437,9 @@ export default function Queue({ profile }) {
                 {wo.description && (
                   <p style={{
                     color: '#9a9db5',
-                    fontSize: '0.87rem',
+                    fontSize: '0.85rem',
                     lineHeight: '1.6',
-                    marginBottom: '0.75rem'
+                    marginBottom: '0.65rem'
                   }}>
                     {wo.description.length > 120
                       ? wo.description.slice(0, 120) + '...'
@@ -374,20 +447,19 @@ export default function Queue({ profile }) {
                   </p>
                 )}
 
-                <div style={{
-                  display: 'flex',
-                  gap: '1.5rem',
-                  flexWrap: 'wrap'
-                }}>
+                <div style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap' }}>
                   <span style={{ fontSize: '0.8rem', color: '#9a9db5' }}>
-                    <span style={{ color: '#c9a84c' }}>Asset:</span> {getAssetName(wo.asset_id)}
+                    <span style={{ color: '#c9a84c' }}>Asset:</span>{' '}
+                    {getAssetName(wo.asset_id)}
                   </span>
                   <span style={{ fontSize: '0.8rem', color: '#9a9db5' }}>
-                    <span style={{ color: '#c9a84c' }}>Created:</span> {new Date(wo.created_at).toLocaleDateString()}
+                    <span style={{ color: '#c9a84c' }}>Created:</span>{' '}
+                    {new Date(wo.created_at).toLocaleDateString()}
                   </span>
                   {wo.closed_at && (
                     <span style={{ fontSize: '0.8rem', color: '#9a9db5' }}>
-                      <span style={{ color: '#c9a84c' }}>Closed:</span> {new Date(wo.closed_at).toLocaleDateString()}
+                      <span style={{ color: '#c9a84c' }}>Closed:</span>{' '}
+                      {new Date(wo.closed_at).toLocaleDateString()}
                     </span>
                   )}
                 </div>
