@@ -3,6 +3,16 @@ import Stripe from 'stripe'
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 
 export default async function handler(req, res) {
+  // CORS headers — allow requests from the Toolsmith site
+  res.setHeader('Access-Control-Allow-Origin', 'https://toolsmith-site.vercel.app')
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+
+  // Handle preflight
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end()
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
@@ -31,7 +41,7 @@ export default async function handler(req, res) {
         customer_email: email
       },
       success_url: appUrl + '/template-success?session_id={CHECKOUT_SESSION_ID}',
-      cancel_url: 'https://thetoolsmithapp.com/#shop'
+      cancel_url: 'https://toolsmith-site.vercel.app/#shop'
     })
 
     return res.status(200).json({ url: session.url })
