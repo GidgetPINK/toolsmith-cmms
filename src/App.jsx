@@ -1,3 +1,4 @@
+import TemplateSuccess from './pages/TemplateSuccess'
 import { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { supabase } from './lib/supabase'
@@ -243,6 +244,10 @@ function App() {
               <Assets profile={profile} />
             )
           }
+        />
+        <Route
+          path="/template-success"
+          element={<TemplateSuccess />}
         />
       </Routes>
     </BrowserRouter>
