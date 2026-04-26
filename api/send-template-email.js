@@ -27,7 +27,7 @@ export default async function handler(req, res) {
         'Authorization': `Bearer ${process.env.RESEND_API_KEY}`
       },
       body: JSON.stringify({
-        from: 'The Toolsmith <onboarding@resend.dev>',
+        from: 'The Toolsmith <orders@thetoolsmithapp.com>',
         to: [email],
         subject: 'Your Preventive Maintenance Scheduler is ready — The Toolsmith',
         html: buildEmailHTML(email)
