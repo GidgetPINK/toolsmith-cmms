@@ -43,24 +43,38 @@ export default async function handler(req, res) {
   try {
     switch (event.type) {
       case 'checkout.session.completed': {
-        const session = event.data.object
-        if (organizationId) {
-          const { error } = await supabase
-            .from('organizations')
-            .update({
-              stripe_customer_id: session.customer,
-              stripe_subscription_id: session.subscription,
-              upgraded_at: new Date().toISOString()
-            })
-            .eq('id', organizationId)
+  const session = event.data.object
+  const organizationId = session.metadata?.organization_id
+  const product = session.metadata?.product
+  const customerEmail = session.metadata?.customer_email || session.customer_email
 
-          if (error) {
-            console.error('Supabase error:', error)
-            return res.status(500).json({ error: error.message })
-          }
-        }
-        break
-      }
+  // Handle CMMS subscription checkout
+  if (organizationId) {
+    await supabase
+      .from('organizations')
+      .update({
+        is_upgraded: session.metadata?.plan === 'pro',
+        stripe_customer_id: session.customer,
+        stripe_subscription_id: session.subscription,
+        upgraded_at: new Date().toISOString()
+      })
+      .eq('id', organizationId)
+  }
+
+  // Handle template purchase checkout
+  if (product === 'pm_scheduler' && customerEmail) {
+    await fetch(`${process.env.VITE_APP_URL}/api/send-template-email`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: customerEmail,
+        sessionId: session.id
+      })
+    })
+  }
+
+  break
+}
 
       case 'customer.subscription.deleted': {
         if (organizationId) {
