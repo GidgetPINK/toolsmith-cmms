@@ -1,6 +1,3 @@
-import fs from 'fs'
-import path from 'path'
-
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
@@ -16,8 +13,8 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Send the internal notification email to you
-    const resendResponse = await fetch('https://api.resend.com/emails', {
+    // ── 1. Internal notification email to the team ──
+    const internalResponse = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -32,24 +29,27 @@ export default async function handler(req, res) {
       })
     })
 
-    const resendData = await resendResponse.json()
-
-    if (!resendResponse.ok) {
-      console.error('Resend error:', resendData)
-      return res.status(500).json({ error: 'Failed to send email' })
+    if (!internalResponse.ok) {
+      const errorData = await internalResponse.json()
+      console.error('Internal email failed:', errorData)
+      return res.status(500).json({ error: 'Failed to send notification email', details: errorData })
     }
 
-    // Read the PDF from the public folder
-    const pdfPath = path.join(process.cwd(), 'public', 'Toolsmith_Build_Guide.pdf')
+    // ── 2. Fetch the PDF from the public URL ──
     let pdfBase64 = null
     try {
-      const pdfBuffer = fs.readFileSync(pdfPath)
-      pdfBase64 = pdfBuffer.toString('base64')
+      const pdfResponse = await fetch('https://toolsmith-cmms.vercel.app/Toolsmith_Build_Guide.pdf')
+      if (pdfResponse.ok) {
+        const arrayBuffer = await pdfResponse.arrayBuffer()
+        pdfBase64 = Buffer.from(arrayBuffer).toString('base64')
+      } else {
+        console.error('PDF fetch failed with status:', pdfResponse.status)
+      }
     } catch (pdfError) {
-      console.error('Could not read PDF:', pdfError)
+      console.error('Could not fetch PDF:', pdfError.message)
     }
 
-    // Build the confirmation email payload
+    // ── 3. Confirmation email to the visitor ──
     const confirmationPayload = {
       from: 'Gidget at The Toolsmith <orders@thetoolsmithapp.com>',
       to: [email],
@@ -57,18 +57,14 @@ export default async function handler(req, res) {
       html: buildConfirmationEmail(name)
     }
 
-    // Attach the PDF if we successfully read it
     if (pdfBase64) {
-      confirmationPayload.attachments = [
-        {
-          filename: 'Toolsmith_Build_Guide.pdf',
-          content: pdfBase64
-        }
-      ]
+      confirmationPayload.attachments = [{
+        filename: 'Toolsmith_Build_Guide.pdf',
+        content: pdfBase64
+      }]
     }
 
-    // Send the confirmation to the visitor
-    await fetch('https://api.resend.com/emails', {
+    const confirmResponse = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -77,7 +73,13 @@ export default async function handler(req, res) {
       body: JSON.stringify(confirmationPayload)
     })
 
-    return res.status(200).json({ success: true })
+    if (!confirmResponse.ok) {
+      const errorData = await confirmResponse.json()
+      console.error('Confirmation email failed:', errorData)
+      // Still return success since the internal notification went through
+    }
+
+    return res.status(200).json({ success: true, pdfAttached: !!pdfBase64 })
 
   } catch (error) {
     console.error('Inquiry email error:', error)
