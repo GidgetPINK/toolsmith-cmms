@@ -1,3 +1,6 @@
+import fs from 'fs'
+import path from 'path'
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
@@ -13,6 +16,7 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Send the internal notification email to you
     const resendResponse = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -35,19 +39,42 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Failed to send email' })
     }
 
-    // Send confirmation to the visitor
+    // Read the PDF from the public folder
+    const pdfPath = path.join(process.cwd(), 'public', 'Toolsmith_Build_Guide.pdf')
+    let pdfBase64 = null
+    try {
+      const pdfBuffer = fs.readFileSync(pdfPath)
+      pdfBase64 = pdfBuffer.toString('base64')
+    } catch (pdfError) {
+      console.error('Could not read PDF:', pdfError)
+    }
+
+    // Build the confirmation email payload
+    const confirmationPayload = {
+      from: 'Gidget at The Toolsmith <orders@thetoolsmithapp.com>',
+      to: [email],
+      subject: 'We received your inquiry — The Toolsmith',
+      html: buildConfirmationEmail(name)
+    }
+
+    // Attach the PDF if we successfully read it
+    if (pdfBase64) {
+      confirmationPayload.attachments = [
+        {
+          filename: 'Toolsmith_Build_Guide.pdf',
+          content: pdfBase64
+        }
+      ]
+    }
+
+    // Send the confirmation to the visitor
     await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${process.env.RESEND_API_KEY}`
       },
-      body: JSON.stringify({
-        from: 'Gidget at The Toolsmith <orders@thetoolsmithapp.com>',
-        to: [email],
-        subject: 'We received your inquiry — The Toolsmith',
-        html: buildConfirmationEmail(name)
-      })
+      body: JSON.stringify(confirmationPayload)
     })
 
     return res.status(200).json({ success: true })
@@ -116,17 +143,15 @@ function buildConfirmationEmail(name) {
     <div style="padding:40px;">
       <h2 style="color:#1A1A2E;font-size:20px;margin:0 0 16px;">Got it, ${name}.</h2>
       <p style="color:#444;font-size:15px;line-height:1.7;margin:0 0 16px;">
-        Your inquiry has been received. I will review your project details and get back to you within one business day.
+        Your inquiry has been received. I will review your project details and get back to you within one business day to schedule your discovery call.
       </p>
       <p style="color:#444;font-size:15px;line-height:1.7;margin:0 0 24px;">
-        In the meantime if you have any questions you can reply directly to this email or start a free trial of the Toolsmith CMMS at
-        <a href="https://thetoolsmithapp.com" style="color:#C9A84C;">thetoolsmithapp.com</a>.
+        Attached to this email is The Toolsmith Build Guide, a complete walkthrough of our process from inquiry to launch, the three pricing tiers, and what to expect at each step.
       </p>
       <div style="background:#F8F6F1;border-left:4px solid #C9A84C;padding:16px 20px;border-radius:0 8px 8px 0;">
         <p style="color:#1A1A2E;font-size:13px;margin:0;font-weight:bold;">What happens next</p>
         <p style="color:#555;font-size:13px;margin:8px 0 0;line-height:1.6;">
-          I will review your project scope and send you a detailed proposal with timeline and pricing within one business day.
-          If the scope needs clarification I may follow up with a few quick questions first.
+          I will review your project scope and reach out within one business day to schedule a short discovery call. If the scope needs clarification, I may follow up with a few quick questions first. Reply directly to this email any time.
         </p>
       </div>
     </div>
