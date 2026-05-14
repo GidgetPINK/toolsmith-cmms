@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
@@ -21,6 +21,9 @@ const STATUS_COLOR = {
   'in progress': '#6cb6e0',
   closed: '#6a6d85'
 }
+
+const CATEGORIES = ['Mechanical', 'Electrical', 'HVAC', 'Plumbing', 'Vehicle', 'Safety', 'Other']
+const CRITICALITY_LEVELS = ['Low', 'Standard', 'High', 'Critical']
 
 const navBtnStyle = {
   background: 'none',
@@ -50,18 +53,27 @@ const mobileNavBtnStyle = {
   width: '100%'
 }
 
-const sidebarInputStyle = {
+const flyoutInputStyle = {
   width: '100%',
   background: 'rgba(255,255,255,0.05)',
   border: '1px solid rgba(201,168,76,0.18)',
-  borderRadius: '6px',
-  padding: '0.5rem 0.75rem',
+  borderRadius: '8px',
+  padding: '0.7rem 0.85rem',
   color: '#f8f6f1',
-  fontSize: '0.82rem',
+  fontSize: '0.9rem',
   outline: 'none',
   fontFamily: 'Inter, sans-serif',
-  boxSizing: 'border-box',
-  marginBottom: '0.5rem'
+  boxSizing: 'border-box'
+}
+
+const flyoutLabelStyle = {
+  display: 'block',
+  color: '#9a9db5',
+  fontSize: '0.72rem',
+  letterSpacing: '0.1em',
+  textTransform: 'uppercase',
+  marginBottom: '0.4rem',
+  fontWeight: '500'
 }
 
 export default function Dashboard({ profile }) {
@@ -73,12 +85,17 @@ export default function Dashboard({ profile }) {
   const [filter, setFilter] = useState('all')
   const [selectedAsset, setSelectedAsset] = useState(null)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
-  const [showSidebarAddAsset, setShowSidebarAddAsset] = useState(false)
-  const [sidebarAssetName, setSidebarAssetName] = useState('')
-  const [sidebarAssetLocation, setSidebarAssetLocation] = useState('')
-  const [sidebarAssetCategory, setSidebarAssetCategory] = useState('')
-  const [sidebarAssetError, setSidebarAssetError] = useState(null)
-  const [sidebarAssetSubmitting, setSidebarAssetSubmitting] = useState(false)
+
+  // Asset search state
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchFocused, setSearchFocused] = useState(false)
+
+  // Flyout state
+  const [flyoutOpen, setFlyoutOpen] = useState(false)
+  const [flyoutMode, setFlyoutMode] = useState('create') // 'create' or 'edit'
+  const [flyoutAsset, setFlyoutAsset] = useState(null)
+  const [flyoutTab, setFlyoutTab] = useState('details')
+
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -112,32 +129,25 @@ export default function Dashboard({ profile }) {
     await supabase.auth.signOut()
   }
 
-  async function handleSidebarAddAsset(e) {
-    e.preventDefault()
-    setSidebarAssetSubmitting(true)
-    setSidebarAssetError(null)
+  function openAddAsset() {
+    setFlyoutMode('create')
+    setFlyoutAsset(null)
+    setFlyoutTab('details')
+    setFlyoutOpen(true)
+  }
 
-    const { error } = await supabase
-      .from('assets')
-      .insert({
-        name: sidebarAssetName,
-        location: sidebarAssetLocation,
-        category: sidebarAssetCategory,
-        organization_id: profile.organization_id
-      })
+  function openEditAsset(asset) {
+    setFlyoutMode('edit')
+    setFlyoutAsset(asset)
+    setFlyoutTab('details')
+    setFlyoutOpen(true)
+    setSearchQuery('')
+    setSearchFocused(false)
+  }
 
-    if (error) {
-      setSidebarAssetError(error.message)
-      setSidebarAssetSubmitting(false)
-      return
-    }
-
-    setSidebarAssetName('')
-    setSidebarAssetLocation('')
-    setSidebarAssetCategory('')
-    setShowSidebarAddAsset(false)
-    fetchAll()
-    setSidebarAssetSubmitting(false)
+  function closeFlyout() {
+    setFlyoutOpen(false)
+    setFlyoutAsset(null)
   }
 
   function getTechName(id) {
@@ -150,12 +160,20 @@ export default function Dashboard({ profile }) {
     return asset ? asset.name : 'No asset'
   }
 
-  function getAssetWorkOrderCount(assetId) {
-    return workOrders.filter(wo => wo.asset_id === assetId).length
-  }
-
   const firstName = profile?.full_name?.split(' ')[0] || 'there'
   const isPro = organization?.is_upgraded === true
+
+  // Filter assets by search query
+  const searchResults = useMemo(() => {
+    if (!searchQuery.trim()) return []
+    const q = searchQuery.toLowerCase()
+    return assets.filter(a =>
+      (a.name && a.name.toLowerCase().includes(q)) ||
+      (a.location && a.location.toLowerCase().includes(q)) ||
+      (a.category && a.category.toLowerCase().includes(q)) ||
+      (a.function && a.function.toLowerCase().includes(q))
+    ).slice(0, 8)
+  }, [searchQuery, assets])
 
   const filtered = filter === 'all'
     ? workOrders
@@ -171,178 +189,6 @@ export default function Dashboard({ profile }) {
     standard: workOrders.filter(wo => wo.priority === 'standard').length,
     routine: workOrders.filter(wo => wo.priority === 'routine').length,
     total: workOrders.length
-  }
-
-  function SidebarAddAssetForm() {
-    return (
-      <form onSubmit={handleSidebarAddAsset} style={{ marginTop: '0.75rem' }}>
-        <input
-          type="text"
-          value={sidebarAssetName}
-          onChange={e => setSidebarAssetName(e.target.value)}
-          required
-          placeholder="Asset name"
-          style={sidebarInputStyle}
-        />
-        <input
-          type="text"
-          value={sidebarAssetLocation}
-          onChange={e => setSidebarAssetLocation(e.target.value)}
-          required
-          placeholder="Location"
-          style={sidebarInputStyle}
-        />
-        <select
-          value={sidebarAssetCategory}
-          onChange={e => setSidebarAssetCategory(e.target.value)}
-          required
-          style={{
-            ...sidebarInputStyle,
-            background: '#1e2245',
-            cursor: 'pointer',
-            marginBottom: '0.75rem'
-          }}
-        >
-          <option value="">Select category</option>
-          <option value="Mechanical">Mechanical</option>
-          <option value="Electrical">Electrical</option>
-          <option value="HVAC">HVAC</option>
-          <option value="Plumbing">Plumbing</option>
-          <option value="Vehicle">Vehicle</option>
-          <option value="Safety">Safety</option>
-          <option value="Other">Other</option>
-        </select>
-        {sidebarAssetError && (
-          <p style={{ color: '#e06c75', fontSize: '0.78rem', marginBottom: '0.5rem' }}>
-            {sidebarAssetError}
-          </p>
-        )}
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <button
-            type="submit"
-            disabled={sidebarAssetSubmitting}
-            style={{
-              flex: 1,
-              background: 'linear-gradient(135deg, #c9a84c, #e8c97a)',
-              color: '#1a1a2e', border: 'none', borderRadius: '6px',
-              padding: '0.5rem', fontSize: '0.75rem', fontWeight: '700',
-              cursor: sidebarAssetSubmitting ? 'not-allowed' : 'pointer',
-              opacity: sidebarAssetSubmitting ? 0.7 : 1,
-              fontFamily: 'Inter, sans-serif'
-            }}
-          >
-            {sidebarAssetSubmitting ? 'Saving...' : 'Save'}
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowSidebarAddAsset(false)}
-            style={{
-              flex: 1, background: 'none',
-              border: '1px solid rgba(201,168,76,0.18)',
-              color: '#9a9db5', borderRadius: '6px',
-              padding: '0.5rem', fontSize: '0.75rem',
-              cursor: 'pointer', fontFamily: 'Inter, sans-serif'
-            }}
-          >
-            Cancel
-          </button>
-        </div>
-      </form>
-    )
-  }
-
-  function LiteUpgradePrompt({ compact }) {
-    return compact ? (
-      <div style={{
-        border: '1px dashed rgba(201,168,76,0.2)',
-        borderRadius: '8px',
-        padding: '1rem',
-        textAlign: 'center',
-        marginTop: '1rem'
-      }}>
-        <p style={{ fontSize: '1rem', marginBottom: '0.4rem' }}>🔒</p>
-        <p style={{
-          fontSize: '0.8rem', color: '#9a9db5',
-          marginBottom: '0.75rem', lineHeight: '1.5'
-        }}>
-          Full asset management is a Pro feature
-        </p>
-        <button
-          onClick={() => navigate('/upgrade')}
-          style={{
-            background: 'linear-gradient(135deg, #c9a84c, #e8c97a)',
-            color: '#1a1a2e', border: 'none', borderRadius: '6px',
-            padding: '0.45rem 0.9rem', fontSize: '0.78rem',
-            fontWeight: '700', letterSpacing: '0.06em',
-            textTransform: 'uppercase', cursor: 'pointer',
-            fontFamily: 'Inter, sans-serif'
-          }}
-        >
-          Upgrade to Pro
-        </button>
-      </div>
-    ) : (
-      <div style={{
-        background: 'rgba(201,168,76,0.05)',
-        border: '1px solid rgba(201,168,76,0.2)',
-        borderRadius: '10px',
-        padding: '1.25rem 1rem',
-        textAlign: 'center'
-      }}>
-        <div style={{
-          width: '44px', height: '44px', borderRadius: '50%',
-          background: 'rgba(201,168,76,0.1)',
-          border: '1px solid rgba(201,168,76,0.2)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          margin: '0 auto 0.75rem', fontSize: '1.2rem'
-        }}>
-          🔒
-        </div>
-        <p style={{
-          fontSize: '0.88rem', fontWeight: '500',
-          color: '#f8f6f1', marginBottom: '0.75rem', lineHeight: '1.4'
-        }}>
-          Unlock Asset Management
-        </p>
-        <div style={{
-          display: 'flex', flexDirection: 'column',
-          gap: '0.5rem', marginBottom: '1.1rem', textAlign: 'left'
-        }}>
-          {[
-            'Full asset registry with search and filtering',
-            'Link assets to work orders and PM schedules',
-            'Asset health reports and cost tracking',
-            'Attach OEM spec sheets and documents'
-          ].map((f, i) => (
-            <div key={i} style={{ display: 'flex', gap: '7px', alignItems: 'flex-start' }}>
-              <div style={{
-                width: '6px', height: '6px', borderRadius: '50%',
-                background: 'rgba(201,168,76,0.4)',
-                flexShrink: 0, marginTop: '5px'
-              }} />
-              <p style={{ fontSize: '0.78rem', color: '#9a9db5', lineHeight: '1.5' }}>{f}</p>
-            </div>
-          ))}
-        </div>
-        <button
-          onClick={() => navigate('/upgrade')}
-          style={{
-            width: '100%',
-            background: 'linear-gradient(135deg, #c9a84c, #e8c97a)',
-            color: '#1a1a2e', border: 'none', borderRadius: '6px',
-            padding: '0.6rem', fontSize: '0.78rem', fontWeight: '700',
-            letterSpacing: '0.06em', textTransform: 'uppercase',
-            cursor: 'pointer', fontFamily: 'Inter, sans-serif',
-            marginBottom: '0.4rem'
-          }}
-        >
-          Upgrade to Pro — $49/mo
-        </button>
-        <p style={{ fontSize: '0.72rem', color: '#9a9db5' }}>
-          Cancel any time. No contracts.
-        </p>
-      </div>
-    )
   }
 
   return (
@@ -419,21 +265,9 @@ export default function Dashboard({ profile }) {
               borderTop: '1px solid rgba(201,168,76,0.12)'
             }}
           >
-            <button
-              onClick={() => { navigate('/team'); setMobileNavOpen(false) }}
-              style={mobileNavBtnStyle}
-            >
-              Team
-            </button>
-            <button
-              onClick={() => { navigate('/change-password'); setMobileNavOpen(false) }}
-              style={mobileNavBtnStyle}
-            >
-              Change Password
-            </button>
-            <button onClick={handleSignOut} style={mobileNavBtnStyle}>
-              Sign Out
-            </button>
+            <button onClick={() => { navigate('/team'); setMobileNavOpen(false) }} style={mobileNavBtnStyle}>Team</button>
+            <button onClick={() => { navigate('/change-password'); setMobileNavOpen(false) }} style={mobileNavBtnStyle}>Change Password</button>
+            <button onClick={handleSignOut} style={mobileNavBtnStyle}>Sign Out</button>
           </div>
         )}
       </nav>
@@ -446,6 +280,7 @@ export default function Dashboard({ profile }) {
           .app-body { flex-direction: column !important; }
           .sidebar { width: 100% !important; min-height: auto !important; border-right: none !important; border-bottom: 1px solid rgba(201,168,76,0.15) !important; }
           .stat-grid-inner { grid-template-columns: repeat(2, 1fr) !important; }
+          .asset-flyout { width: 100% !important; }
         }
       `}</style>
 
@@ -455,7 +290,7 @@ export default function Dashboard({ profile }) {
         <div
           className="sidebar"
           style={{
-            width: '240px',
+            width: '260px',
             flexShrink: 0,
             background: '#16213e',
             borderRight: '1px solid rgba(201,168,76,0.15)',
@@ -475,154 +310,170 @@ export default function Dashboard({ profile }) {
           </p>
 
           {!isPro ? (
-
-            /* LITE PLAN — ALWAYS SHOW UPGRADE PROMPT */
-            <LiteUpgradePrompt compact={false} />
-
-          ) : assets.length === 0 ? (
-
-            /* PRO PLAN — EMPTY STATE */
-            <div>
-              <div style={{ textAlign: 'center', padding: '0.75rem 0.5rem 1rem' }}>
-                <p style={{ fontSize: '1.6rem', marginBottom: '0.6rem', opacity: 0.5 }}>🏭</p>
-                <p style={{
-                  fontSize: '0.88rem', fontWeight: '500',
-                  color: '#f8f6f1', marginBottom: '0.4rem'
-                }}>
-                  No assets yet
-                </p>
-                <p style={{
-                  fontSize: '0.8rem', color: '#9a9db5',
-                  lineHeight: '1.6', marginBottom: '1rem'
-                }}>
-                  Add assets from the work order form or build your registry here first.
-                </p>
-              </div>
+            /* LITE — UPGRADE PROMPT */
+            <div style={{
+              background: 'rgba(201,168,76,0.05)',
+              border: '1px solid rgba(201,168,76,0.2)',
+              borderRadius: '10px',
+              padding: '1.25rem 1rem',
+              textAlign: 'center'
+            }}>
               <div style={{
-                background: 'rgba(201,168,76,0.06)',
-                border: '1px solid rgba(201,168,76,0.15)',
-                borderRadius: '8px',
-                padding: '0.85rem',
-                marginBottom: '1rem'
+                width: '44px', height: '44px', borderRadius: '50%',
+                background: 'rgba(201,168,76,0.1)',
+                border: '1px solid rgba(201,168,76,0.2)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                margin: '0 auto 0.75rem', fontSize: '1.2rem'
               }}>
-                {[
-                  { n: 1, parts: ['Click ', { gold: '+ New Work Order' }, ' and select ', { gold: '+ Add New Asset' }] },
-                  { n: 2, parts: ['Or click ', { gold: '+ Add Asset' }, ' below to build your registry first'] },
-                  { n: 3, parts: ['Click any asset here to filter work orders by that asset'] }
-                ].map((step, i) => (
-                  <div key={i} style={{
-                    display: 'flex',
-                    gap: '8px',
-                    alignItems: 'flex-start',
-                    marginBottom: i < 2 ? '0.6rem' : 0
-                  }}>
-                    <div style={{
-                      width: '16px', height: '16px', borderRadius: '50%',
-                      background: 'rgba(201,168,76,0.15)',
-                      border: '1px solid rgba(201,168,76,0.3)',
-                      color: '#c9a84c', fontSize: '0.65rem', fontWeight: '700',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      flexShrink: 0, marginTop: '2px'
-                    }}>
-                      {step.n}
-                    </div>
-                    <p style={{ fontSize: '0.78rem', color: '#9a9db5', lineHeight: '1.5' }}>
-                      {step.parts.map((part, pi) =>
-                        typeof part === 'string'
-                          ? part
-                          : <span key={pi} style={{ color: '#c9a84c' }}>{part.gold}</span>
-                      )}
-                    </p>
-                  </div>
-                ))}
+                🔒
               </div>
-              {!showSidebarAddAsset ? (
-                <button
-                  onClick={() => setShowSidebarAddAsset(true)}
+              <p style={{
+                fontSize: '0.88rem', fontWeight: '500',
+                color: '#f8f6f1', marginBottom: '0.75rem', lineHeight: '1.4'
+              }}>
+                Unlock Asset Management
+              </p>
+              <button
+                onClick={() => navigate('/upgrade')}
+                style={{
+                  width: '100%',
+                  background: 'linear-gradient(135deg, #c9a84c, #e8c97a)',
+                  color: '#1a1a2e', border: 'none', borderRadius: '6px',
+                  padding: '0.6rem', fontSize: '0.78rem', fontWeight: '700',
+                  letterSpacing: '0.06em', textTransform: 'uppercase',
+                  cursor: 'pointer', fontFamily: 'Inter, sans-serif'
+                }}
+              >
+                Upgrade to Pro — $49/mo
+              </button>
+            </div>
+          ) : (
+            <div>
+              {/* ADD ASSET BUTTON */}
+              <button
+                onClick={openAddAsset}
+                style={{
+                  width: '100%',
+                  background: 'linear-gradient(135deg, #c9a84c, #e8c97a)',
+                  color: '#1a1a2e', border: 'none', borderRadius: '8px',
+                  padding: '0.7rem', fontSize: '0.82rem', fontWeight: '700',
+                  letterSpacing: '0.06em', textTransform: 'uppercase',
+                  cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+                  marginBottom: '1rem'
+                }}
+              >
+                + Add Asset
+              </button>
+
+              {/* SEARCH BOX */}
+              <div style={{ position: 'relative', marginBottom: '1.5rem' }}>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  onFocus={() => setSearchFocused(true)}
+                  onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
+                  placeholder="Search assets..."
                   style={{
                     width: '100%',
-                    background: 'linear-gradient(135deg, #c9a84c, #e8c97a)',
-                    color: '#1a1a2e', border: 'none', borderRadius: '6px',
-                    padding: '0.6rem', fontSize: '0.78rem', fontWeight: '700',
-                    letterSpacing: '0.06em', textTransform: 'uppercase',
-                    cursor: 'pointer', fontFamily: 'Inter, sans-serif'
+                    background: 'rgba(255,255,255,0.05)',
+                    border: '1px solid rgba(201,168,76,0.18)',
+                    borderRadius: '8px',
+                    padding: '0.55rem 0.85rem',
+                    color: '#f8f6f1',
+                    fontSize: '0.82rem',
+                    outline: 'none',
+                    fontFamily: 'Inter, sans-serif',
+                    boxSizing: 'border-box'
                   }}
-                >
-                  + Add Asset
-                </button>
-              ) : (
-                <SidebarAddAssetForm />
-              )}
-            </div>
-
-          ) : (
-
-            /* PRO PLAN — ASSET LIST */
-            <div>
-              {assets.map(asset => {
-                const woCount = getAssetWorkOrderCount(asset.id)
-                const isSelected = selectedAsset === asset.id
-                return (
-                  <div
-                    key={asset.id}
-                    onClick={() => setSelectedAsset(isSelected ? null : asset.id)}
-                    style={{
-                      padding: '0.75rem',
-                      borderRadius: '8px',
-                      border: `1px solid ${isSelected ? '#c9a84c' : 'rgba(201,168,76,0.12)'}`,
-                      marginBottom: '0.6rem',
-                      background: isSelected ? 'rgba(201,168,76,0.08)' : '#1e2245',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s'
-                    }}
-                  >
-                    <p style={{
-                      fontSize: '0.88rem', fontWeight: '500',
-                      color: '#f8f6f1', marginBottom: '0.2rem'
-                    }}>
-                      {asset.name}
-                    </p>
-                    <p style={{ fontSize: '0.78rem', color: '#9a9db5' }}>
-                      {asset.location || 'No location'}
-                      {asset.category ? ` · ${asset.category}` : ''}
-                    </p>
-                    {woCount > 0 && (
-                      <span style={{
-                        display: 'inline-block',
-                        marginTop: '0.35rem',
-                        fontSize: '0.72rem',
-                        color: '#c9a84c',
-                        border: '1px solid rgba(201,168,76,0.3)',
-                        padding: '1px 6px',
-                        borderRadius: '10px'
+                />
+                {searchFocused && searchQuery.trim() && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '100%',
+                    left: 0,
+                    right: 0,
+                    background: '#1e2245',
+                    border: '1px solid rgba(201,168,76,0.25)',
+                    borderRadius: '8px',
+                    marginTop: '0.3rem',
+                    maxHeight: '280px',
+                    overflowY: 'auto',
+                    zIndex: 20,
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.4)'
+                  }}>
+                    {searchResults.length === 0 ? (
+                      <p style={{
+                        padding: '0.75rem 0.85rem',
+                        fontSize: '0.8rem',
+                        color: '#9a9db5'
                       }}>
-                        {woCount} open {woCount === 1 ? 'WO' : 'WOs'}
-                      </span>
+                        No matches for "{searchQuery}"
+                      </p>
+                    ) : (
+                      searchResults.map(asset => (
+                        <div
+                          key={asset.id}
+                          onClick={() => openEditAsset(asset)}
+                          style={{
+                            padding: '0.65rem 0.85rem',
+                            cursor: 'pointer',
+                            borderBottom: '1px solid rgba(201,168,76,0.08)'
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.background = 'rgba(201,168,76,0.08)'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                        >
+                          <p style={{
+                            fontSize: '0.85rem',
+                            color: '#f8f6f1',
+                            fontWeight: '500',
+                            marginBottom: '0.15rem'
+                          }}>
+                            {asset.name}
+                          </p>
+                          <p style={{ fontSize: '0.72rem', color: '#9a9db5' }}>
+                            {asset.location || 'No location'}
+                            {asset.category ? ` · ${asset.category}` : ''}
+                          </p>
+                        </div>
+                      ))
                     )}
                   </div>
-                )
-              })}
-
-              <div style={{ marginTop: '0.75rem' }}>
-                {!showSidebarAddAsset ? (
-                  <button
-                    onClick={() => setShowSidebarAddAsset(true)}
-                    style={{
-                      width: '100%',
-                      background: 'none',
-                      border: '1px solid rgba(201,168,76,0.25)',
-                      color: '#c9a84c', borderRadius: '6px',
-                      padding: '0.5rem', fontSize: '0.78rem',
-                      fontWeight: '500', letterSpacing: '0.05em',
-                      textTransform: 'uppercase', cursor: 'pointer',
-                      fontFamily: 'Inter, sans-serif'
-                    }}
-                  >
-                    + Add Asset
-                  </button>
-                ) : (
-                  <SidebarAddAssetForm />
                 )}
+              </div>
+
+              {/* MAINTENANCE COMING UP */}
+              <p style={{
+                fontSize: '0.68rem',
+                letterSpacing: '0.16em',
+                textTransform: 'uppercase',
+                color: '#c9a84c',
+                marginBottom: '0.65rem',
+                fontWeight: '500'
+              }}>
+                Maintenance Coming Up · 7 Days
+              </p>
+              <div style={{
+                background: 'rgba(201,168,76,0.04)',
+                border: '1px dashed rgba(201,168,76,0.2)',
+                borderRadius: '8px',
+                padding: '1rem',
+                textAlign: 'center'
+              }}>
+                <p style={{
+                  fontSize: '1rem',
+                  marginBottom: '0.5rem',
+                  opacity: 0.6
+                }}>
+                  🗓️
+                </p>
+                <p style={{
+                  fontSize: '0.78rem',
+                  color: '#9a9db5',
+                  lineHeight: '1.55'
+                }}>
+                  PM scheduling launching soon. This list will populate once you create your first PM task.
+                </p>
               </div>
             </div>
           )}
@@ -631,7 +482,6 @@ export default function Dashboard({ profile }) {
         {/* MAIN CONTENT */}
         <div style={{ flex: 1, padding: '2rem 2.5rem', minWidth: 0 }}>
 
-          {/* PAYMENT BANNER */}
           {!organization?.stripe_subscription_id && (
             <div style={{
               background: 'rgba(232,201,122,0.08)',
@@ -663,7 +513,6 @@ export default function Dashboard({ profile }) {
             </div>
           )}
 
-          {/* HEADER WITH GREETING AND PLAN BADGE */}
           <div style={{ marginBottom: '1.75rem' }}>
             <div style={{
               display: 'flex',
@@ -681,7 +530,6 @@ export default function Dashboard({ profile }) {
               }}>
                 Manager Dashboard
               </p>
-              {/* PLAN BADGE */}
               <span style={{
                 padding: '0.15rem 0.65rem',
                 borderRadius: '20px',
@@ -689,12 +537,8 @@ export default function Dashboard({ profile }) {
                 fontWeight: '700',
                 letterSpacing: '0.1em',
                 textTransform: 'uppercase',
-                background: isPro
-                  ? 'rgba(201,168,76,0.15)'
-                  : 'rgba(180,180,180,0.15)',
-                border: isPro
-                  ? '1px solid rgba(201,168,76,0.5)'
-                  : '1px solid rgba(180,180,180,0.4)',
+                background: isPro ? 'rgba(201,168,76,0.15)' : 'rgba(180,180,180,0.15)',
+                border: isPro ? '1px solid rgba(201,168,76,0.5)' : '1px solid rgba(180,180,180,0.4)',
                 color: isPro ? '#c9a84c' : '#b0b0b0'
               }}>
                 {isPro ? 'Pro' : 'Lite'}
@@ -711,58 +555,48 @@ export default function Dashboard({ profile }) {
             </h1>
           </div>
 
-          {/* STAT CARDS */}
           <div style={{
-  display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
-  gap: '0.75rem',
-  marginBottom: '2rem'
-}} className="stat-grid-inner">
-  {[
-    { label: 'Total Open', value: counts.total, color: '#c9a84c', filterKey: 'all' },
-    { label: 'Critical', value: counts.critical, color: '#e06c75', filterKey: 'critical' },
-    { label: 'High', value: counts.high, color: '#e8c97a', filterKey: 'high' },
-    { label: 'Standard', value: counts.standard, color: '#9a9db5', filterKey: 'standard' },
-    { label: 'Routine', value: counts.routine, color: '#6a6d85', filterKey: 'routine' }
-  ].map(stat => (
-    <div
-      key={stat.label}
-      onClick={() => setFilter(stat.filterKey)}
-      style={{
-        background: filter === stat.filterKey ? 'rgba(201,168,76,0.08)' : '#1e2245',
-        border: `1px solid ${filter === stat.filterKey ? '#c9a84c' : 'rgba(201,168,76,0.18)'}`,
-        borderRadius: '12px',
-        padding: '1rem',
-        textAlign: 'center',
-        cursor: 'pointer',
-        transition: 'all 0.2s'
-      }}
-      onMouseEnter={e => {
-        e.currentTarget.style.transform = 'translateY(-2px)'
-        e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.3)'
-      }}
-      onMouseLeave={e => {
-        e.currentTarget.style.transform = 'translateY(0)'
-        e.currentTarget.style.boxShadow = 'none'
-      }}
-    >
-      <p style={{
-        fontSize: '1.8rem', fontWeight: '700',
-        color: stat.color, marginBottom: '0.2rem'
-      }}>
-        {stat.value}
-      </p>
-      <p style={{
-        fontSize: '0.7rem', color: '#9a9db5',
-        letterSpacing: '0.08em', textTransform: 'uppercase'
-      }}>
-        {stat.label}
-      </p>
-    </div>
-  ))}
-</div>
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+            gap: '0.75rem',
+            marginBottom: '2rem'
+          }} className="stat-grid-inner">
+            {[
+              { label: 'Total Open', value: counts.total, color: '#c9a84c', filterKey: 'all' },
+              { label: 'Critical', value: counts.critical, color: '#e06c75', filterKey: 'critical' },
+              { label: 'High', value: counts.high, color: '#e8c97a', filterKey: 'high' },
+              { label: 'Standard', value: counts.standard, color: '#9a9db5', filterKey: 'standard' },
+              { label: 'Routine', value: counts.routine, color: '#6a6d85', filterKey: 'routine' }
+            ].map(stat => (
+              <div
+                key={stat.label}
+                onClick={() => setFilter(stat.filterKey)}
+                style={{
+                  background: filter === stat.filterKey ? 'rgba(201,168,76,0.08)' : '#1e2245',
+                  border: `1px solid ${filter === stat.filterKey ? '#c9a84c' : 'rgba(201,168,76,0.18)'}`,
+                  borderRadius: '12px',
+                  padding: '1rem',
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+              >
+                <p style={{
+                  fontSize: '1.8rem', fontWeight: '700',
+                  color: stat.color, marginBottom: '0.2rem'
+                }}>
+                  {stat.value}
+                </p>
+                <p style={{
+                  fontSize: '0.7rem', color: '#9a9db5',
+                  letterSpacing: '0.08em', textTransform: 'uppercase'
+                }}>
+                  {stat.label}
+                </p>
+              </div>
+            ))}
+          </div>
 
-          {/* FILTERS + NEW WO BUTTON */}
           <div style={{
             display: 'flex',
             alignItems: 'center',
@@ -821,7 +655,6 @@ export default function Dashboard({ profile }) {
             </button>
           </div>
 
-          {/* WORK ORDER LIST */}
           {loading ? (
             <p style={{ color: '#9a9db5' }}>Loading work orders...</p>
           ) : displayedOrders.length === 0 ? (
@@ -848,14 +681,6 @@ export default function Dashboard({ profile }) {
                     padding: '1.25rem 1.5rem',
                     cursor: 'pointer',
                     transition: 'transform 0.2s, box-shadow 0.2s'
-                  }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.transform = 'translateY(-2px)'
-                    e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.3)'
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.transform = 'translateY(0)'
-                    e.currentTarget.style.boxShadow = 'none'
                   }}
                 >
                   <div style={{
@@ -893,9 +718,7 @@ export default function Dashboard({ profile }) {
                       color: '#9a9db5', fontSize: '0.85rem',
                       lineHeight: '1.6', marginBottom: '0.65rem'
                     }}>
-                      {wo.description.length > 120
-                        ? wo.description.slice(0, 120) + '...'
-                        : wo.description}
+                      {wo.description.length > 120 ? wo.description.slice(0, 120) + '...' : wo.description}
                     </p>
                   )}
                   <div style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap' }}>
@@ -911,6 +734,474 @@ export default function Dashboard({ profile }) {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ASSET FLYOUT */}
+      {flyoutOpen && (
+        <AssetFlyout
+          mode={flyoutMode}
+          asset={flyoutAsset}
+          tab={flyoutTab}
+          setTab={setFlyoutTab}
+          workOrders={workOrders}
+          organizationId={profile.organization_id}
+          onClose={closeFlyout}
+          onSaved={() => { fetchAll(); closeFlyout() }}
+          onDeleted={() => { fetchAll(); closeFlyout() }}
+          getTechName={getTechName}
+        />
+      )}
+    </div>
+  )
+}
+
+// ── ASSET FLYOUT COMPONENT ──
+function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, onClose, onSaved, onDeleted, getTechName }) {
+  const [name, setName] = useState(asset?.name || '')
+  const [location, setLocation] = useState(asset?.location || '')
+  const [category, setCategory] = useState(asset?.category || '')
+  const [criticality, setCriticality] = useState(asset?.criticality || 'Standard')
+  const [functionText, setFunctionText] = useState(asset?.function || '')
+  const [serialNumber, setSerialNumber] = useState(asset?.serial_number || '')
+  const [manufacturer, setManufacturer] = useState(asset?.manufacturer || '')
+  const [model, setModel] = useState(asset?.model || '')
+  const [installDate, setInstallDate] = useState(asset?.install_date || '')
+  const [error, setError] = useState(null)
+  const [submitting, setSubmitting] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+
+  async function handleSave(e) {
+    e.preventDefault()
+    setSubmitting(true)
+    setError(null)
+
+    const payload = {
+      name,
+      location,
+      category,
+      criticality,
+      function: functionText,
+      serial_number: serialNumber,
+      manufacturer,
+      model,
+      install_date: installDate || null,
+      organization_id: organizationId
+    }
+
+    let result
+    if (mode === 'edit' && asset?.id) {
+      result = await supabase.from('assets').update(payload).eq('id', asset.id)
+    } else {
+      result = await supabase.from('assets').insert(payload)
+    }
+
+    if (result.error) {
+      setError(result.error.message)
+      setSubmitting(false)
+      return
+    }
+
+    setSubmitting(false)
+    onSaved()
+  }
+
+  async function handleDelete() {
+    if (!asset?.id) return
+    if (!confirm(`Delete ${asset.name}? This cannot be undone.`)) return
+    setDeleting(true)
+    const { error } = await supabase.from('assets').delete().eq('id', asset.id)
+    if (error) {
+      setError(error.message)
+      setDeleting(false)
+      return
+    }
+    setDeleting(false)
+    onDeleted()
+  }
+
+  const assetWorkOrders = asset?.id
+    ? workOrders.filter(wo => wo.asset_id === asset.id)
+    : []
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0,0,0,0.6)',
+        zIndex: 100,
+        display: 'flex',
+        justifyContent: 'flex-end'
+      }}
+    >
+      <div
+        className="asset-flyout"
+        onClick={e => e.stopPropagation()}
+        style={{
+          width: '480px',
+          height: '100vh',
+          background: '#1a1a2e',
+          borderLeft: '1px solid rgba(201,168,76,0.25)',
+          display: 'flex',
+          flexDirection: 'column',
+          boxShadow: '-10px 0 40px rgba(0,0,0,0.5)'
+        }}
+      >
+        {/* FLYOUT HEADER */}
+        <div style={{
+          padding: '1.5rem',
+          borderBottom: '1px solid rgba(201,168,76,0.18)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between'
+        }}>
+          <div>
+            <p style={{
+              fontSize: '0.7rem',
+              letterSpacing: '0.18em',
+              textTransform: 'uppercase',
+              color: '#c9a84c',
+              marginBottom: '0.25rem',
+              fontWeight: '500'
+            }}>
+              {mode === 'edit' ? 'Edit Asset' : 'New Asset'}
+            </p>
+            <h2 style={{
+              fontFamily: 'Georgia, serif',
+              fontSize: '1.25rem',
+              fontWeight: '600',
+              color: '#f8f6f1'
+            }}>
+              {mode === 'edit' ? asset?.name : 'Add a new asset'}
+            </h2>
+          </div>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#9a9db5',
+              fontSize: '1.5rem',
+              cursor: 'pointer',
+              padding: '0.25rem',
+              lineHeight: 1
+            }}
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* TABS (only in edit mode) */}
+        {mode === 'edit' && (
+          <div style={{
+            display: 'flex',
+            borderBottom: '1px solid rgba(201,168,76,0.18)',
+            padding: '0 1.5rem'
+          }}>
+            {[
+              { id: 'details', label: 'Details' },
+              { id: 'history', label: 'Work Order History' },
+              { id: 'pm', label: 'PM Schedule' }
+            ].map(t => (
+              <button
+                key={t.id}
+                onClick={() => setTab(t.id)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: tab === t.id ? '#c9a84c' : '#9a9db5',
+                  padding: '0.85rem 1rem',
+                  fontSize: '0.82rem',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  fontFamily: 'Inter, sans-serif',
+                  borderBottom: tab === t.id ? '2px solid #c9a84c' : '2px solid transparent',
+                  marginBottom: '-1px',
+                  letterSpacing: '0.04em'
+                }}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* FLYOUT BODY */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem' }}>
+          {(mode === 'create' || tab === 'details') && (
+            <form onSubmit={handleSave}>
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={flyoutLabelStyle}>Asset Name *</label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  required
+                  placeholder="Air Compressor Unit 1"
+                  style={flyoutInputStyle}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
+                <div>
+                  <label style={flyoutLabelStyle}>Location</label>
+                  <input
+                    type="text"
+                    value={location}
+                    onChange={e => setLocation(e.target.value)}
+                    placeholder="Building A"
+                    style={flyoutInputStyle}
+                  />
+                </div>
+                <div>
+                  <label style={flyoutLabelStyle}>Category</label>
+                  <select
+                    value={category}
+                    onChange={e => setCategory(e.target.value)}
+                    style={{ ...flyoutInputStyle, cursor: 'pointer' }}
+                  >
+                    <option value="">Select</option>
+                    {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={flyoutLabelStyle}>Criticality</label>
+                <select
+                  value={criticality}
+                  onChange={e => setCriticality(e.target.value)}
+                  style={{ ...flyoutInputStyle, cursor: 'pointer' }}
+                >
+                  {CRITICALITY_LEVELS.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={flyoutLabelStyle}>Function</label>
+                <textarea
+                  value={functionText}
+                  onChange={e => setFunctionText(e.target.value)}
+                  placeholder="Supplies compressed air to the production line..."
+                  rows={3}
+                  style={{ ...flyoutInputStyle, resize: 'vertical', fontFamily: 'Inter, sans-serif' }}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
+                <div>
+                  <label style={flyoutLabelStyle}>Manufacturer</label>
+                  <input
+                    type="text"
+                    value={manufacturer}
+                    onChange={e => setManufacturer(e.target.value)}
+                    placeholder="Ingersoll Rand"
+                    style={flyoutInputStyle}
+                  />
+                </div>
+                <div>
+                  <label style={flyoutLabelStyle}>Model</label>
+                  <input
+                    type="text"
+                    value={model}
+                    onChange={e => setModel(e.target.value)}
+                    placeholder="SSR-EP25"
+                    style={flyoutInputStyle}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1.25rem' }}>
+                <div>
+                  <label style={flyoutLabelStyle}>Serial Number</label>
+                  <input
+                    type="text"
+                    value={serialNumber}
+                    onChange={e => setSerialNumber(e.target.value)}
+                    placeholder="SN-12345"
+                    style={flyoutInputStyle}
+                  />
+                </div>
+                <div>
+                  <label style={flyoutLabelStyle}>Install Date</label>
+                  <input
+                    type="date"
+                    value={installDate}
+                    onChange={e => setInstallDate(e.target.value)}
+                    style={flyoutInputStyle}
+                  />
+                </div>
+              </div>
+
+              <div style={{
+                background: 'rgba(201,168,76,0.05)',
+                border: '1px dashed rgba(201,168,76,0.25)',
+                borderRadius: '8px',
+                padding: '1rem',
+                marginBottom: '1.25rem',
+                textAlign: 'center'
+              }}>
+                <p style={{ fontSize: '0.82rem', color: '#c9a84c', marginBottom: '0.25rem', fontWeight: '500' }}>
+                  📷 Photo Upload
+                </p>
+                <p style={{ fontSize: '0.75rem', color: '#9a9db5' }}>
+                  Coming in the next update.
+                </p>
+              </div>
+
+              {error && (
+                <p style={{
+                  color: '#e06c75',
+                  fontSize: '0.85rem',
+                  marginBottom: '1rem',
+                  padding: '0.65rem 0.85rem',
+                  background: 'rgba(224,108,117,0.1)',
+                  borderRadius: '6px',
+                  border: '1px solid rgba(224,108,117,0.2)'
+                }}>
+                  {error}
+                </p>
+              )}
+
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  style={{
+                    flex: 1,
+                    background: 'linear-gradient(135deg, #c9a84c, #e8c97a)',
+                    color: '#1a1a2e',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '0.85rem',
+                    fontSize: '0.88rem',
+                    fontWeight: '700',
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                    cursor: submitting ? 'not-allowed' : 'pointer',
+                    opacity: submitting ? 0.7 : 1,
+                    fontFamily: 'Inter, sans-serif'
+                  }}
+                >
+                  {submitting ? 'Saving...' : mode === 'edit' ? 'Save Changes' : 'Create Asset'}
+                </button>
+                {mode === 'edit' && (
+                  <button
+                    type="button"
+                    onClick={handleDelete}
+                    disabled={deleting}
+                    style={{
+                      background: 'none',
+                      border: '1px solid rgba(224,108,117,0.4)',
+                      color: '#e06c75',
+                      borderRadius: '8px',
+                      padding: '0.85rem 1.25rem',
+                      fontSize: '0.82rem',
+                      cursor: deleting ? 'not-allowed' : 'pointer',
+                      fontFamily: 'Inter, sans-serif',
+                      opacity: deleting ? 0.6 : 1
+                    }}
+                  >
+                    {deleting ? 'Deleting...' : 'Delete'}
+                  </button>
+                )}
+              </div>
+            </form>
+          )}
+
+          {mode === 'edit' && tab === 'history' && (
+            <div>
+              {assetWorkOrders.length === 0 ? (
+                <div style={{
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px dashed rgba(201,168,76,0.2)',
+                  borderRadius: '10px',
+                  padding: '2rem',
+                  textAlign: 'center'
+                }}>
+                  <p style={{ fontSize: '0.88rem', color: '#9a9db5', lineHeight: '1.6' }}>
+                    No work orders for this asset yet.
+                  </p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {assetWorkOrders.map(wo => (
+                    <div
+                      key={wo.id}
+                      style={{
+                        background: '#1e2245',
+                        border: '1px solid rgba(201,168,76,0.18)',
+                        borderRadius: '10px',
+                        padding: '1rem'
+                      }}
+                    >
+                      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.45rem' }}>
+                        <span style={{
+                          padding: '0.15rem 0.55rem',
+                          borderRadius: '20px',
+                          fontSize: '0.65rem',
+                          fontWeight: '700',
+                          letterSpacing: '0.08em',
+                          textTransform: 'uppercase',
+                          color: PRIORITY_COLOR[wo.priority] || '#9a9db5',
+                          border: `1px solid ${PRIORITY_COLOR[wo.priority] || '#9a9db5'}`
+                        }}>
+                          {wo.priority}
+                        </span>
+                        <span style={{
+                          padding: '0.15rem 0.55rem',
+                          borderRadius: '20px',
+                          fontSize: '0.65rem',
+                          letterSpacing: '0.06em',
+                          textTransform: 'capitalize',
+                          color: STATUS_COLOR[wo.status] || '#9a9db5',
+                          border: `1px solid ${STATUS_COLOR[wo.status] || '#9a9db5'}`
+                        }}>
+                          {wo.status}
+                        </span>
+                      </div>
+                      <p style={{
+                        fontFamily: 'Georgia, serif',
+                        fontSize: '0.95rem',
+                        fontWeight: '600',
+                        marginBottom: '0.3rem'
+                      }}>
+                        {wo.title}
+                      </p>
+                      <p style={{ fontSize: '0.75rem', color: '#9a9db5' }}>
+                        Assigned: {getTechName(wo.assigned_to)} · {new Date(wo.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {mode === 'edit' && tab === 'pm' && (
+            <div style={{
+              background: 'rgba(201,168,76,0.04)',
+              border: '1px dashed rgba(201,168,76,0.2)',
+              borderRadius: '10px',
+              padding: '2.5rem 1.5rem',
+              textAlign: 'center'
+            }}>
+              <p style={{ fontSize: '2rem', marginBottom: '0.75rem', opacity: 0.5 }}>🗓️</p>
+              <p style={{
+                fontSize: '0.95rem',
+                color: '#f8f6f1',
+                fontWeight: '500',
+                marginBottom: '0.5rem'
+              }}>
+                PM Scheduling Coming Soon
+              </p>
+              <p style={{ fontSize: '0.82rem', color: '#9a9db5', lineHeight: '1.65' }}>
+                Once PM scheduling launches, this tab will let you create recurring maintenance tasks for this asset.
+              </p>
             </div>
           )}
         </div>
