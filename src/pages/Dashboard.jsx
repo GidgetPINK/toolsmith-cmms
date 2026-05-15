@@ -86,11 +86,9 @@ export default function Dashboard({ profile }) {
   const [selectedAsset, setSelectedAsset] = useState(null)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
 
-  // Asset search state
   const [searchQuery, setSearchQuery] = useState('')
   const [searchFocused, setSearchFocused] = useState(false)
 
-  // Flyout state
   const [flyoutOpen, setFlyoutOpen] = useState(false)
   const [flyoutMode, setFlyoutMode] = useState('create')
   const [flyoutAsset, setFlyoutAsset] = useState(null)
@@ -195,7 +193,8 @@ export default function Dashboard({ profile }) {
       minHeight: '100vh',
       background: '#1a1a2e',
       fontFamily: 'Inter, sans-serif',
-      color: '#f8f6f1'
+      color: '#f8f6f1',
+      overflowX: 'hidden'
     }}>
 
       <nav style={{
@@ -277,6 +276,7 @@ export default function Dashboard({ profile }) {
           .mobile-nav-dropdown { display: flex !important; }
           .app-body { flex-direction: column !important; }
           .sidebar { width: 100% !important; min-height: auto !important; border-right: none !important; border-bottom: 1px solid rgba(201,168,76,0.15) !important; }
+          .main-content { padding: 1.5rem 1rem !important; }
           .stat-grid-inner { grid-template-columns: repeat(2, 1fr) !important; }
           .asset-flyout { width: 100% !important; max-width: 100vw !important; border-left: none !important; box-sizing: border-box !important; }
           .asset-flyout-grid { grid-template-columns: 1fr !important; }
@@ -296,7 +296,8 @@ export default function Dashboard({ profile }) {
             background: '#16213e',
             borderRight: '1px solid rgba(201,168,76,0.15)',
             padding: '1.5rem 1rem',
-            minHeight: 'calc(100vh - 64px)'
+            minHeight: 'calc(100vh - 64px)',
+            boxSizing: 'border-box'
           }}
         >
           <p style={{
@@ -476,7 +477,15 @@ export default function Dashboard({ profile }) {
           )}
         </div>
 
-        <div style={{ flex: 1, padding: '2rem 2.5rem', minWidth: 0 }}>
+        <div
+          className="main-content"
+          style={{
+            flex: 1,
+            padding: '2rem 2.5rem',
+            minWidth: 0,
+            boxSizing: 'border-box'
+          }}
+        >
 
           {!organization?.stripe_subscription_id && (
             <div style={{
