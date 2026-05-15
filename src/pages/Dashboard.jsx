@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
@@ -218,10 +218,7 @@ export default function Dashboard({ profile }) {
           }}>
             The Toolsmith CMMS
           </span>
-          <div
-            className="desktop-nav"
-            style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}
-          >
+          <div className="desktop-nav" style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
             <button onClick={() => navigate('/team')} style={navBtnStyle}>Team</button>
             <button onClick={() => navigate('/change-password')} style={navBtnStyle}>Change Password</button>
             <button onClick={handleSignOut} style={navBtnStyle}>Sign Out</button>
@@ -241,27 +238,18 @@ export default function Dashboard({ profile }) {
           >
             {[0, 1, 2].map(i => (
               <span key={i} style={{
-                display: 'block',
-                width: '20px',
-                height: '2px',
-                background: '#9a9db5',
-                borderRadius: '1px'
+                display: 'block', width: '20px', height: '2px',
+                background: '#9a9db5', borderRadius: '1px'
               }} />
             ))}
           </button>
         </div>
 
         {mobileNavOpen && (
-          <div
-            className="mobile-nav-dropdown"
-            style={{
-              display: 'none',
-              flexDirection: 'column',
-              gap: '6px',
-              padding: '0.75rem 5%',
-              borderTop: '1px solid rgba(201,168,76,0.12)'
-            }}
-          >
+          <div className="mobile-nav-dropdown" style={{
+            display: 'none', flexDirection: 'column', gap: '6px',
+            padding: '0.75rem 5%', borderTop: '1px solid rgba(201,168,76,0.12)'
+          }}>
             <button onClick={() => { navigate('/team'); setMobileNavOpen(false) }} style={mobileNavBtnStyle}>Team</button>
             <button onClick={() => { navigate('/change-password'); setMobileNavOpen(false) }} style={mobileNavBtnStyle}>Change Password</button>
             <button onClick={handleSignOut} style={mobileNavBtnStyle}>Sign Out</button>
@@ -288,6 +276,7 @@ export default function Dashboard({ profile }) {
 
       <div style={{ display: 'flex' }} className="app-body">
 
+        {/* SIDEBAR */}
         <div
           className="sidebar"
           style={{
@@ -301,12 +290,9 @@ export default function Dashboard({ profile }) {
           }}
         >
           <p style={{
-            fontSize: '0.7rem',
-            letterSpacing: '0.18em',
-            textTransform: 'uppercase',
-            color: '#c9a84c',
-            marginBottom: '1rem',
-            fontWeight: '500'
+            fontSize: '0.7rem', letterSpacing: '0.18em',
+            textTransform: 'uppercase', color: '#c9a84c',
+            marginBottom: '1rem', fontWeight: '500'
           }}>
             Assets
           </p>
@@ -315,30 +301,21 @@ export default function Dashboard({ profile }) {
             <div style={{
               background: 'rgba(201,168,76,0.05)',
               border: '1px solid rgba(201,168,76,0.2)',
-              borderRadius: '10px',
-              padding: '1.25rem 1rem',
-              textAlign: 'center'
+              borderRadius: '10px', padding: '1.25rem 1rem', textAlign: 'center'
             }}>
               <div style={{
                 width: '44px', height: '44px', borderRadius: '50%',
-                background: 'rgba(201,168,76,0.1)',
-                border: '1px solid rgba(201,168,76,0.2)',
+                background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.2)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 margin: '0 auto 0.75rem', fontSize: '1.2rem'
-              }}>
-                🔒
-              </div>
-              <p style={{
-                fontSize: '0.88rem', fontWeight: '500',
-                color: '#f8f6f1', marginBottom: '0.75rem', lineHeight: '1.4'
-              }}>
+              }}>🔒</div>
+              <p style={{ fontSize: '0.88rem', fontWeight: '500', color: '#f8f6f1', marginBottom: '0.75rem', lineHeight: '1.4' }}>
                 Unlock Asset Management
               </p>
               <button
                 onClick={() => navigate('/upgrade')}
                 style={{
-                  width: '100%',
-                  background: 'linear-gradient(135deg, #c9a84c, #e8c97a)',
+                  width: '100%', background: 'linear-gradient(135deg, #c9a84c, #e8c97a)',
                   color: '#1a1a2e', border: 'none', borderRadius: '6px',
                   padding: '0.6rem', fontSize: '0.78rem', fontWeight: '700',
                   letterSpacing: '0.06em', textTransform: 'uppercase',
@@ -353,13 +330,11 @@ export default function Dashboard({ profile }) {
               <button
                 onClick={openAddAsset}
                 style={{
-                  width: '100%',
-                  background: 'linear-gradient(135deg, #c9a84c, #e8c97a)',
+                  width: '100%', background: 'linear-gradient(135deg, #c9a84c, #e8c97a)',
                   color: '#1a1a2e', border: 'none', borderRadius: '8px',
                   padding: '0.7rem', fontSize: '0.82rem', fontWeight: '700',
                   letterSpacing: '0.06em', textTransform: 'uppercase',
-                  cursor: 'pointer', fontFamily: 'Inter, sans-serif',
-                  marginBottom: '1rem'
+                  cursor: 'pointer', fontFamily: 'Inter, sans-serif', marginBottom: '1rem'
                 }}
               >
                 + Add Asset
@@ -374,39 +349,22 @@ export default function Dashboard({ profile }) {
                   onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
                   placeholder="Search assets..."
                   style={{
-                    width: '100%',
-                    background: 'rgba(255,255,255,0.05)',
-                    border: '1px solid rgba(201,168,76,0.18)',
-                    borderRadius: '8px',
-                    padding: '0.55rem 0.85rem',
-                    color: '#f8f6f1',
-                    fontSize: '0.82rem',
-                    outline: 'none',
-                    fontFamily: 'Inter, sans-serif',
-                    boxSizing: 'border-box'
+                    width: '100%', background: 'rgba(255,255,255,0.05)',
+                    border: '1px solid rgba(201,168,76,0.18)', borderRadius: '8px',
+                    padding: '0.55rem 0.85rem', color: '#f8f6f1',
+                    fontSize: '0.82rem', outline: 'none',
+                    fontFamily: 'Inter, sans-serif', boxSizing: 'border-box'
                   }}
                 />
                 {searchFocused && searchQuery.trim() && (
                   <div style={{
-                    position: 'absolute',
-                    top: '100%',
-                    left: 0,
-                    right: 0,
-                    background: '#1e2245',
-                    border: '1px solid rgba(201,168,76,0.25)',
-                    borderRadius: '8px',
-                    marginTop: '0.3rem',
-                    maxHeight: '280px',
-                    overflowY: 'auto',
-                    zIndex: 20,
-                    boxShadow: '0 8px 24px rgba(0,0,0,0.4)'
+                    position: 'absolute', top: '100%', left: 0, right: 0,
+                    background: '#1e2245', border: '1px solid rgba(201,168,76,0.25)',
+                    borderRadius: '8px', marginTop: '0.3rem', maxHeight: '280px',
+                    overflowY: 'auto', zIndex: 20, boxShadow: '0 8px 24px rgba(0,0,0,0.4)'
                   }}>
                     {searchResults.length === 0 ? (
-                      <p style={{
-                        padding: '0.75rem 0.85rem',
-                        fontSize: '0.8rem',
-                        color: '#9a9db5'
-                      }}>
+                      <p style={{ padding: '0.75rem 0.85rem', fontSize: '0.8rem', color: '#9a9db5' }}>
                         No matches for "{searchQuery}"
                       </p>
                     ) : (
@@ -414,25 +372,15 @@ export default function Dashboard({ profile }) {
                         <div
                           key={asset.id}
                           onClick={() => openEditAsset(asset)}
-                          style={{
-                            padding: '0.65rem 0.85rem',
-                            cursor: 'pointer',
-                            borderBottom: '1px solid rgba(201,168,76,0.08)'
-                          }}
+                          style={{ padding: '0.65rem 0.85rem', cursor: 'pointer', borderBottom: '1px solid rgba(201,168,76,0.08)' }}
                           onMouseEnter={e => e.currentTarget.style.background = 'rgba(201,168,76,0.08)'}
                           onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                         >
-                          <p style={{
-                            fontSize: '0.85rem',
-                            color: '#f8f6f1',
-                            fontWeight: '500',
-                            marginBottom: '0.15rem'
-                          }}>
+                          <p style={{ fontSize: '0.85rem', color: '#f8f6f1', fontWeight: '500', marginBottom: '0.15rem' }}>
                             {asset.name}
                           </p>
                           <p style={{ fontSize: '0.72rem', color: '#9a9db5' }}>
-                            {asset.location || 'No location'}
-                            {asset.category ? ` · ${asset.category}` : ''}
+                            {asset.location || 'No location'}{asset.category ? ` · ${asset.category}` : ''}
                           </p>
                         </div>
                       ))
@@ -442,34 +390,19 @@ export default function Dashboard({ profile }) {
               </div>
 
               <p style={{
-                fontSize: '0.68rem',
-                letterSpacing: '0.16em',
-                textTransform: 'uppercase',
-                color: '#c9a84c',
-                marginBottom: '0.65rem',
-                fontWeight: '500'
+                fontSize: '0.68rem', letterSpacing: '0.16em',
+                textTransform: 'uppercase', color: '#c9a84c',
+                marginBottom: '0.65rem', fontWeight: '500'
               }}>
                 Maintenance Coming Up · 7 Days
               </p>
               <div style={{
                 background: 'rgba(201,168,76,0.04)',
                 border: '1px dashed rgba(201,168,76,0.2)',
-                borderRadius: '8px',
-                padding: '1rem',
-                textAlign: 'center'
+                borderRadius: '8px', padding: '1rem', textAlign: 'center'
               }}>
-                <p style={{
-                  fontSize: '1rem',
-                  marginBottom: '0.5rem',
-                  opacity: 0.6
-                }}>
-                  🗓️
-                </p>
-                <p style={{
-                  fontSize: '0.78rem',
-                  color: '#9a9db5',
-                  lineHeight: '1.55'
-                }}>
+                <p style={{ fontSize: '1rem', marginBottom: '0.5rem', opacity: 0.6 }}>🗓️</p>
+                <p style={{ fontSize: '0.78rem', color: '#9a9db5', lineHeight: '1.55' }}>
                   PM scheduling launching soon. This list will populate once you create your first PM task.
                 </p>
               </div>
@@ -477,28 +410,17 @@ export default function Dashboard({ profile }) {
           )}
         </div>
 
+        {/* MAIN CONTENT */}
         <div
           className="main-content"
-          style={{
-            flex: 1,
-            padding: '2rem 2.5rem',
-            minWidth: 0,
-            boxSizing: 'border-box'
-          }}
+          style={{ flex: 1, padding: '2rem 2.5rem', minWidth: 0, boxSizing: 'border-box' }}
         >
-
           {!organization?.stripe_subscription_id && (
             <div style={{
-              background: 'rgba(232,201,122,0.08)',
-              border: '1px solid rgba(232,201,122,0.4)',
-              borderRadius: '10px',
-              padding: '0.85rem 1.25rem',
-              marginBottom: '1.75rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: '0.75rem'
+              background: 'rgba(232,201,122,0.08)', border: '1px solid rgba(232,201,122,0.4)',
+              borderRadius: '10px', padding: '0.85rem 1.25rem', marginBottom: '1.75rem',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              flexWrap: 'wrap', gap: '0.75rem'
             }}>
               <p style={{ color: '#e8c97a', fontSize: '0.88rem', lineHeight: '1.6' }}>
                 ⚠ Your payment setup is incomplete. Add a payment method to keep access after your trial ends.
@@ -506,11 +428,11 @@ export default function Dashboard({ profile }) {
               <button
                 onClick={() => navigate('/upgrade')}
                 style={{
-                  background: 'linear-gradient(135deg, #c9a84c, #e8c97a)',
-                  color: '#1a1a2e', border: 'none', borderRadius: '6px',
-                  padding: '0.45rem 1rem', fontSize: '0.8rem', fontWeight: '700',
-                  letterSpacing: '0.06em', textTransform: 'uppercase',
-                  cursor: 'pointer', fontFamily: 'Inter, sans-serif', whiteSpace: 'nowrap'
+                  background: 'linear-gradient(135deg, #c9a84c, #e8c97a)', color: '#1a1a2e',
+                  border: 'none', borderRadius: '6px', padding: '0.45rem 1rem',
+                  fontSize: '0.8rem', fontWeight: '700', letterSpacing: '0.06em',
+                  textTransform: 'uppercase', cursor: 'pointer',
+                  fontFamily: 'Inter, sans-serif', whiteSpace: 'nowrap'
                 }}
               >
                 Complete Setup
@@ -519,29 +441,13 @@ export default function Dashboard({ profile }) {
           )}
 
           <div style={{ marginBottom: '1.75rem' }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.75rem',
-              marginBottom: '0.35rem',
-              flexWrap: 'wrap'
-            }}>
-              <p style={{
-                fontSize: '0.72rem',
-                letterSpacing: '0.22em',
-                textTransform: 'uppercase',
-                color: '#c9a84c',
-                fontWeight: '500'
-              }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.35rem', flexWrap: 'wrap' }}>
+              <p style={{ fontSize: '0.72rem', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#c9a84c', fontWeight: '500' }}>
                 Manager Dashboard
               </p>
               <span style={{
-                padding: '0.15rem 0.65rem',
-                borderRadius: '20px',
-                fontSize: '0.68rem',
-                fontWeight: '700',
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
+                padding: '0.15rem 0.65rem', borderRadius: '20px',
+                fontSize: '0.68rem', fontWeight: '700', letterSpacing: '0.1em', textTransform: 'uppercase',
                 background: isPro ? 'rgba(201,168,76,0.15)' : 'rgba(180,180,180,0.15)',
                 border: isPro ? '1px solid rgba(201,168,76,0.5)' : '1px solid rgba(180,180,180,0.4)',
                 color: isPro ? '#c9a84c' : '#b0b0b0'
@@ -549,23 +455,12 @@ export default function Dashboard({ profile }) {
                 {isPro ? 'Pro' : 'Lite'}
               </span>
             </div>
-            <h1 style={{
-              fontFamily: 'Inter, sans-serif',
-              fontSize: '1.4rem',
-              fontWeight: '400',
-              color: '#f8f6f1',
-              letterSpacing: '0.01em'
-            }}>
+            <h1 style={{ fontFamily: 'Inter, sans-serif', fontSize: '1.4rem', fontWeight: '400', color: '#f8f6f1', letterSpacing: '0.01em' }}>
               Hi, {firstName}!
             </h1>
           </div>
 
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
-            gap: '0.75rem',
-            marginBottom: '2rem'
-          }} className="stat-grid-inner">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '0.75rem', marginBottom: '2rem' }} className="stat-grid-inner">
             {[
               { label: 'Total Open', value: counts.total, color: '#c9a84c', filterKey: 'all' },
               { label: 'Critical', value: counts.critical, color: '#e06c75', filterKey: 'critical' },
@@ -579,51 +474,33 @@ export default function Dashboard({ profile }) {
                 style={{
                   background: filter === stat.filterKey ? 'rgba(201,168,76,0.08)' : '#1e2245',
                   border: `1px solid ${filter === stat.filterKey ? '#c9a84c' : 'rgba(201,168,76,0.18)'}`,
-                  borderRadius: '12px',
-                  padding: '1rem',
-                  textAlign: 'center',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s'
+                  borderRadius: '12px', padding: '1rem', textAlign: 'center',
+                  cursor: 'pointer', transition: 'all 0.2s'
                 }}
               >
-                <p style={{
-                  fontSize: '1.8rem', fontWeight: '700',
-                  color: stat.color, marginBottom: '0.2rem'
-                }}>
+                <p style={{ fontSize: '1.8rem', fontWeight: '700', color: stat.color, marginBottom: '0.2rem' }}>
                   {stat.value}
                 </p>
-                <p style={{
-                  fontSize: '0.7rem', color: '#9a9db5',
-                  letterSpacing: '0.08em', textTransform: 'uppercase'
-                }}>
+                <p style={{ fontSize: '0.7rem', color: '#9a9db5', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
                   {stat.label}
                 </p>
               </div>
             ))}
           </div>
 
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: '1.25rem',
-            flexWrap: 'wrap',
-            gap: '0.75rem'
-          }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
             <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
               {['all', 'critical', 'high', 'standard', 'routine'].map(f => (
                 <button
                   key={f}
                   onClick={() => setFilter(f)}
                   style={{
-                    padding: '0.35rem 0.9rem',
-                    borderRadius: '20px',
+                    padding: '0.35rem 0.9rem', borderRadius: '20px',
                     border: `1px solid ${filter === f ? '#c9a84c' : 'rgba(201,168,76,0.18)'}`,
                     background: filter === f ? 'rgba(201,168,76,0.08)' : 'none',
                     color: filter === f ? '#c9a84c' : '#9a9db5',
-                    fontSize: '0.8rem', cursor: 'pointer',
-                    letterSpacing: '0.05em', textTransform: 'capitalize',
-                    fontFamily: 'Inter, sans-serif'
+                    fontSize: '0.8rem', cursor: 'pointer', letterSpacing: '0.05em',
+                    textTransform: 'capitalize', fontFamily: 'Inter, sans-serif'
                   }}
                 >
                   {f === 'all' ? 'All' : f}
@@ -633,12 +510,9 @@ export default function Dashboard({ profile }) {
                 <button
                   onClick={() => setSelectedAsset(null)}
                   style={{
-                    padding: '0.35rem 0.9rem',
-                    borderRadius: '20px',
-                    border: '1px solid rgba(108,182,224,0.4)',
-                    background: 'rgba(108,182,224,0.08)',
-                    color: '#6cb6e0', fontSize: '0.8rem',
-                    cursor: 'pointer', fontFamily: 'Inter, sans-serif'
+                    padding: '0.35rem 0.9rem', borderRadius: '20px',
+                    border: '1px solid rgba(108,182,224,0.4)', background: 'rgba(108,182,224,0.08)',
+                    color: '#6cb6e0', fontSize: '0.8rem', cursor: 'pointer', fontFamily: 'Inter, sans-serif'
                   }}
                 >
                   {getAssetName(selectedAsset)} ✕
@@ -648,9 +522,8 @@ export default function Dashboard({ profile }) {
             <button
               onClick={() => navigate('/work-order/new')}
               style={{
-                background: 'linear-gradient(135deg, #c9a84c, #e8c97a)',
-                border: 'none', color: '#1a1a2e',
-                padding: '0.5rem 1.25rem', borderRadius: '6px',
+                background: 'linear-gradient(135deg, #c9a84c, #e8c97a)', border: 'none',
+                color: '#1a1a2e', padding: '0.5rem 1.25rem', borderRadius: '6px',
                 cursor: 'pointer', fontSize: '0.85rem', fontWeight: '700',
                 letterSpacing: '0.06em', textTransform: 'uppercase',
                 fontFamily: 'Inter, sans-serif', whiteSpace: 'nowrap'
@@ -664,12 +537,8 @@ export default function Dashboard({ profile }) {
             <p style={{ color: '#9a9db5' }}>Loading work orders...</p>
           ) : displayedOrders.length === 0 ? (
             <div style={{
-              background: '#1e2245',
-              border: '1px solid rgba(201,168,76,0.18)',
-              borderRadius: '12px',
-              padding: '3rem',
-              textAlign: 'center',
-              color: '#9a9db5'
+              background: '#1e2245', border: '1px solid rgba(201,168,76,0.18)',
+              borderRadius: '12px', padding: '3rem', textAlign: 'center', color: '#9a9db5'
             }}>
               No open work orders{filter !== 'all' ? ` with ${filter} priority` : ''}.
             </div>
@@ -680,22 +549,15 @@ export default function Dashboard({ profile }) {
                   key={wo.id}
                   onClick={() => navigate(`/work-order/${wo.id}`)}
                   style={{
-                    background: '#1e2245',
-                    border: '1px solid rgba(201,168,76,0.18)',
-                    borderRadius: '12px',
-                    padding: '1.25rem 1.5rem',
-                    cursor: 'pointer',
-                    transition: 'transform 0.2s, box-shadow 0.2s'
+                    background: '#1e2245', border: '1px solid rgba(201,168,76,0.18)',
+                    borderRadius: '12px', padding: '1.25rem 1.5rem',
+                    cursor: 'pointer', transition: 'transform 0.2s, box-shadow 0.2s'
                   }}
                 >
-                  <div style={{
-                    display: 'flex', gap: '0.6rem',
-                    alignItems: 'center', marginBottom: '0.5rem', flexWrap: 'wrap'
-                  }}>
+                  <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
                     <span style={{
                       padding: '0.2rem 0.65rem', borderRadius: '20px',
-                      fontSize: '0.7rem', fontWeight: '700',
-                      letterSpacing: '0.1em', textTransform: 'uppercase',
+                      fontSize: '0.7rem', fontWeight: '700', letterSpacing: '0.1em', textTransform: 'uppercase',
                       color: PRIORITY_COLOR[wo.priority] || '#9a9db5',
                       background: PRIORITY_BG[wo.priority] || 'rgba(154,157,181,0.12)',
                       border: `1px solid ${PRIORITY_COLOR[wo.priority] || '#9a9db5'}`
@@ -712,17 +574,11 @@ export default function Dashboard({ profile }) {
                       {wo.status}
                     </span>
                   </div>
-                  <h3 style={{
-                    fontFamily: 'Georgia, serif', fontSize: '1.05rem',
-                    fontWeight: '600', color: '#f8f6f1', marginBottom: '0.35rem'
-                  }}>
+                  <h3 style={{ fontFamily: 'Georgia, serif', fontSize: '1.05rem', fontWeight: '600', color: '#f8f6f1', marginBottom: '0.35rem' }}>
                     {wo.title}
                   </h3>
                   {wo.description && (
-                    <p style={{
-                      color: '#9a9db5', fontSize: '0.85rem',
-                      lineHeight: '1.6', marginBottom: '0.65rem'
-                    }}>
+                    <p style={{ color: '#9a9db5', fontSize: '0.85rem', lineHeight: '1.6', marginBottom: '0.65rem' }}>
                       {wo.description.length > 120 ? wo.description.slice(0, 120) + '...' : wo.description}
                     </p>
                   )}
@@ -762,6 +618,7 @@ export default function Dashboard({ profile }) {
   )
 }
 
+// ── ASSET FLYOUT ──
 function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, onClose, onSaved, onDeleted, getTechName }) {
   const [name, setName] = useState(asset?.name || '')
   const [location, setLocation] = useState(asset?.location || '')
@@ -772,14 +629,83 @@ function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, onC
   const [manufacturer, setManufacturer] = useState(asset?.manufacturer || '')
   const [model, setModel] = useState(asset?.model || '')
   const [installDate, setInstallDate] = useState(asset?.install_date || '')
+
+  // Photo state
+  const [photoFile, setPhotoFile] = useState(null)
+  const [photoPreview, setPhotoPreview] = useState(asset?.photo_url || null)
+  const [uploadingPhoto, setUploadingPhoto] = useState(false)
+  const fileInputRef = useRef(null)
+
   const [error, setError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [deleting, setDeleting] = useState(false)
+
+  function handlePhotoChange(e) {
+    const file = e.target.files[0]
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setError('Please select an image file.')
+      return
+    }
+
+    // Validate file size — 5MB max
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Photo must be under 5MB.')
+      return
+    }
+
+    setPhotoFile(file)
+    setPhotoPreview(URL.createObjectURL(file))
+    setError(null)
+  }
+
+  function removePhoto() {
+    setPhotoFile(null)
+    setPhotoPreview(null)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  async function uploadPhoto() {
+    if (!photoFile) return asset?.photo_url || null
+
+    setUploadingPhoto(true)
+    const ext = photoFile.name.split('.').pop()
+    const filename = `${organizationId}/${Date.now()}.${ext}`
+
+    const { data, error: uploadError } = await supabase.storage
+      .from('asset-photos')
+      .upload(filename, photoFile, {
+        contentType: photoFile.type,
+        upsert: false
+      })
+
+    setUploadingPhoto(false)
+
+    if (uploadError) {
+      setError(`Photo upload failed: ${uploadError.message}`)
+      return null
+    }
+
+    const { data: urlData } = supabase.storage
+      .from('asset-photos')
+      .getPublicUrl(data.path)
+
+    return urlData.publicUrl
+  }
 
   async function handleSave(e) {
     e.preventDefault()
     setSubmitting(true)
     setError(null)
+
+    // Upload photo first if a new one was selected
+    const photoUrl = await uploadPhoto()
+    if (error) {
+      setSubmitting(false)
+      return
+    }
 
     const payload = {
       name,
@@ -791,7 +717,8 @@ function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, onC
       manufacturer,
       model,
       install_date: installDate || null,
-      organization_id: organizationId
+      organization_id: organizationId,
+      photo_url: photoUrl
     }
 
     let result
@@ -815,6 +742,15 @@ function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, onC
     if (!asset?.id) return
     if (!confirm(`Delete ${asset.name}? This cannot be undone.`)) return
     setDeleting(true)
+
+    // Delete photo from storage if it exists
+    if (asset.photo_url) {
+      const path = asset.photo_url.split('/asset-photos/')[1]
+      if (path) {
+        await supabase.storage.from('asset-photos').remove([path])
+      }
+    }
+
     const { error } = await supabase.from('assets').delete().eq('id', asset.id)
     if (error) {
       setError(error.message)
@@ -829,87 +765,55 @@ function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, onC
     ? workOrders.filter(wo => wo.asset_id === asset.id)
     : []
 
+  const isSaving = submitting || uploadingPhoto
+
   return (
     <div
       onClick={onClose}
       style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0,0,0,0.6)',
-        zIndex: 100,
-        display: 'flex',
-        justifyContent: 'flex-end'
+        position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
+        zIndex: 100, display: 'flex', justifyContent: 'flex-end'
       }}
     >
       <div
         className="asset-flyout"
         onClick={e => e.stopPropagation()}
         style={{
-          width: '480px',
-          maxWidth: '100vw',
-          height: '100vh',
-          background: '#1a1a2e',
-          borderLeft: '1px solid rgba(201,168,76,0.25)',
-          display: 'flex',
-          flexDirection: 'column',
-          boxShadow: '-10px 0 40px rgba(0,0,0,0.5)',
-          boxSizing: 'border-box'
+          width: '480px', maxWidth: '100vw', height: '100vh',
+          background: '#1a1a2e', borderLeft: '1px solid rgba(201,168,76,0.25)',
+          display: 'flex', flexDirection: 'column',
+          boxShadow: '-10px 0 40px rgba(0,0,0,0.5)', boxSizing: 'border-box'
         }}
       >
+        {/* HEADER */}
         <div
           className="asset-flyout-header"
           style={{
-            padding: '1.5rem',
-            borderBottom: '1px solid rgba(201,168,76,0.18)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between'
+            padding: '1.5rem', borderBottom: '1px solid rgba(201,168,76,0.18)',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between'
           }}
         >
           <div>
-            <p style={{
-              fontSize: '0.7rem',
-              letterSpacing: '0.18em',
-              textTransform: 'uppercase',
-              color: '#c9a84c',
-              marginBottom: '0.25rem',
-              fontWeight: '500'
-            }}>
+            <p style={{ fontSize: '0.7rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c9a84c', marginBottom: '0.25rem', fontWeight: '500' }}>
               {mode === 'edit' ? 'Edit Asset' : 'New Asset'}
             </p>
-            <h2 style={{
-              fontFamily: 'Georgia, serif',
-              fontSize: '1.25rem',
-              fontWeight: '600',
-              color: '#f8f6f1'
-            }}>
+            <h2 style={{ fontFamily: 'Georgia, serif', fontSize: '1.25rem', fontWeight: '600', color: '#f8f6f1' }}>
               {mode === 'edit' ? asset?.name : 'Add a new asset'}
             </h2>
           </div>
           <button
             onClick={onClose}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: '#9a9db5',
-              fontSize: '1.5rem',
-              cursor: 'pointer',
-              padding: '0.25rem',
-              lineHeight: 1
-            }}
+            style={{ background: 'none', border: 'none', color: '#9a9db5', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem', lineHeight: 1 }}
           >
             ✕
           </button>
         </div>
 
+        {/* TABS (edit mode only) */}
         {mode === 'edit' && (
           <div
             className="asset-flyout-tabs"
-            style={{
-              display: 'flex',
-              borderBottom: '1px solid rgba(201,168,76,0.18)',
-              padding: '0 1.5rem'
-            }}
+            style={{ display: 'flex', borderBottom: '1px solid rgba(201,168,76,0.18)', padding: '0 1.5rem' }}
           >
             {[
               { id: 'details', label: 'Details' },
@@ -920,17 +824,12 @@ function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, onC
                 key={t.id}
                 onClick={() => setTab(t.id)}
                 style={{
-                  background: 'none',
-                  border: 'none',
+                  background: 'none', border: 'none',
                   color: tab === t.id ? '#c9a84c' : '#9a9db5',
-                  padding: '0.85rem 1rem',
-                  fontSize: '0.82rem',
-                  fontWeight: '500',
-                  cursor: 'pointer',
-                  fontFamily: 'Inter, sans-serif',
+                  padding: '0.85rem 1rem', fontSize: '0.82rem', fontWeight: '500',
+                  cursor: 'pointer', fontFamily: 'Inter, sans-serif',
                   borderBottom: tab === t.id ? '2px solid #c9a84c' : '2px solid transparent',
-                  marginBottom: '-1px',
-                  letterSpacing: '0.04em'
+                  marginBottom: '-1px', letterSpacing: '0.04em'
                 }}
               >
                 {t.label}
@@ -939,9 +838,97 @@ function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, onC
           </div>
         )}
 
+        {/* BODY */}
         <div className="asset-flyout-body" style={{ flex: 1, overflowY: 'auto', padding: '1.5rem' }}>
+
           {(mode === 'create' || tab === 'details') && (
             <form onSubmit={handleSave}>
+
+              {/* PHOTO — shown at top in edit mode if photo exists, or as upload area always */}
+              <div style={{ marginBottom: '1.25rem' }}>
+                <label style={flyoutLabelStyle}>Asset Photo</label>
+
+                {photoPreview ? (
+                  <div style={{ position: 'relative' }}>
+                    <img
+                      src={photoPreview}
+                      alt="Asset preview"
+                      style={{
+                        width: '100%',
+                        height: '180px',
+                        objectFit: 'cover',
+                        borderRadius: '8px',
+                        border: '1px solid rgba(201,168,76,0.2)',
+                        display: 'block'
+                      }}
+                    />
+                    <div style={{
+                      position: 'absolute', top: '0.5rem', right: '0.5rem',
+                      display: 'flex', gap: '0.4rem'
+                    }}>
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        style={{
+                          background: 'rgba(26,26,46,0.85)', border: '1px solid rgba(201,168,76,0.3)',
+                          color: '#c9a84c', borderRadius: '6px', padding: '0.3rem 0.65rem',
+                          fontSize: '0.72rem', cursor: 'pointer', fontFamily: 'Inter, sans-serif'
+                        }}
+                      >
+                        Change
+                      </button>
+                      <button
+                        type="button"
+                        onClick={removePhoto}
+                        style={{
+                          background: 'rgba(224,108,117,0.15)', border: '1px solid rgba(224,108,117,0.3)',
+                          color: '#e06c75', borderRadius: '6px', padding: '0.3rem 0.65rem',
+                          fontSize: '0.72rem', cursor: 'pointer', fontFamily: 'Inter, sans-serif'
+                        }}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    style={{
+                      border: '1px dashed rgba(201,168,76,0.3)',
+                      borderRadius: '8px', padding: '1.75rem 1rem',
+                      textAlign: 'center', cursor: 'pointer',
+                      background: 'rgba(201,168,76,0.03)',
+                      transition: 'border-color 0.2s, background 0.2s'
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.borderColor = 'rgba(201,168,76,0.6)'
+                      e.currentTarget.style.background = 'rgba(201,168,76,0.07)'
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.borderColor = 'rgba(201,168,76,0.3)'
+                      e.currentTarget.style.background = 'rgba(201,168,76,0.03)'
+                    }}
+                  >
+                    <p style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>📷</p>
+                    <p style={{ fontSize: '0.85rem', color: '#c9a84c', fontWeight: '500', marginBottom: '0.25rem' }}>
+                      Click to upload a photo
+                    </p>
+                    <p style={{ fontSize: '0.72rem', color: '#9a9db5' }}>
+                      JPG, PNG, or WebP — max 5MB
+                    </p>
+                  </div>
+                )}
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoChange}
+                  style={{ display: 'none' }}
+                />
+              </div>
+
+              {/* ASSET NAME */}
               <div style={{ marginBottom: '1rem' }}>
                 <label style={flyoutLabelStyle}>Asset Name *</label>
                 <input
@@ -1045,31 +1032,11 @@ function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, onC
                 </div>
               </div>
 
-              <div style={{
-                background: 'rgba(201,168,76,0.05)',
-                border: '1px dashed rgba(201,168,76,0.25)',
-                borderRadius: '8px',
-                padding: '1rem',
-                marginBottom: '1.25rem',
-                textAlign: 'center'
-              }}>
-                <p style={{ fontSize: '0.82rem', color: '#c9a84c', marginBottom: '0.25rem', fontWeight: '500' }}>
-                  📷 Photo Upload
-                </p>
-                <p style={{ fontSize: '0.75rem', color: '#9a9db5' }}>
-                  Coming in the next update.
-                </p>
-              </div>
-
               {error && (
                 <p style={{
-                  color: '#e06c75',
-                  fontSize: '0.85rem',
-                  marginBottom: '1rem',
-                  padding: '0.65rem 0.85rem',
-                  background: 'rgba(224,108,117,0.1)',
-                  borderRadius: '6px',
-                  border: '1px solid rgba(224,108,117,0.2)'
+                  color: '#e06c75', fontSize: '0.85rem', marginBottom: '1rem',
+                  padding: '0.65rem 0.85rem', background: 'rgba(224,108,117,0.1)',
+                  borderRadius: '6px', border: '1px solid rgba(224,108,117,0.2)'
                 }}>
                   {error}
                 </p>
@@ -1078,24 +1045,18 @@ function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, onC
               <div style={{ display: 'flex', gap: '0.75rem' }}>
                 <button
                   type="submit"
-                  disabled={submitting}
+                  disabled={isSaving}
                   style={{
                     flex: 1,
                     background: 'linear-gradient(135deg, #c9a84c, #e8c97a)',
-                    color: '#1a1a2e',
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '0.85rem',
-                    fontSize: '0.88rem',
-                    fontWeight: '700',
-                    letterSpacing: '0.06em',
-                    textTransform: 'uppercase',
-                    cursor: submitting ? 'not-allowed' : 'pointer',
-                    opacity: submitting ? 0.7 : 1,
-                    fontFamily: 'Inter, sans-serif'
+                    color: '#1a1a2e', border: 'none', borderRadius: '8px',
+                    padding: '0.85rem', fontSize: '0.88rem', fontWeight: '700',
+                    letterSpacing: '0.06em', textTransform: 'uppercase',
+                    cursor: isSaving ? 'not-allowed' : 'pointer',
+                    opacity: isSaving ? 0.7 : 1, fontFamily: 'Inter, sans-serif'
                   }}
                 >
-                  {submitting ? 'Saving...' : mode === 'edit' ? 'Save Changes' : 'Create Asset'}
+                  {uploadingPhoto ? 'Uploading photo...' : submitting ? 'Saving...' : mode === 'edit' ? 'Save Changes' : 'Create Asset'}
                 </button>
                 {mode === 'edit' && (
                   <button
@@ -1103,15 +1064,10 @@ function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, onC
                     onClick={handleDelete}
                     disabled={deleting}
                     style={{
-                      background: 'none',
-                      border: '1px solid rgba(224,108,117,0.4)',
-                      color: '#e06c75',
-                      borderRadius: '8px',
-                      padding: '0.85rem 1.25rem',
-                      fontSize: '0.82rem',
-                      cursor: deleting ? 'not-allowed' : 'pointer',
-                      fontFamily: 'Inter, sans-serif',
-                      opacity: deleting ? 0.6 : 1
+                      background: 'none', border: '1px solid rgba(224,108,117,0.4)',
+                      color: '#e06c75', borderRadius: '8px', padding: '0.85rem 1.25rem',
+                      fontSize: '0.82rem', cursor: deleting ? 'not-allowed' : 'pointer',
+                      fontFamily: 'Inter, sans-serif', opacity: deleting ? 0.6 : 1
                     }}
                   >
                     {deleting ? 'Deleting...' : 'Delete'}
@@ -1121,15 +1077,13 @@ function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, onC
             </form>
           )}
 
+          {/* WORK ORDER HISTORY TAB */}
           {mode === 'edit' && tab === 'history' && (
             <div>
               {assetWorkOrders.length === 0 ? (
                 <div style={{
-                  background: 'rgba(255,255,255,0.03)',
-                  border: '1px dashed rgba(201,168,76,0.2)',
-                  borderRadius: '10px',
-                  padding: '2rem',
-                  textAlign: 'center'
+                  background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(201,168,76,0.2)',
+                  borderRadius: '10px', padding: '2rem', textAlign: 'center'
                 }}>
                   <p style={{ fontSize: '0.88rem', color: '#9a9db5', lineHeight: '1.6' }}>
                     No work orders for this asset yet.
@@ -1138,46 +1092,29 @@ function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, onC
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                   {assetWorkOrders.map(wo => (
-                    <div
-                      key={wo.id}
-                      style={{
-                        background: '#1e2245',
-                        border: '1px solid rgba(201,168,76,0.18)',
-                        borderRadius: '10px',
-                        padding: '1rem'
-                      }}
-                    >
+                    <div key={wo.id} style={{
+                      background: '#1e2245', border: '1px solid rgba(201,168,76,0.18)',
+                      borderRadius: '10px', padding: '1rem'
+                    }}>
                       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.45rem' }}>
                         <span style={{
-                          padding: '0.15rem 0.55rem',
-                          borderRadius: '20px',
-                          fontSize: '0.65rem',
-                          fontWeight: '700',
-                          letterSpacing: '0.08em',
-                          textTransform: 'uppercase',
+                          padding: '0.15rem 0.55rem', borderRadius: '20px',
+                          fontSize: '0.65rem', fontWeight: '700', letterSpacing: '0.08em', textTransform: 'uppercase',
                           color: PRIORITY_COLOR[wo.priority] || '#9a9db5',
                           border: `1px solid ${PRIORITY_COLOR[wo.priority] || '#9a9db5'}`
                         }}>
                           {wo.priority}
                         </span>
                         <span style={{
-                          padding: '0.15rem 0.55rem',
-                          borderRadius: '20px',
-                          fontSize: '0.65rem',
-                          letterSpacing: '0.06em',
-                          textTransform: 'capitalize',
+                          padding: '0.15rem 0.55rem', borderRadius: '20px',
+                          fontSize: '0.65rem', letterSpacing: '0.06em', textTransform: 'capitalize',
                           color: STATUS_COLOR[wo.status] || '#9a9db5',
                           border: `1px solid ${STATUS_COLOR[wo.status] || '#9a9db5'}`
                         }}>
                           {wo.status}
                         </span>
                       </div>
-                      <p style={{
-                        fontFamily: 'Georgia, serif',
-                        fontSize: '0.95rem',
-                        fontWeight: '600',
-                        marginBottom: '0.3rem'
-                      }}>
+                      <p style={{ fontFamily: 'Georgia, serif', fontSize: '0.95rem', fontWeight: '600', marginBottom: '0.3rem' }}>
                         {wo.title}
                       </p>
                       <p style={{ fontSize: '0.75rem', color: '#9a9db5' }}>
@@ -1190,21 +1127,14 @@ function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, onC
             </div>
           )}
 
+          {/* PM SCHEDULE TAB */}
           {mode === 'edit' && tab === 'pm' && (
             <div style={{
-              background: 'rgba(201,168,76,0.04)',
-              border: '1px dashed rgba(201,168,76,0.2)',
-              borderRadius: '10px',
-              padding: '2.5rem 1.5rem',
-              textAlign: 'center'
+              background: 'rgba(201,168,76,0.04)', border: '1px dashed rgba(201,168,76,0.2)',
+              borderRadius: '10px', padding: '2.5rem 1.5rem', textAlign: 'center'
             }}>
               <p style={{ fontSize: '2rem', marginBottom: '0.75rem', opacity: 0.5 }}>🗓️</p>
-              <p style={{
-                fontSize: '0.95rem',
-                color: '#f8f6f1',
-                fontWeight: '500',
-                marginBottom: '0.5rem'
-              }}>
+              <p style={{ fontSize: '0.95rem', color: '#f8f6f1', fontWeight: '500', marginBottom: '0.5rem' }}>
                 PM Scheduling Coming Soon
               </p>
               <p style={{ fontSize: '0.82rem', color: '#9a9db5', lineHeight: '1.65' }}>
