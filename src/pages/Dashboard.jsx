@@ -92,7 +92,7 @@ export default function Dashboard({ profile }) {
 
   // Flyout state
   const [flyoutOpen, setFlyoutOpen] = useState(false)
-  const [flyoutMode, setFlyoutMode] = useState('create') // 'create' or 'edit'
+  const [flyoutMode, setFlyoutMode] = useState('create')
   const [flyoutAsset, setFlyoutAsset] = useState(null)
   const [flyoutTab, setFlyoutTab] = useState('details')
 
@@ -163,7 +163,6 @@ export default function Dashboard({ profile }) {
   const firstName = profile?.full_name?.split(' ')[0] || 'there'
   const isPro = organization?.is_upgraded === true
 
-  // Filter assets by search query
   const searchResults = useMemo(() => {
     if (!searchQuery.trim()) return []
     const q = searchQuery.toLowerCase()
@@ -199,7 +198,6 @@ export default function Dashboard({ profile }) {
       color: '#f8f6f1'
     }}>
 
-      {/* NAV */}
       <nav style={{
         background: 'rgba(26,26,46,0.95)',
         borderBottom: '1px solid rgba(201,168,76,0.18)',
@@ -280,13 +278,16 @@ export default function Dashboard({ profile }) {
           .app-body { flex-direction: column !important; }
           .sidebar { width: 100% !important; min-height: auto !important; border-right: none !important; border-bottom: 1px solid rgba(201,168,76,0.15) !important; }
           .stat-grid-inner { grid-template-columns: repeat(2, 1fr) !important; }
-          .asset-flyout { width: 100% !important; }
+          .asset-flyout { width: 100% !important; max-width: 100vw !important; border-left: none !important; box-sizing: border-box !important; }
+          .asset-flyout-grid { grid-template-columns: 1fr !important; }
+          .asset-flyout-body { padding: 1rem !important; }
+          .asset-flyout-header { padding: 1rem !important; }
+          .asset-flyout-tabs { padding: 0 1rem !important; }
         }
       `}</style>
 
       <div style={{ display: 'flex' }} className="app-body">
 
-        {/* SIDEBAR */}
         <div
           className="sidebar"
           style={{
@@ -310,7 +311,6 @@ export default function Dashboard({ profile }) {
           </p>
 
           {!isPro ? (
-            /* LITE — UPGRADE PROMPT */
             <div style={{
               background: 'rgba(201,168,76,0.05)',
               border: '1px solid rgba(201,168,76,0.2)',
@@ -349,7 +349,6 @@ export default function Dashboard({ profile }) {
             </div>
           ) : (
             <div>
-              {/* ADD ASSET BUTTON */}
               <button
                 onClick={openAddAsset}
                 style={{
@@ -365,7 +364,6 @@ export default function Dashboard({ profile }) {
                 + Add Asset
               </button>
 
-              {/* SEARCH BOX */}
               <div style={{ position: 'relative', marginBottom: '1.5rem' }}>
                 <input
                   type="text"
@@ -442,7 +440,6 @@ export default function Dashboard({ profile }) {
                 )}
               </div>
 
-              {/* MAINTENANCE COMING UP */}
               <p style={{
                 fontSize: '0.68rem',
                 letterSpacing: '0.16em',
@@ -479,7 +476,6 @@ export default function Dashboard({ profile }) {
           )}
         </div>
 
-        {/* MAIN CONTENT */}
         <div style={{ flex: 1, padding: '2rem 2.5rem', minWidth: 0 }}>
 
           {!organization?.stripe_subscription_id && (
@@ -739,7 +735,6 @@ export default function Dashboard({ profile }) {
         </div>
       </div>
 
-      {/* ASSET FLYOUT */}
       {flyoutOpen && (
         <AssetFlyout
           mode={flyoutMode}
@@ -758,7 +753,6 @@ export default function Dashboard({ profile }) {
   )
 }
 
-// ── ASSET FLYOUT COMPONENT ──
 function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, onClose, onSaved, onDeleted, getTechName }) {
   const [name, setName] = useState(asset?.name || '')
   const [location, setLocation] = useState(asset?.location || '')
@@ -843,22 +837,26 @@ function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, onC
         onClick={e => e.stopPropagation()}
         style={{
           width: '480px',
+          maxWidth: '100vw',
           height: '100vh',
           background: '#1a1a2e',
           borderLeft: '1px solid rgba(201,168,76,0.25)',
           display: 'flex',
           flexDirection: 'column',
-          boxShadow: '-10px 0 40px rgba(0,0,0,0.5)'
+          boxShadow: '-10px 0 40px rgba(0,0,0,0.5)',
+          boxSizing: 'border-box'
         }}
       >
-        {/* FLYOUT HEADER */}
-        <div style={{
-          padding: '1.5rem',
-          borderBottom: '1px solid rgba(201,168,76,0.18)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between'
-        }}>
+        <div
+          className="asset-flyout-header"
+          style={{
+            padding: '1.5rem',
+            borderBottom: '1px solid rgba(201,168,76,0.18)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between'
+          }}
+        >
           <div>
             <p style={{
               fontSize: '0.7rem',
@@ -895,13 +893,15 @@ function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, onC
           </button>
         </div>
 
-        {/* TABS (only in edit mode) */}
         {mode === 'edit' && (
-          <div style={{
-            display: 'flex',
-            borderBottom: '1px solid rgba(201,168,76,0.18)',
-            padding: '0 1.5rem'
-          }}>
+          <div
+            className="asset-flyout-tabs"
+            style={{
+              display: 'flex',
+              borderBottom: '1px solid rgba(201,168,76,0.18)',
+              padding: '0 1.5rem'
+            }}
+          >
             {[
               { id: 'details', label: 'Details' },
               { id: 'history', label: 'Work Order History' },
@@ -930,8 +930,7 @@ function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, onC
           </div>
         )}
 
-        {/* FLYOUT BODY */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem' }}>
+        <div className="asset-flyout-body" style={{ flex: 1, overflowY: 'auto', padding: '1.5rem' }}>
           {(mode === 'create' || tab === 'details') && (
             <form onSubmit={handleSave}>
               <div style={{ marginBottom: '1rem' }}>
@@ -946,7 +945,7 @@ function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, onC
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
+              <div className="asset-flyout-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
                 <div>
                   <label style={flyoutLabelStyle}>Location</label>
                   <input
@@ -992,7 +991,7 @@ function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, onC
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
+              <div className="asset-flyout-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
                 <div>
                   <label style={flyoutLabelStyle}>Manufacturer</label>
                   <input
@@ -1015,7 +1014,7 @@ function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, onC
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1.25rem' }}>
+              <div className="asset-flyout-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1.25rem' }}>
                 <div>
                   <label style={flyoutLabelStyle}>Serial Number</label>
                   <input
