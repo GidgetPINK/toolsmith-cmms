@@ -478,12 +478,8 @@ export default function Dashboard({ profile }) {
                   cursor: 'pointer', transition: 'all 0.2s'
                 }}
               >
-                <p style={{ fontSize: '1.8rem', fontWeight: '700', color: stat.color, marginBottom: '0.2rem' }}>
-                  {stat.value}
-                </p>
-                <p style={{ fontSize: '0.7rem', color: '#9a9db5', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                  {stat.label}
-                </p>
+                <p style={{ fontSize: '1.8rem', fontWeight: '700', color: stat.color, marginBottom: '0.2rem' }}>{stat.value}</p>
+                <p style={{ fontSize: '0.7rem', color: '#9a9db5', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{stat.label}</p>
               </div>
             ))}
           </div>
@@ -620,6 +616,8 @@ export default function Dashboard({ profile }) {
 
 // ── ASSET FLYOUT ──
 function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, onClose, onSaved, onDeleted, getTechName }) {
+  const navigate = useNavigate()
+
   const [name, setName] = useState(asset?.name || '')
   const [location, setLocation] = useState(asset?.location || '')
   const [category, setCategory] = useState(asset?.category || '')
@@ -630,7 +628,6 @@ function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, onC
   const [model, setModel] = useState(asset?.model || '')
   const [installDate, setInstallDate] = useState(asset?.install_date || '')
 
-  // Photo state
   const [photoFile, setPhotoFile] = useState(null)
   const [photoPreview, setPhotoPreview] = useState(asset?.photo_url || null)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
@@ -643,19 +640,8 @@ function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, onC
   function handlePhotoChange(e) {
     const file = e.target.files[0]
     if (!file) return
-
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      setError('Please select an image file.')
-      return
-    }
-
-    // Validate file size — 5MB max
-    if (file.size > 5 * 1024 * 1024) {
-      setError('Photo must be under 5MB.')
-      return
-    }
-
+    if (!file.type.startsWith('image/')) { setError('Please select an image file.'); return }
+    if (file.size > 5 * 1024 * 1024) { setError('Photo must be under 5MB.'); return }
     setPhotoFile(file)
     setPhotoPreview(URL.createObjectURL(file))
     setError(null)
@@ -669,29 +655,15 @@ function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, onC
 
   async function uploadPhoto() {
     if (!photoFile) return asset?.photo_url || null
-
     setUploadingPhoto(true)
     const ext = photoFile.name.split('.').pop()
     const filename = `${organizationId}/${Date.now()}.${ext}`
-
     const { data, error: uploadError } = await supabase.storage
       .from('asset-photos')
-      .upload(filename, photoFile, {
-        contentType: photoFile.type,
-        upsert: false
-      })
-
+      .upload(filename, photoFile, { contentType: photoFile.type, upsert: false })
     setUploadingPhoto(false)
-
-    if (uploadError) {
-      setError(`Photo upload failed: ${uploadError.message}`)
-      return null
-    }
-
-    const { data: urlData } = supabase.storage
-      .from('asset-photos')
-      .getPublicUrl(data.path)
-
+    if (uploadError) { setError(`Photo upload failed: ${uploadError.message}`); return null }
+    const { data: urlData } = supabase.storage.from('asset-photos').getPublicUrl(data.path)
     return urlData.publicUrl
   }
 
@@ -699,41 +671,21 @@ function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, onC
     e.preventDefault()
     setSubmitting(true)
     setError(null)
-
-    // Upload photo first if a new one was selected
     const photoUrl = await uploadPhoto()
-    if (error) {
-      setSubmitting(false)
-      return
-    }
-
+    if (error) { setSubmitting(false); return }
     const payload = {
-      name,
-      location,
-      category,
-      criticality,
-      function: functionText,
-      serial_number: serialNumber,
-      manufacturer,
-      model,
-      install_date: installDate || null,
-      organization_id: organizationId,
-      photo_url: photoUrl
+      name, location, category, criticality,
+      function: functionText, serial_number: serialNumber,
+      manufacturer, model, install_date: installDate || null,
+      organization_id: organizationId, photo_url: photoUrl
     }
-
     let result
     if (mode === 'edit' && asset?.id) {
       result = await supabase.from('assets').update(payload).eq('id', asset.id)
     } else {
       result = await supabase.from('assets').insert(payload)
     }
-
-    if (result.error) {
-      setError(result.error.message)
-      setSubmitting(false)
-      return
-    }
-
+    if (result.error) { setError(result.error.message); setSubmitting(false); return }
     setSubmitting(false)
     onSaved()
   }
@@ -742,38 +694,28 @@ function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, onC
     if (!asset?.id) return
     if (!confirm(`Delete ${asset.name}? This cannot be undone.`)) return
     setDeleting(true)
-
-    // Delete photo from storage if it exists
     if (asset.photo_url) {
       const path = asset.photo_url.split('/asset-photos/')[1]
-      if (path) {
-        await supabase.storage.from('asset-photos').remove([path])
-      }
+      if (path) await supabase.storage.from('asset-photos').remove([path])
     }
-
     const { error } = await supabase.from('assets').delete().eq('id', asset.id)
-    if (error) {
-      setError(error.message)
-      setDeleting(false)
-      return
-    }
+    if (error) { setError(error.message); setDeleting(false); return }
     setDeleting(false)
     onDeleted()
   }
 
-  const assetWorkOrders = asset?.id
-    ? workOrders.filter(wo => wo.asset_id === asset.id)
-    : []
+  function handleCreateWorkOrder() {
+    onClose()
+    navigate(`/work-order/new?asset=${asset.id}`)
+  }
 
+  const assetWorkOrders = asset?.id ? workOrders.filter(wo => wo.asset_id === asset.id) : []
   const isSaving = submitting || uploadingPhoto
 
   return (
     <div
       onClick={onClose}
-      style={{
-        position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
-        zIndex: 100, display: 'flex', justifyContent: 'flex-end'
-      }}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 100, display: 'flex', justifyContent: 'flex-end' }}
     >
       <div
         className="asset-flyout"
@@ -809,12 +751,9 @@ function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, onC
           </button>
         </div>
 
-        {/* TABS (edit mode only) */}
+        {/* TABS */}
         {mode === 'edit' && (
-          <div
-            className="asset-flyout-tabs"
-            style={{ display: 'flex', borderBottom: '1px solid rgba(201,168,76,0.18)', padding: '0 1.5rem' }}
-          >
+          <div className="asset-flyout-tabs" style={{ display: 'flex', borderBottom: '1px solid rgba(201,168,76,0.18)', padding: '0 1.5rem' }}>
             {[
               { id: 'details', label: 'Details' },
               { id: 'history', label: 'Work Order History' },
@@ -844,28 +783,20 @@ function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, onC
           {(mode === 'create' || tab === 'details') && (
             <form onSubmit={handleSave}>
 
-              {/* PHOTO — shown at top in edit mode if photo exists, or as upload area always */}
+              {/* PHOTO */}
               <div style={{ marginBottom: '1.25rem' }}>
                 <label style={flyoutLabelStyle}>Asset Photo</label>
-
                 {photoPreview ? (
                   <div style={{ position: 'relative' }}>
                     <img
                       src={photoPreview}
-                      alt="Asset preview"
+                      alt="Asset"
                       style={{
-                        width: '100%',
-                        height: '180px',
-                        objectFit: 'cover',
-                        borderRadius: '8px',
-                        border: '1px solid rgba(201,168,76,0.2)',
-                        display: 'block'
+                        width: '100%', height: '180px', objectFit: 'cover',
+                        borderRadius: '8px', border: '1px solid rgba(201,168,76,0.2)', display: 'block'
                       }}
                     />
-                    <div style={{
-                      position: 'absolute', top: '0.5rem', right: '0.5rem',
-                      display: 'flex', gap: '0.4rem'
-                    }}>
+                    <div style={{ position: 'absolute', top: '0.5rem', right: '0.5rem', display: 'flex', gap: '0.4rem' }}>
                       <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
@@ -894,11 +825,9 @@ function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, onC
                   <div
                     onClick={() => fileInputRef.current?.click()}
                     style={{
-                      border: '1px dashed rgba(201,168,76,0.3)',
-                      borderRadius: '8px', padding: '1.75rem 1rem',
-                      textAlign: 'center', cursor: 'pointer',
-                      background: 'rgba(201,168,76,0.03)',
-                      transition: 'border-color 0.2s, background 0.2s'
+                      border: '1px dashed rgba(201,168,76,0.3)', borderRadius: '8px',
+                      padding: '1.75rem 1rem', textAlign: 'center', cursor: 'pointer',
+                      background: 'rgba(201,168,76,0.03)', transition: 'border-color 0.2s, background 0.2s'
                     }}
                     onMouseEnter={e => {
                       e.currentTarget.style.borderColor = 'rgba(201,168,76,0.6)'
@@ -913,52 +842,26 @@ function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, onC
                     <p style={{ fontSize: '0.85rem', color: '#c9a84c', fontWeight: '500', marginBottom: '0.25rem' }}>
                       Click to upload a photo
                     </p>
-                    <p style={{ fontSize: '0.72rem', color: '#9a9db5' }}>
-                      JPG, PNG, or WebP — max 5MB
-                    </p>
+                    <p style={{ fontSize: '0.72rem', color: '#9a9db5' }}>JPG, PNG, or WebP — max 5MB</p>
                   </div>
                 )}
-
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handlePhotoChange}
-                  style={{ display: 'none' }}
-                />
+                <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoChange} style={{ display: 'none' }} />
               </div>
 
-              {/* ASSET NAME */}
+              {/* FIELDS */}
               <div style={{ marginBottom: '1rem' }}>
                 <label style={flyoutLabelStyle}>Asset Name *</label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={e => setName(e.target.value)}
-                  required
-                  placeholder="Air Compressor Unit 1"
-                  style={flyoutInputStyle}
-                />
+                <input type="text" value={name} onChange={e => setName(e.target.value)} required placeholder="Air Compressor Unit 1" style={flyoutInputStyle} />
               </div>
 
               <div className="asset-flyout-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
                 <div>
                   <label style={flyoutLabelStyle}>Location</label>
-                  <input
-                    type="text"
-                    value={location}
-                    onChange={e => setLocation(e.target.value)}
-                    placeholder="Building A"
-                    style={flyoutInputStyle}
-                  />
+                  <input type="text" value={location} onChange={e => setLocation(e.target.value)} placeholder="Building A" style={flyoutInputStyle} />
                 </div>
                 <div>
                   <label style={flyoutLabelStyle}>Category</label>
-                  <select
-                    value={category}
-                    onChange={e => setCategory(e.target.value)}
-                    style={{ ...flyoutInputStyle, cursor: 'pointer' }}
-                  >
+                  <select value={category} onChange={e => setCategory(e.target.value)} style={{ ...flyoutInputStyle, cursor: 'pointer' }}>
                     <option value="">Select</option>
                     {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
@@ -967,11 +870,7 @@ function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, onC
 
               <div style={{ marginBottom: '1rem' }}>
                 <label style={flyoutLabelStyle}>Criticality</label>
-                <select
-                  value={criticality}
-                  onChange={e => setCriticality(e.target.value)}
-                  style={{ ...flyoutInputStyle, cursor: 'pointer' }}
-                >
+                <select value={criticality} onChange={e => setCriticality(e.target.value)} style={{ ...flyoutInputStyle, cursor: 'pointer' }}>
                   {CRITICALITY_LEVELS.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
@@ -990,45 +889,22 @@ function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, onC
               <div className="asset-flyout-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
                 <div>
                   <label style={flyoutLabelStyle}>Manufacturer</label>
-                  <input
-                    type="text"
-                    value={manufacturer}
-                    onChange={e => setManufacturer(e.target.value)}
-                    placeholder="Ingersoll Rand"
-                    style={flyoutInputStyle}
-                  />
+                  <input type="text" value={manufacturer} onChange={e => setManufacturer(e.target.value)} placeholder="Ingersoll Rand" style={flyoutInputStyle} />
                 </div>
                 <div>
                   <label style={flyoutLabelStyle}>Model</label>
-                  <input
-                    type="text"
-                    value={model}
-                    onChange={e => setModel(e.target.value)}
-                    placeholder="SSR-EP25"
-                    style={flyoutInputStyle}
-                  />
+                  <input type="text" value={model} onChange={e => setModel(e.target.value)} placeholder="SSR-EP25" style={flyoutInputStyle} />
                 </div>
               </div>
 
               <div className="asset-flyout-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1.25rem' }}>
                 <div>
                   <label style={flyoutLabelStyle}>Serial Number</label>
-                  <input
-                    type="text"
-                    value={serialNumber}
-                    onChange={e => setSerialNumber(e.target.value)}
-                    placeholder="SN-12345"
-                    style={flyoutInputStyle}
-                  />
+                  <input type="text" value={serialNumber} onChange={e => setSerialNumber(e.target.value)} placeholder="SN-12345" style={flyoutInputStyle} />
                 </div>
                 <div>
                   <label style={flyoutLabelStyle}>Install Date</label>
-                  <input
-                    type="date"
-                    value={installDate}
-                    onChange={e => setInstallDate(e.target.value)}
-                    style={flyoutInputStyle}
-                  />
+                  <input type="date" value={installDate} onChange={e => setInstallDate(e.target.value)} style={flyoutInputStyle} />
                 </div>
               </div>
 
@@ -1042,13 +918,13 @@ function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, onC
                 </p>
               )}
 
-              <div style={{ display: 'flex', gap: '0.75rem' }}>
+              {/* SAVE / DELETE BUTTONS */}
+              <div style={{ display: 'flex', gap: '0.75rem', marginBottom: mode === 'edit' ? '0.75rem' : 0 }}>
                 <button
                   type="submit"
                   disabled={isSaving}
                   style={{
-                    flex: 1,
-                    background: 'linear-gradient(135deg, #c9a84c, #e8c97a)',
+                    flex: 1, background: 'linear-gradient(135deg, #c9a84c, #e8c97a)',
                     color: '#1a1a2e', border: 'none', borderRadius: '8px',
                     padding: '0.85rem', fontSize: '0.88rem', fontWeight: '700',
                     letterSpacing: '0.06em', textTransform: 'uppercase',
@@ -1074,6 +950,42 @@ function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, onC
                   </button>
                 )}
               </div>
+
+              {/* CREATE WORK ORDER BUTTON — edit mode only */}
+              {mode === 'edit' && (
+                <>
+                  <div style={{ height: '1px', background: 'rgba(201,168,76,0.12)', margin: '0.25rem 0 0.75rem' }} />
+                  <button
+                    type="button"
+                    onClick={handleCreateWorkOrder}
+                    style={{
+                      width: '100%',
+                      background: 'none',
+                      border: '1px solid rgba(201,168,76,0.3)',
+                      color: '#c9a84c',
+                      borderRadius: '8px',
+                      padding: '0.85rem',
+                      fontSize: '0.85rem',
+                      fontWeight: '500',
+                      letterSpacing: '0.05em',
+                      textTransform: 'uppercase',
+                      cursor: 'pointer',
+                      fontFamily: 'Inter, sans-serif',
+                      transition: 'border-color 0.2s, background 0.2s'
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.borderColor = '#c9a84c'
+                      e.currentTarget.style.background = 'rgba(201,168,76,0.06)'
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.borderColor = 'rgba(201,168,76,0.3)'
+                      e.currentTarget.style.background = 'none'
+                    }}
+                  >
+                    + Create Work Order for This Asset
+                  </button>
+                </>
+              )}
             </form>
           )}
 
@@ -1088,6 +1000,18 @@ function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, onC
                   <p style={{ fontSize: '0.88rem', color: '#9a9db5', lineHeight: '1.6' }}>
                     No work orders for this asset yet.
                   </p>
+                  <button
+                    onClick={handleCreateWorkOrder}
+                    style={{
+                      marginTop: '1rem', background: 'none',
+                      border: '1px solid rgba(201,168,76,0.3)', color: '#c9a84c',
+                      borderRadius: '8px', padding: '0.65rem 1.25rem',
+                      fontSize: '0.82rem', fontWeight: '500', letterSpacing: '0.05em',
+                      textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Inter, sans-serif'
+                    }}
+                  >
+                    + Create First Work Order
+                  </button>
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -1122,6 +1046,17 @@ function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, onC
                       </p>
                     </div>
                   ))}
+                  <button
+                    onClick={handleCreateWorkOrder}
+                    style={{
+                      background: 'none', border: '1px solid rgba(201,168,76,0.25)',
+                      color: '#c9a84c', borderRadius: '8px', padding: '0.7rem',
+                      fontSize: '0.82rem', fontWeight: '500', letterSpacing: '0.05em',
+                      textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Inter, sans-serif'
+                    }}
+                  >
+                    + Create Work Order
+                  </button>
                 </div>
               )}
             </div>

@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
 export default function WorkOrderForm({ profile }) {
   const { id } = useParams()
+  const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const isNew = !id
 
@@ -20,7 +21,6 @@ export default function WorkOrderForm({ profile }) {
   const [fetching, setFetching] = useState(!isNew)
   const [error, setError] = useState(null)
 
-  // Inline add asset state
   const [showAddAsset, setShowAddAsset] = useState(false)
   const [newAssetName, setNewAssetName] = useState('')
   const [newAssetLocation, setNewAssetLocation] = useState('')
@@ -33,6 +33,11 @@ export default function WorkOrderForm({ profile }) {
     if (!isNew) fetchWorkOrder()
     if (isNew && profile?.role === 'technician') {
       setAssignedTo(profile.id)
+    }
+    // Pre-fill asset from flyout "Create Work Order" button
+    const prefilledAsset = searchParams.get('asset')
+    if (isNew && prefilledAsset) {
+      setAssetId(prefilledAsset)
     }
   }, [id])
 
@@ -74,7 +79,6 @@ export default function WorkOrderForm({ profile }) {
     setAddAssetError(null)
     setAddAssetSubmitting(true)
 
-    // Lite plan — trigger upgrade
     if (!organization?.is_upgraded) {
       navigate('/upgrade')
       return
@@ -201,7 +205,6 @@ export default function WorkOrderForm({ profile }) {
       color: '#f8f6f1'
     }}>
 
-      {/* NAV */}
       <nav style={{
         display: 'flex',
         alignItems: 'center',
@@ -242,7 +245,25 @@ export default function WorkOrderForm({ profile }) {
 
       <div style={{ padding: '2.5rem 5%', maxWidth: '680px', margin: '0 auto' }}>
 
-        {/* HEADER */}
+        {/* ASSET PRE-FILL NOTICE */}
+        {isNew && searchParams.get('asset') && assetId && (
+          <div style={{
+            background: 'rgba(201,168,76,0.06)',
+            border: '1px solid rgba(201,168,76,0.25)',
+            borderRadius: '10px',
+            padding: '0.75rem 1rem',
+            marginBottom: '1.5rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.6rem'
+          }}>
+            <span style={{ color: '#c9a84c', fontSize: '0.88rem' }}>⚡</span>
+            <p style={{ color: '#c9a84c', fontSize: '0.85rem' }}>
+              Asset pre-selected from your registry. Update any field before saving.
+            </p>
+          </div>
+        )}
+
         <div style={{ marginBottom: '2rem' }}>
           <p style={{
             fontSize: '0.75rem',
@@ -265,7 +286,6 @@ export default function WorkOrderForm({ profile }) {
 
         <form onSubmit={handleSubmit}>
 
-          {/* TITLE */}
           <div style={fieldStyle}>
             <label style={labelStyle}>Title</label>
             <input
@@ -278,7 +298,6 @@ export default function WorkOrderForm({ profile }) {
             />
           </div>
 
-          {/* DESCRIPTION */}
           <div style={fieldStyle}>
             <label style={labelStyle}>Description</label>
             <textarea
@@ -290,7 +309,6 @@ export default function WorkOrderForm({ profile }) {
             />
           </div>
 
-          {/* PRIORITY */}
           <div style={fieldStyle}>
             <label style={labelStyle}>Priority</label>
             <select
@@ -305,7 +323,6 @@ export default function WorkOrderForm({ profile }) {
             </select>
           </div>
 
-          {/* STATUS — only on edit */}
           {!isNew && (
             <div style={fieldStyle}>
               <label style={labelStyle}>Status</label>
@@ -321,7 +338,6 @@ export default function WorkOrderForm({ profile }) {
             </div>
           )}
 
-          {/* ASSET */}
           <div style={fieldStyle}>
             <label style={labelStyle}>Asset</label>
             <select
@@ -350,7 +366,6 @@ export default function WorkOrderForm({ profile }) {
               </option>
             </select>
 
-            {/* INLINE ADD ASSET FORM */}
             {showAddAsset && (
               <div style={{
                 marginTop: '0.75rem',
@@ -390,12 +405,7 @@ export default function WorkOrderForm({ profile }) {
                     value={newAssetCategory}
                     onChange={e => setNewAssetCategory(e.target.value)}
                     required
-                    style={{
-                      ...smallInputStyle,
-                      background: '#1e2245',
-                      cursor: 'pointer',
-                      marginBottom: '0.75rem'
-                    }}
+                    style={{ ...smallInputStyle, background: '#1e2245', cursor: 'pointer', marginBottom: '0.75rem' }}
                   >
                     <option value="">Select category</option>
                     <option value="Mechanical">Mechanical</option>
@@ -408,11 +418,7 @@ export default function WorkOrderForm({ profile }) {
                   </select>
 
                   {addAssetError && (
-                    <p style={{
-                      color: '#e06c75',
-                      fontSize: '0.82rem',
-                      marginBottom: '0.75rem'
-                    }}>
+                    <p style={{ color: '#e06c75', fontSize: '0.82rem', marginBottom: '0.75rem' }}>
                       {addAssetError}
                     </p>
                   )}
@@ -424,12 +430,8 @@ export default function WorkOrderForm({ profile }) {
                       style={{
                         flex: 1,
                         background: 'linear-gradient(135deg, #c9a84c, #e8c97a)',
-                        color: '#1a1a2e',
-                        border: 'none',
-                        borderRadius: '6px',
-                        padding: '0.6rem',
-                        fontSize: '0.82rem',
-                        fontWeight: '700',
+                        color: '#1a1a2e', border: 'none', borderRadius: '6px',
+                        padding: '0.6rem', fontSize: '0.82rem', fontWeight: '700',
                         cursor: addAssetSubmitting ? 'not-allowed' : 'pointer',
                         opacity: addAssetSubmitting ? 0.7 : 1,
                         fontFamily: 'Inter, sans-serif'
@@ -447,15 +449,11 @@ export default function WorkOrderForm({ profile }) {
                         setAddAssetError(null)
                       }}
                       style={{
-                        flex: 1,
-                        background: 'none',
+                        flex: 1, background: 'none',
                         border: '1px solid rgba(201,168,76,0.18)',
-                        color: '#9a9db5',
-                        borderRadius: '6px',
-                        padding: '0.6rem',
-                        fontSize: '0.82rem',
-                        cursor: 'pointer',
-                        fontFamily: 'Inter, sans-serif'
+                        color: '#9a9db5', borderRadius: '6px',
+                        padding: '0.6rem', fontSize: '0.82rem',
+                        cursor: 'pointer', fontFamily: 'Inter, sans-serif'
                       }}
                     >
                       Cancel
@@ -466,7 +464,6 @@ export default function WorkOrderForm({ profile }) {
             )}
           </div>
 
-          {/* ASSIGNED TO */}
           <div style={fieldStyle}>
             <label style={labelStyle}>Assigned To</label>
             {profile?.role === 'manager' ? (
@@ -485,47 +482,32 @@ export default function WorkOrderForm({ profile }) {
                 type="text"
                 value={profile?.full_name || ''}
                 disabled
-                style={{
-                  ...inputStyle,
-                  opacity: 0.5,
-                  cursor: 'not-allowed'
-                }}
+                style={{ ...inputStyle, opacity: 0.5, cursor: 'not-allowed' }}
               />
             )}
           </div>
 
           {error && (
             <p style={{
-              color: '#e06c75',
-              fontSize: '0.85rem',
-              marginBottom: '1rem',
-              padding: '0.75rem',
-              background: 'rgba(224,108,117,0.1)',
-              borderRadius: '6px',
-              border: '1px solid rgba(224,108,117,0.2)'
+              color: '#e06c75', fontSize: '0.85rem', marginBottom: '1rem',
+              padding: '0.75rem', background: 'rgba(224,108,117,0.1)',
+              borderRadius: '6px', border: '1px solid rgba(224,108,117,0.2)'
             }}>
               {error}
             </p>
           )}
 
-          {/* ACTIONS */}
           <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
             <button
               type="submit"
               disabled={loading}
               style={{
                 background: 'linear-gradient(135deg, #c9a84c, #e8c97a)',
-                color: '#1a1a2e',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '0.9rem 2rem',
-                fontSize: '0.9rem',
-                fontWeight: '700',
-                letterSpacing: '0.06em',
-                textTransform: 'uppercase',
+                color: '#1a1a2e', border: 'none', borderRadius: '8px',
+                padding: '0.9rem 2rem', fontSize: '0.9rem', fontWeight: '700',
+                letterSpacing: '0.06em', textTransform: 'uppercase',
                 cursor: loading ? 'not-allowed' : 'pointer',
-                opacity: loading ? 0.7 : 1,
-                fontFamily: 'Inter, sans-serif'
+                opacity: loading ? 0.7 : 1, fontFamily: 'Inter, sans-serif'
               }}
             >
               {loading ? 'Saving...' : isNew ? 'Create Work Order' : 'Save Changes'}
@@ -538,14 +520,10 @@ export default function WorkOrderForm({ profile }) {
                 style={{
                   background: 'none',
                   border: '1px solid rgba(224,108,117,0.4)',
-                  color: '#e06c75',
-                  borderRadius: '8px',
-                  padding: '0.9rem 2rem',
-                  fontSize: '0.9rem',
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
-                  cursor: 'pointer',
-                  fontFamily: 'Inter, sans-serif'
+                  color: '#e06c75', borderRadius: '8px',
+                  padding: '0.9rem 2rem', fontSize: '0.9rem',
+                  letterSpacing: '0.06em', textTransform: 'uppercase',
+                  cursor: 'pointer', fontFamily: 'Inter, sans-serif'
                 }}
               >
                 Delete
