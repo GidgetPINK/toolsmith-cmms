@@ -13,6 +13,7 @@ import Register from './pages/Register'
 import Success from './pages/Success'
 import Upgrade from './pages/Upgrade'
 import Assets from './pages/Assets'
+import CustomFields from './pages/CustomFields'
 
 function DisabledScreen() {
   async function handleSignOut() {
@@ -242,6 +243,18 @@ function App() {
               <Navigate to="/" replace />
             ) : (
               <Assets profile={profile} />
+            )
+          }
+        />
+        <Route
+          path="/settings/custom-fields"
+          element={
+            !session ? (
+              <Navigate to="/login" replace />
+            ) : profile?.role !== 'manager' ? (
+              <Navigate to="/" replace />
+            ) : (
+              <CustomFields profile={profile} />
             )
           }
         />
