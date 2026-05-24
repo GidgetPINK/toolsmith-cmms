@@ -15,6 +15,23 @@ import Upgrade from './pages/Upgrade'
 import Assets from './pages/Assets'
 import CustomFields from './pages/CustomFields'
 import Settings from './pages/Settings'
+import MobileWorkOrders from './pages/MobileWorkOrders'
+import MobileAssets from './pages/MobileAssets'
+import MobileAssetDetail from './pages/MobileAssetDetail'
+
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined' && window.innerWidth < 768
+  )
+  useEffect(() => {
+    function handleResize() {
+      setIsMobile(window.innerWidth < 768)
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+  return isMobile
+}
 
 function DisabledScreen() {
   async function handleSignOut() {
@@ -97,6 +114,7 @@ function DisabledScreen() {
 function App() {
   const [session, setSession] = useState(undefined)
   const [profile, setProfile] = useState(undefined)
+  const isMobile = useIsMobile()
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -196,10 +214,12 @@ function App() {
           element={
             !session ? (
               <Navigate to="/login" replace />
-            ) : profile?.role === 'manager' ? (
-              <Dashboard profile={profile} />
-            ) : (
+            ) : profile?.role !== 'manager' ? (
               <Queue profile={profile} />
+            ) : isMobile ? (
+              <Navigate to="/m/work-orders" replace />
+            ) : (
+              <Dashboard profile={profile} />
             )
           }
         />
@@ -266,6 +286,54 @@ function App() {
               <Navigate to="/" replace />
             ) : (
               <CustomFields profile={profile} />
+            )
+          }
+        />
+        <Route
+          path="/m/work-orders"
+          element={
+            !session ? (
+              <Navigate to="/login" replace />
+            ) : profile?.role !== 'manager' ? (
+              <Navigate to="/" replace />
+            ) : (
+              <MobileWorkOrders profile={profile} />
+            )
+          }
+        />
+        <Route
+          path="/m/assets"
+          element={
+            !session ? (
+              <Navigate to="/login" replace />
+            ) : profile?.role !== 'manager' ? (
+              <Navigate to="/" replace />
+            ) : (
+              <MobileAssets profile={profile} />
+            )
+          }
+        />
+        <Route
+          path="/m/assets/new"
+          element={
+            !session ? (
+              <Navigate to="/login" replace />
+            ) : profile?.role !== 'manager' ? (
+              <Navigate to="/" replace />
+            ) : (
+              <MobileAssetDetail profile={profile} />
+            )
+          }
+        />
+        <Route
+          path="/m/assets/:id"
+          element={
+            !session ? (
+              <Navigate to="/login" replace />
+            ) : profile?.role !== 'manager' ? (
+              <Navigate to="/" replace />
+            ) : (
+              <MobileAssetDetail profile={profile} />
             )
           }
         />
