@@ -1,0 +1,212 @@
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { supabase } from '../lib/supabase'
+
+export default function Settings({ profile }) {
+  const navigate = useNavigate()
+  const [isUpgraded, setIsUpgraded] = useState(false)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!profile) return
+    fetchOrgStatus()
+  }, [profile])
+
+  async function fetchOrgStatus() {
+    if (profile.role !== 'manager' || !profile.organization_id) {
+      setLoading(false)
+      return
+    }
+    const { data } = await supabase
+      .from('organizations')
+      .select('is_upgraded')
+      .eq('id', profile.organization_id)
+      .single()
+    setIsUpgraded(!!data?.is_upgraded)
+    setLoading(false)
+  }
+
+  const isManager = profile?.role === 'manager'
+
+  // ============ STYLES ============
+  const page = {
+    minHeight: '100vh',
+    background: '#1A1A2E',
+    color: '#F8F6F1',
+    fontFamily: 'Inter, sans-serif',
+    padding: '2rem 1rem'
+  }
+
+  const container = {
+    maxWidth: '720px',
+    margin: '0 auto'
+  }
+
+  const headerRow = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '1rem',
+    marginBottom: '0.5rem'
+  }
+
+  const backBtn = {
+    background: 'none',
+    border: '1px solid rgba(201,168,76,0.4)',
+    color: '#C9A84C',
+    borderRadius: '6px',
+    padding: '0.4rem 0.8rem',
+    fontSize: '0.8rem',
+    letterSpacing: '0.06em',
+    textTransform: 'uppercase',
+    cursor: 'pointer',
+    fontFamily: 'Inter, sans-serif'
+  }
+
+  const heading = {
+    fontSize: '1.6rem',
+    fontWeight: 600,
+    margin: 0,
+    color: '#F8F6F1'
+  }
+
+  const subhead = {
+    color: '#9A9DB5',
+    fontSize: '0.95rem',
+    margin: '0 0 2rem 0',
+    lineHeight: 1.5
+  }
+
+  const sectionLabel = {
+    fontSize: '0.75rem',
+    letterSpacing: '0.12em',
+    textTransform: 'uppercase',
+    color: '#9A9DB5',
+    margin: '1.5rem 0 0.75rem 0',
+    fontWeight: 600
+  }
+
+  const settingRow = {
+    background: '#16213E',
+    border: '1px solid rgba(154,157,181,0.15)',
+    borderRadius: '12px',
+    padding: '1.25rem 1.5rem',
+    marginBottom: '0.75rem',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: '1rem',
+    width: '100%',
+    textAlign: 'left',
+    fontFamily: 'Inter, sans-serif',
+    color: '#F8F6F1'
+  }
+
+  const settingTitle = {
+    fontSize: '1.05rem',
+    fontWeight: 600,
+    color: '#F8F6F1',
+    margin: 0,
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.6rem',
+    flexWrap: 'wrap'
+  }
+
+  const settingDesc = {
+    color: '#9A9DB5',
+    fontSize: '0.85rem',
+    margin: '0.3rem 0 0 0',
+    lineHeight: 1.4
+  }
+
+  const chevron = {
+    color: '#C9A84C',
+    fontSize: '1.5rem',
+    flexShrink: 0,
+    lineHeight: 1
+  }
+
+  const proBadge = {
+    display: 'inline-block',
+    background: 'rgba(201,168,76,0.2)',
+    color: '#E8C97A',
+    fontSize: '0.65rem',
+    letterSpacing: '0.12em',
+    textTransform: 'uppercase',
+    padding: '0.2rem 0.55rem',
+    borderRadius: '4px',
+    fontWeight: 700
+  }
+
+  if (loading && isManager) {
+    return (
+      <div style={page}>
+        <div style={container}>
+          <p style={{ color: '#9A9DB5' }}>Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div style={page}>
+      <div style={container}>
+        <div style={headerRow}>
+          <button style={backBtn} onClick={() => navigate('/')}>← Back</button>
+          <h1 style={heading}>Settings</h1>
+        </div>
+        <p style={subhead}>
+          Manage your account, your team, and how your assets are tracked.
+        </p>
+
+        <div style={sectionLabel}>Account</div>
+        <button
+          style={settingRow}
+          onClick={() => navigate('/change-password')}
+        >
+          <div style={{ flex: 1 }}>
+            <h3 style={settingTitle}>Change Password</h3>
+            <p style={settingDesc}>Update the password on your account</p>
+          </div>
+          <span style={chevron}>›</span>
+        </button>
+
+        {isManager && (
+          <>
+            <div style={sectionLabel}>Team</div>
+            <button
+              style={settingRow}
+              onClick={() => navigate('/team')}
+            >
+              <div style={{ flex: 1 }}>
+                <h3 style={settingTitle}>Team Management</h3>
+                <p style={settingDesc}>Invite technicians, manage roles, deactivate accounts</p>
+              </div>
+              <span style={chevron}>›</span>
+            </button>
+
+            <div style={sectionLabel}>Asset Configuration</div>
+            <button
+              style={settingRow}
+              onClick={() => navigate('/settings/custom-fields')}
+            >
+              <div style={{ flex: 1 }}>
+                <h3 style={settingTitle}>
+                  Custom Asset Fields
+                  {!isUpgraded && <span style={proBadge}>Pro</span>}
+                </h3>
+                <p style={settingDesc}>
+                  {isUpgraded
+                    ? 'Define fields specific to your operation'
+                    : 'Define fields specific to your operation. Available on the Pro plan.'}
+                </p>
+              </div>
+              <span style={chevron}>›</span>
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
