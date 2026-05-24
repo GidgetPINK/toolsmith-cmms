@@ -219,8 +219,7 @@ export default function Dashboard({ profile }) {
             The Toolsmith CMMS
           </span>
           <div className="desktop-nav" style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-            <button onClick={() => navigate('/team')} style={navBtnStyle}>Team</button>
-            <button onClick={() => navigate('/change-password')} style={navBtnStyle}>Change Password</button>
+            <button onClick={() => navigate('/settings')} style={navBtnStyle}>Settings</button>
             <button onClick={handleSignOut} style={navBtnStyle}>Sign Out</button>
           </div>
           <button
@@ -250,8 +249,7 @@ export default function Dashboard({ profile }) {
             display: 'none', flexDirection: 'column', gap: '6px',
             padding: '0.75rem 5%', borderTop: '1px solid rgba(201,168,76,0.12)'
           }}>
-            <button onClick={() => { navigate('/team'); setMobileNavOpen(false) }} style={mobileNavBtnStyle}>Team</button>
-            <button onClick={() => { navigate('/change-password'); setMobileNavOpen(false) }} style={mobileNavBtnStyle}>Change Password</button>
+            <button onClick={() => { navigate('/settings'); setMobileNavOpen(false) }} style={mobileNavBtnStyle}>Settings</button>
             <button onClick={handleSignOut} style={mobileNavBtnStyle}>Sign Out</button>
           </div>
         )}
