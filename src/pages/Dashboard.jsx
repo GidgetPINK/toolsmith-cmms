@@ -81,6 +81,7 @@ export default function Dashboard({ profile }) {
   const [profiles, setProfiles] = useState([])
   const [assets, setAssets] = useState([])
   const [organization, setOrganization] = useState(null)
+  const [customFieldDefs, setCustomFieldDefs] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('all')
   const [selectedAsset, setSelectedAsset] = useState(null)
@@ -102,7 +103,7 @@ export default function Dashboard({ profile }) {
 
   async function fetchAll() {
     setLoading(true)
-    const [woRes, profRes, assetRes, orgRes] = await Promise.all([
+    const [woRes, profRes, assetRes, orgRes, cfdRes] = await Promise.all([
       supabase
         .from('work_orders')
         .select('*')
@@ -114,12 +115,18 @@ export default function Dashboard({ profile }) {
         .from('organizations')
         .select('*')
         .eq('id', profile.organization_id)
-        .single()
+        .single(),
+      supabase
+        .from('custom_field_definitions')
+        .select('*')
+        .eq('organization_id', profile.organization_id)
+        .order('display_order', { ascending: true })
     ])
     setWorkOrders(woRes.data || [])
     setProfiles(profRes.data || [])
     setAssets(assetRes.data || [])
     setOrganization(orgRes.data || null)
+    setCustomFieldDefs(cfdRes.data || [])
     setLoading(false)
   }
 
@@ -602,6 +609,7 @@ export default function Dashboard({ profile }) {
           setTab={setFlyoutTab}
           workOrders={workOrders}
           organizationId={profile.organization_id}
+          customFieldDefs={customFieldDefs}
           onClose={closeFlyout}
           onSaved={() => { fetchAll(); closeFlyout() }}
           onDeleted={() => { fetchAll(); closeFlyout() }}
@@ -613,7 +621,7 @@ export default function Dashboard({ profile }) {
 }
 
 // ── ASSET FLYOUT ──
-function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, onClose, onSaved, onDeleted, getTechName }) {
+function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, customFieldDefs, onClose, onSaved, onDeleted, getTechName }) {
   const navigate = useNavigate()
 
   const [name, setName] = useState(asset?.name || '')
@@ -625,6 +633,7 @@ function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, onC
   const [manufacturer, setManufacturer] = useState(asset?.manufacturer || '')
   const [model, setModel] = useState(asset?.model || '')
   const [installDate, setInstallDate] = useState(asset?.install_date || '')
+  const [customFieldValues, setCustomFieldValues] = useState(asset?.custom_fields || {})
 
   const [photoFile, setPhotoFile] = useState(null)
   const [photoPreview, setPhotoPreview] = useState(asset?.photo_url || null)
@@ -634,6 +643,99 @@ function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, onC
   const [error, setError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [deleting, setDeleting] = useState(false)
+
+  function updateCustomFieldValue(defId, value) {
+    setCustomFieldValues(prev => ({ ...prev, [defId]: value }))
+  }
+
+  function validateRequiredCustomFields() {
+    for (const def of customFieldDefs) {
+      if (!def.is_required) continue
+      const value = customFieldValues[def.id]
+      if (def.field_type === 'checkbox') {
+        if (value === undefined || value === null) {
+          return `${def.field_name} is required`
+        }
+      } else {
+        if (value === undefined || value === null || value === '') {
+          return `${def.field_name} is required`
+        }
+      }
+    }
+    return null
+  }
+
+  function renderCustomFieldInput(def) {
+    const value = customFieldValues[def.id]
+
+    if (def.field_type === 'text') {
+      return (
+        <input
+          type="text"
+          value={value ?? ''}
+          onChange={e => updateCustomFieldValue(def.id, e.target.value)}
+          style={flyoutInputStyle}
+        />
+      )
+    }
+
+    if (def.field_type === 'number') {
+      return (
+        <input
+          type="number"
+          value={value ?? ''}
+          onChange={e => updateCustomFieldValue(def.id, e.target.value)}
+          style={flyoutInputStyle}
+        />
+      )
+    }
+
+    if (def.field_type === 'date') {
+      return (
+        <input
+          type="date"
+          value={value ?? ''}
+          onChange={e => updateCustomFieldValue(def.id, e.target.value)}
+          style={flyoutInputStyle}
+        />
+      )
+    }
+
+    if (def.field_type === 'dropdown') {
+      return (
+        <select
+          value={value ?? ''}
+          onChange={e => updateCustomFieldValue(def.id, e.target.value)}
+          style={{ ...flyoutInputStyle, cursor: 'pointer' }}
+        >
+          <option value="">Select</option>
+          {(def.options || []).map(opt => (
+            <option key={opt} value={opt}>{opt}</option>
+          ))}
+        </select>
+      )
+    }
+
+    if (def.field_type === 'checkbox') {
+      return (
+        <label style={{
+          display: 'flex', alignItems: 'center', gap: '0.6rem',
+          color: '#f8f6f1', fontSize: '0.9rem', cursor: 'pointer',
+          padding: '0.5rem 0'
+        }}>
+          <input
+            type="checkbox"
+            checked={!!value}
+            onChange={e => updateCustomFieldValue(def.id, e.target.checked)}
+            style={{ width: '18px', height: '18px', accentColor: '#c9a84c', cursor: 'pointer' }}
+          />
+          Yes
+        </label>
+      )
+    }
+
+    return null
+  }
 
   function handlePhotoChange(e) {
     const file = e.target.files[0]
@@ -667,15 +769,23 @@ function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, onC
 
   async function handleSave(e) {
     e.preventDefault()
-    setSubmitting(true)
     setError(null)
+
+    const validationError = validateRequiredCustomFields()
+    if (validationError) {
+      setError(validationError)
+      return
+    }
+
+    setSubmitting(true)
     const photoUrl = await uploadPhoto()
     if (error) { setSubmitting(false); return }
     const payload = {
       name, location, category, criticality,
       function: functionText, serial_number: serialNumber,
       manufacturer, model, install_date: installDate || null,
-      organization_id: organizationId, photo_url: photoUrl
+      organization_id: organizationId, photo_url: photoUrl,
+      custom_fields: customFieldValues
     }
     let result
     if (mode === 'edit' && asset?.id) {
@@ -905,6 +1015,29 @@ function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, onC
                   <input type="date" value={installDate} onChange={e => setInstallDate(e.target.value)} style={flyoutInputStyle} />
                 </div>
               </div>
+
+              {/* CUSTOM FIELDS SECTION */}
+              {customFieldDefs && customFieldDefs.length > 0 && (
+                <>
+                  <div style={{ height: '1px', background: 'rgba(201,168,76,0.12)', margin: '0.5rem 0 1.25rem' }} />
+                  <p style={{
+                    fontSize: '0.7rem', letterSpacing: '0.18em',
+                    textTransform: 'uppercase', color: '#c9a84c',
+                    marginBottom: '1rem', fontWeight: '500'
+                  }}>
+                    Custom Fields
+                  </p>
+                  {customFieldDefs.map(def => (
+                    <div key={def.id} style={{ marginBottom: '1rem' }}>
+                      <label style={flyoutLabelStyle}>
+                        {def.field_name}{def.is_required && ' *'}
+                      </label>
+                      {renderCustomFieldInput(def)}
+                    </div>
+                  ))}
+                  <div style={{ height: '0.25rem' }} />
+                </>
+              )}
 
               {error && (
                 <p style={{
