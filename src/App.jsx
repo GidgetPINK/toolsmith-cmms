@@ -306,8 +306,6 @@ function App() {
           element={
             !session ? (
               <Navigate to="/login" replace />
-            ) : profile?.role !== 'manager' ? (
-              <Navigate to="/" replace />
             ) : (
               <MobileAssets profile={profile} />
             )
@@ -318,8 +316,6 @@ function App() {
           element={
             !session ? (
               <Navigate to="/login" replace />
-            ) : profile?.role !== 'manager' ? (
-              <Navigate to="/" replace />
             ) : (
               <MobileAssetDetail profile={profile} />
             )
@@ -330,8 +326,6 @@ function App() {
           element={
             !session ? (
               <Navigate to="/login" replace />
-            ) : profile?.role !== 'manager' ? (
-              <Navigate to="/" replace />
             ) : (
               <MobileAssetDetail profile={profile} />
             )
