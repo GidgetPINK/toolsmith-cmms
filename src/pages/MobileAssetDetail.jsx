@@ -88,7 +88,6 @@ export default function MobileAssetDetail({ profile }) {
     setLoading(true)
     setError(null)
 
-    // Always fetch custom field definitions and profiles
     const [cfdRes, profRes] = await Promise.all([
       supabase
         .from('custom_field_definitions')
@@ -105,7 +104,6 @@ export default function MobileAssetDetail({ profile }) {
       return
     }
 
-    // Fetch the asset
     const { data: assetData, error: assetErr } = await supabase
       .from('assets')
       .select('*')
@@ -134,7 +132,6 @@ export default function MobileAssetDetail({ profile }) {
       setOrganizationId(assetData.organization_id || profile?.organization_id || null)
     }
 
-    // Fetch work orders for this asset
     const { data: woData } = await supabase
       .from('work_orders')
       .select('*')
@@ -255,7 +252,14 @@ export default function MobileAssetDetail({ profile }) {
   }
 
   async function uploadPhoto() {
-    if (!photoFile) return originalPhotoUrl
+    // No new file picked
+    if (!photoFile) {
+      // Preview is also empty → user explicitly removed the existing photo
+      if (!photoPreview) return null
+      // Preview still shows the original → no change
+      return originalPhotoUrl
+    }
+    // New file picked → upload it
     setUploadingPhoto(true)
     const orgId = organizationId || profile?.organization_id
     const ext = photoFile.name.split('.').pop()
@@ -316,6 +320,14 @@ export default function MobileAssetDetail({ profile }) {
       setError(result.error.message)
       setSubmitting(false)
       return
+    }
+
+    // Clean up the old photo from storage if it was replaced or removed
+    if (originalPhotoUrl && originalPhotoUrl !== photoUrl) {
+      const oldPath = originalPhotoUrl.split('/asset-photos/')[1]
+      if (oldPath) {
+        await supabase.storage.from('asset-photos').remove([oldPath])
+      }
     }
 
     setSubmitting(false)
@@ -404,7 +416,7 @@ export default function MobileAssetDetail({ profile }) {
         <div style={{ width: '68px', flexShrink: 0 }} />
       </nav>
 
-      {/* TABS — only show in edit mode */}
+      {/* TABS — edit mode only */}
       {!isCreating && (
         <div style={{
           display: 'flex',

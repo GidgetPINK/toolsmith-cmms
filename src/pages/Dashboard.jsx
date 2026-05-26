@@ -754,7 +754,14 @@ function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, cus
   }
 
   async function uploadPhoto() {
-    if (!photoFile) return asset?.photo_url || null
+    // No new file picked
+    if (!photoFile) {
+      // Preview is also empty → user explicitly removed the existing photo
+      if (!photoPreview) return null
+      // Preview still shows the original → no change
+      return asset?.photo_url || null
+    }
+    // New file picked → upload it
     setUploadingPhoto(true)
     const ext = photoFile.name.split('.').pop()
     const filename = `${organizationId}/${Date.now()}.${ext}`
@@ -794,6 +801,15 @@ function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, cus
       result = await supabase.from('assets').insert(payload)
     }
     if (result.error) { setError(result.error.message); setSubmitting(false); return }
+
+    // Clean up the old photo from storage if it was replaced or removed
+    if (asset?.photo_url && asset.photo_url !== photoUrl) {
+      const oldPath = asset.photo_url.split('/asset-photos/')[1]
+      if (oldPath) {
+        await supabase.storage.from('asset-photos').remove([oldPath])
+      }
+    }
+
     setSubmitting(false)
     onSaved()
   }
