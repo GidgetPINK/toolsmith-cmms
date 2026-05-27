@@ -5,6 +5,8 @@ import MobileBottomNav from '../components/MobileBottomNav'
 
 const CATEGORIES = ['Mechanical', 'Electrical', 'HVAC', 'Plumbing', 'Vehicle', 'Safety', 'Other']
 const CRITICALITY_LEVELS = ['Low', 'Standard', 'High', 'Critical']
+const PRIORITY_OPTIONS = ['critical', 'high', 'standard', 'routine']
+const FREQUENCY_UNITS = ['days', 'weeks', 'months', 'years']
 
 const PRIORITY_COLOR = {
   critical: '#e06c75',
@@ -17,6 +19,32 @@ const STATUS_COLOR = {
   open: '#c9a84c',
   'in progress': '#6cb6e0',
   closed: '#6a6d85'
+}
+
+function formatFrequency(value, unit) {
+  const n = parseInt(value)
+  if (!n) return ''
+  if (n === 1) return `Every ${unit.replace(/s$/, '')}`
+  return `Every ${n} ${unit}`
+}
+
+function getRelativeDueText(dateString) {
+  if (!dateString) return ''
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const due = new Date(dateString + 'T00:00:00')
+  const diffMs = due - today
+  const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24))
+  if (diffDays === 0) return 'Due today'
+  if (diffDays < 0) return `Overdue by ${Math.abs(diffDays)} ${Math.abs(diffDays) === 1 ? 'day' : 'days'}`
+  if (diffDays <= 14) return `Due in ${diffDays} ${diffDays === 1 ? 'day' : 'days'}`
+  return ''
+}
+
+function formatDueDate(dateString) {
+  if (!dateString) return ''
+  const d = new Date(dateString + 'T00:00:00')
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
 const mobileInputStyle = {
@@ -51,7 +79,7 @@ export default function MobileAssetDetail({ profile }) {
   const [loading, setLoading] = useState(!isCreating)
   const [organizationId, setOrganizationId] = useState(profile?.organization_id || null)
 
-  // Form state
+  // Asset form state
   const [name, setName] = useState('')
   const [location, setLocation] = useState('')
   const [category, setCategory] = useState('')
@@ -70,7 +98,7 @@ export default function MobileAssetDetail({ profile }) {
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const fileInputRef = useRef(null)
 
-  // Action state
+  // Asset action state
   const [error, setError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -79,6 +107,22 @@ export default function MobileAssetDetail({ profile }) {
   const [customFieldDefs, setCustomFieldDefs] = useState([])
   const [workOrders, setWorkOrders] = useState([])
   const [profiles, setProfiles] = useState([])
+
+  // PM state
+  const [pmList, setPmList] = useState([])
+  const [pmLoading, setPmLoading] = useState(false)
+  const [pmView, setPmView] = useState('list')
+  const [editingPmId, setEditingPmId] = useState(null)
+  const [pmTitle, setPmTitle] = useState('')
+  const [pmDescription, setPmDescription] = useState('')
+  const [pmFrequencyValue, setPmFrequencyValue] = useState('')
+  const [pmFrequencyUnit, setPmFrequencyUnit] = useState('days')
+  const [pmNextDueDate, setPmNextDueDate] = useState('')
+  const [pmPriority, setPmPriority] = useState('standard')
+  const [pmAssignedTo, setPmAssignedTo] = useState('')
+  const [pmIsActive, setPmIsActive] = useState(true)
+  const [pmSaving, setPmSaving] = useState(false)
+  const [pmError, setPmError] = useState(null)
 
   useEffect(() => {
     loadData()
@@ -139,7 +183,109 @@ export default function MobileAssetDetail({ profile }) {
       .order('created_at', { ascending: false })
     setWorkOrders(woData || [])
 
+    await fetchPmList()
     setLoading(false)
+  }
+
+  async function fetchPmList() {
+    if (!id || isCreating) return
+    setPmLoading(true)
+    const { data } = await supabase
+      .from('pm_schedules')
+      .select('*')
+      .eq('asset_id', id)
+      .order('next_due_at', { ascending: true })
+    setPmList(data || [])
+    setPmLoading(false)
+  }
+
+  function openCreatePm() {
+    setPmView('form')
+    setEditingPmId(null)
+    setPmTitle('')
+    setPmDescription('')
+    setPmFrequencyValue('')
+    setPmFrequencyUnit('days')
+    setPmNextDueDate('')
+    setPmPriority('standard')
+    setPmAssignedTo('')
+    setPmIsActive(true)
+    setPmError(null)
+  }
+
+  function openEditPm(pm) {
+    setPmView('form')
+    setEditingPmId(pm.id)
+    setPmTitle(pm.title)
+    setPmDescription(pm.description || '')
+    setPmFrequencyValue(String(pm.frequency_value))
+    setPmFrequencyUnit(pm.frequency_unit)
+    setPmNextDueDate(pm.next_due_at)
+    setPmPriority(pm.priority)
+    setPmAssignedTo(pm.assigned_to || '')
+    setPmIsActive(pm.is_active)
+    setPmError(null)
+  }
+
+  function cancelPmForm() {
+    setPmView('list')
+    setEditingPmId(null)
+    setPmError(null)
+  }
+
+  async function savePm() {
+    setPmError(null)
+    if (!pmTitle.trim()) { setPmError('Task title is required'); return }
+    const freq = parseInt(pmFrequencyValue)
+    if (!freq || freq <= 0) { setPmError('Frequency must be a positive number'); return }
+    if (!pmNextDueDate) { setPmError('Next due date is required'); return }
+
+    setPmSaving(true)
+    const orgId = organizationId || profile?.organization_id
+    const payload = {
+      asset_id: id,
+      organization_id: orgId,
+      title: pmTitle.trim(),
+      description: pmDescription.trim() || null,
+      frequency_value: freq,
+      frequency_unit: pmFrequencyUnit,
+      next_due_at: pmNextDueDate,
+      priority: pmPriority,
+      assigned_to: pmAssignedTo || null,
+      is_active: pmIsActive,
+      updated_at: new Date().toISOString()
+    }
+
+    let result
+    if (editingPmId) {
+      result = await supabase.from('pm_schedules').update(payload).eq('id', editingPmId)
+    } else {
+      result = await supabase.from('pm_schedules').insert(payload)
+    }
+
+    if (result.error) {
+      setPmError(result.error.message)
+      setPmSaving(false)
+      return
+    }
+
+    setPmSaving(false)
+    cancelPmForm()
+    await fetchPmList()
+  }
+
+  async function togglePmActive(pm) {
+    const { error } = await supabase
+      .from('pm_schedules')
+      .update({ is_active: !pm.is_active, updated_at: new Date().toISOString() })
+      .eq('id', pm.id)
+    if (!error) await fetchPmList()
+  }
+
+  async function deletePm(pm) {
+    if (!confirm(`Delete "${pm.title}"? This cannot be undone.`)) return
+    const { error } = await supabase.from('pm_schedules').delete().eq('id', pm.id)
+    if (!error) await fetchPmList()
   }
 
   function updateCustomFieldValue(defId, value) {
@@ -151,13 +297,9 @@ export default function MobileAssetDetail({ profile }) {
       if (!def.is_required) continue
       const value = customFieldValues[def.id]
       if (def.field_type === 'checkbox') {
-        if (value === undefined || value === null) {
-          return `${def.field_name} is required`
-        }
+        if (value === undefined || value === null) return `${def.field_name} is required`
       } else {
-        if (value === undefined || value === null || value === '') {
-          return `${def.field_name} is required`
-        }
+        if (value === undefined || value === null || value === '') return `${def.field_name} is required`
       }
     }
     return null
@@ -165,73 +307,31 @@ export default function MobileAssetDetail({ profile }) {
 
   function renderCustomFieldInput(def) {
     const value = customFieldValues[def.id]
-
     if (def.field_type === 'text') {
-      return (
-        <input
-          type="text"
-          value={value ?? ''}
-          onChange={e => updateCustomFieldValue(def.id, e.target.value)}
-          style={mobileInputStyle}
-        />
-      )
+      return <input type="text" value={value ?? ''} onChange={e => updateCustomFieldValue(def.id, e.target.value)} style={mobileInputStyle} />
     }
-
     if (def.field_type === 'number') {
-      return (
-        <input
-          type="number"
-          value={value ?? ''}
-          onChange={e => updateCustomFieldValue(def.id, e.target.value)}
-          style={mobileInputStyle}
-        />
-      )
+      return <input type="number" value={value ?? ''} onChange={e => updateCustomFieldValue(def.id, e.target.value)} style={mobileInputStyle} />
     }
-
     if (def.field_type === 'date') {
-      return (
-        <input
-          type="date"
-          value={value ?? ''}
-          onChange={e => updateCustomFieldValue(def.id, e.target.value)}
-          style={mobileInputStyle}
-        />
-      )
+      return <input type="date" value={value ?? ''} onChange={e => updateCustomFieldValue(def.id, e.target.value)} style={mobileInputStyle} />
     }
-
     if (def.field_type === 'dropdown') {
       return (
-        <select
-          value={value ?? ''}
-          onChange={e => updateCustomFieldValue(def.id, e.target.value)}
-          style={{ ...mobileInputStyle, cursor: 'pointer' }}
-        >
+        <select value={value ?? ''} onChange={e => updateCustomFieldValue(def.id, e.target.value)} style={{ ...mobileInputStyle, cursor: 'pointer' }}>
           <option value="">Select</option>
-          {(def.options || []).map(opt => (
-            <option key={opt} value={opt}>{opt}</option>
-          ))}
+          {(def.options || []).map(opt => <option key={opt} value={opt}>{opt}</option>)}
         </select>
       )
     }
-
     if (def.field_type === 'checkbox') {
       return (
-        <label style={{
-          display: 'flex', alignItems: 'center', gap: '0.7rem',
-          color: '#f8f6f1', fontSize: '0.95rem', cursor: 'pointer',
-          padding: '0.5rem 0'
-        }}>
-          <input
-            type="checkbox"
-            checked={!!value}
-            onChange={e => updateCustomFieldValue(def.id, e.target.checked)}
-            style={{ width: '20px', height: '20px', accentColor: '#c9a84c', cursor: 'pointer' }}
-          />
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.7rem', color: '#f8f6f1', fontSize: '0.95rem', cursor: 'pointer', padding: '0.5rem 0' }}>
+          <input type="checkbox" checked={!!value} onChange={e => updateCustomFieldValue(def.id, e.target.checked)} style={{ width: '20px', height: '20px', accentColor: '#c9a84c', cursor: 'pointer' }} />
           Yes
         </label>
       )
     }
-
     return null
   }
 
@@ -252,14 +352,10 @@ export default function MobileAssetDetail({ profile }) {
   }
 
   async function uploadPhoto() {
-    // No new file picked
     if (!photoFile) {
-      // Preview is also empty → user explicitly removed the existing photo
       if (!photoPreview) return null
-      // Preview still shows the original → no change
       return originalPhotoUrl
     }
-    // New file picked → upload it
     setUploadingPhoto(true)
     const orgId = organizationId || profile?.organization_id
     const ext = photoFile.name.split('.').pop()
@@ -276,36 +372,21 @@ export default function MobileAssetDetail({ profile }) {
   async function handleSave(e) {
     e.preventDefault()
     setError(null)
-
-    if (!name.trim()) {
-      setError('Asset Name is required')
-      return
-    }
+    if (!name.trim()) { setError('Asset Name is required'); return }
 
     const validationError = validateRequiredCustomFields()
-    if (validationError) {
-      setError(validationError)
-      return
-    }
+    if (validationError) { setError(validationError); return }
 
     setSubmitting(true)
     const photoUrl = await uploadPhoto()
     if (error) { setSubmitting(false); return }
 
     const orgId = organizationId || profile?.organization_id
-
     const payload = {
-      name: name.trim(),
-      location,
-      category,
-      criticality,
-      function: functionText,
-      serial_number: serialNumber,
-      manufacturer,
-      model,
-      install_date: installDate || null,
-      organization_id: orgId,
-      photo_url: photoUrl,
+      name: name.trim(), location, category, criticality,
+      function: functionText, serial_number: serialNumber,
+      manufacturer, model, install_date: installDate || null,
+      organization_id: orgId, photo_url: photoUrl,
       custom_fields: customFieldValues
     }
 
@@ -316,18 +397,11 @@ export default function MobileAssetDetail({ profile }) {
       result = await supabase.from('assets').update(payload).eq('id', id)
     }
 
-    if (result.error) {
-      setError(result.error.message)
-      setSubmitting(false)
-      return
-    }
+    if (result.error) { setError(result.error.message); setSubmitting(false); return }
 
-    // Clean up the old photo from storage if it was replaced or removed
     if (originalPhotoUrl && originalPhotoUrl !== photoUrl) {
       const oldPath = originalPhotoUrl.split('/asset-photos/')[1]
-      if (oldPath) {
-        await supabase.storage.from('asset-photos').remove([oldPath])
-      }
+      if (oldPath) await supabase.storage.from('asset-photos').remove([oldPath])
     }
 
     setSubmitting(false)
@@ -337,18 +411,13 @@ export default function MobileAssetDetail({ profile }) {
   async function handleDelete() {
     if (isCreating) return
     if (!confirm(`Delete ${name}? This cannot be undone.`)) return
-
     setDeleting(true)
     if (originalPhotoUrl) {
       const path = originalPhotoUrl.split('/asset-photos/')[1]
       if (path) await supabase.storage.from('asset-photos').remove([path])
     }
     const { error: delError } = await supabase.from('assets').delete().eq('id', id)
-    if (delError) {
-      setError(delError.message)
-      setDeleting(false)
-      return
-    }
+    if (delError) { setError(delError.message); setDeleting(false); return }
     setDeleting(false)
     navigate('/m/assets')
   }
@@ -372,7 +441,6 @@ export default function MobileAssetDetail({ profile }) {
       color: '#f8f6f1',
       paddingBottom: '90px'
     }}>
-      {/* TOP BAR */}
       <nav style={{
         background: 'rgba(26,26,46,0.95)',
         borderBottom: '1px solid rgba(201,168,76,0.18)',
@@ -384,48 +452,17 @@ export default function MobileAssetDetail({ profile }) {
         alignItems: 'center',
         gap: '0.6rem'
       }}>
-        <button
-          onClick={() => navigate('/m/assets')}
-          style={{
-            background: 'none',
-            border: '1px solid rgba(201,168,76,0.3)',
-            color: '#c9a84c',
-            padding: '0.35rem 0.75rem',
-            borderRadius: '6px',
-            fontSize: '0.75rem',
-            cursor: 'pointer',
-            fontFamily: 'Inter, sans-serif',
-            flexShrink: 0
-          }}
-        >
+        <button onClick={() => navigate('/m/assets')} style={{ background: 'none', border: '1px solid rgba(201,168,76,0.3)', color: '#c9a84c', padding: '0.35rem 0.75rem', borderRadius: '6px', fontSize: '0.75rem', cursor: 'pointer', fontFamily: 'Inter, sans-serif', flexShrink: 0 }}>
           ← Back
         </button>
-        <span style={{
-          fontFamily: 'Georgia, serif',
-          color: '#f8f6f1',
-          fontSize: '0.95rem',
-          fontWeight: '600',
-          flex: 1,
-          textAlign: 'center',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap'
-        }}>
+        <span style={{ fontFamily: 'Georgia, serif', color: '#f8f6f1', fontSize: '0.95rem', fontWeight: '600', flex: 1, textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {isCreating ? 'New Asset' : (loading ? 'Loading...' : name || 'Asset')}
         </span>
         <div style={{ width: '68px', flexShrink: 0 }} />
       </nav>
 
-      {/* TABS — edit mode only */}
       {!isCreating && (
-        <div style={{
-          display: 'flex',
-          borderBottom: '1px solid rgba(201,168,76,0.18)',
-          background: '#16213e',
-          position: 'sticky',
-          top: '57px',
-          zIndex: 30
-        }}>
+        <div style={{ display: 'flex', borderBottom: '1px solid rgba(201,168,76,0.18)', background: '#16213e', position: 'sticky', top: '57px', zIndex: 30 }}>
           {[
             { id: 'details', label: 'Details' },
             { id: 'history', label: 'Work Orders' },
@@ -455,7 +492,6 @@ export default function MobileAssetDetail({ profile }) {
         </div>
       )}
 
-      {/* CONTENT */}
       <div style={{ padding: '1.25rem 1rem' }}>
         {loading ? (
           <p style={{ color: '#9a9db5', textAlign: 'center', padding: '2rem' }}>Loading...</p>
@@ -463,111 +499,43 @@ export default function MobileAssetDetail({ profile }) {
           <>
             {(isCreating || tab === 'details') && (
               <form onSubmit={handleSave}>
-                {/* PHOTO */}
                 <div style={{ marginBottom: '1.25rem' }}>
                   <label style={mobileLabelStyle}>Asset Photo</label>
                   {photoPreview ? (
                     <div style={{ position: 'relative' }}>
-                      <img
-                        src={photoPreview}
-                        alt="Asset"
-                        style={{
-                          width: '100%',
-                          height: '200px',
-                          objectFit: 'cover',
-                          borderRadius: '8px',
-                          border: '1px solid rgba(201,168,76,0.2)',
-                          display: 'block'
-                        }}
-                      />
+                      <img src={photoPreview} alt="Asset" style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '8px', border: '1px solid rgba(201,168,76,0.2)', display: 'block' }} />
                       <div style={{ position: 'absolute', top: '0.5rem', right: '0.5rem', display: 'flex', gap: '0.4rem' }}>
-                        <button
-                          type="button"
-                          onClick={() => fileInputRef.current?.click()}
-                          style={{
-                            background: 'rgba(26,26,46,0.9)',
-                            border: '1px solid rgba(201,168,76,0.3)',
-                            color: '#c9a84c',
-                            borderRadius: '6px',
-                            padding: '0.4rem 0.7rem',
-                            fontSize: '0.75rem',
-                            cursor: 'pointer',
-                            fontFamily: 'Inter, sans-serif'
-                          }}
-                        >
+                        <button type="button" onClick={() => fileInputRef.current?.click()} style={{ background: 'rgba(26,26,46,0.9)', border: '1px solid rgba(201,168,76,0.3)', color: '#c9a84c', borderRadius: '6px', padding: '0.4rem 0.7rem', fontSize: '0.75rem', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
                           Change
                         </button>
-                        <button
-                          type="button"
-                          onClick={removePhoto}
-                          style={{
-                            background: 'rgba(224,108,117,0.18)',
-                            border: '1px solid rgba(224,108,117,0.3)',
-                            color: '#e06c75',
-                            borderRadius: '6px',
-                            padding: '0.4rem 0.7rem',
-                            fontSize: '0.75rem',
-                            cursor: 'pointer',
-                            fontFamily: 'Inter, sans-serif'
-                          }}
-                        >
+                        <button type="button" onClick={removePhoto} style={{ background: 'rgba(224,108,117,0.18)', border: '1px solid rgba(224,108,117,0.3)', color: '#e06c75', borderRadius: '6px', padding: '0.4rem 0.7rem', fontSize: '0.75rem', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
                           Remove
                         </button>
                       </div>
                     </div>
                   ) : (
-                    <div
-                      onClick={() => fileInputRef.current?.click()}
-                      style={{
-                        border: '1px dashed rgba(201,168,76,0.3)',
-                        borderRadius: '8px',
-                        padding: '2rem 1rem',
-                        textAlign: 'center',
-                        cursor: 'pointer',
-                        background: 'rgba(201,168,76,0.03)'
-                      }}
-                    >
+                    <div onClick={() => fileInputRef.current?.click()} style={{ border: '1px dashed rgba(201,168,76,0.3)', borderRadius: '8px', padding: '2rem 1rem', textAlign: 'center', cursor: 'pointer', background: 'rgba(201,168,76,0.03)' }}>
                       <p style={{ fontSize: '1.6rem', marginBottom: '0.5rem' }}>📷</p>
-                      <p style={{ fontSize: '0.88rem', color: '#c9a84c', fontWeight: '500', marginBottom: '0.25rem' }}>
-                        Tap to upload a photo
-                      </p>
+                      <p style={{ fontSize: '0.88rem', color: '#c9a84c', fontWeight: '500', marginBottom: '0.25rem' }}>Tap to upload a photo</p>
                       <p style={{ fontSize: '0.72rem', color: '#9a9db5' }}>JPG, PNG, or WebP, max 5MB</p>
                     </div>
                   )}
                   <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoChange} style={{ display: 'none' }} />
                 </div>
 
-                {/* FIELDS */}
                 <div style={{ marginBottom: '1rem' }}>
                   <label style={mobileLabelStyle}>Asset Name *</label>
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={e => setName(e.target.value)}
-                    required
-                    placeholder="Air Compressor Unit 1"
-                    style={mobileInputStyle}
-                  />
+                  <input type="text" value={name} onChange={e => setName(e.target.value)} required placeholder="Air Compressor Unit 1" style={mobileInputStyle} />
                 </div>
 
                 <div style={{ marginBottom: '1rem' }}>
                   <label style={mobileLabelStyle}>Location</label>
-                  <input
-                    type="text"
-                    value={location}
-                    onChange={e => setLocation(e.target.value)}
-                    placeholder="Building A"
-                    style={mobileInputStyle}
-                  />
+                  <input type="text" value={location} onChange={e => setLocation(e.target.value)} placeholder="Building A" style={mobileInputStyle} />
                 </div>
 
                 <div style={{ marginBottom: '1rem' }}>
                   <label style={mobileLabelStyle}>Category</label>
-                  <select
-                    value={category}
-                    onChange={e => setCategory(e.target.value)}
-                    style={{ ...mobileInputStyle, cursor: 'pointer' }}
-                  >
+                  <select value={category} onChange={e => setCategory(e.target.value)} style={{ ...mobileInputStyle, cursor: 'pointer' }}>
                     <option value="">Select</option>
                     {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
@@ -575,81 +543,40 @@ export default function MobileAssetDetail({ profile }) {
 
                 <div style={{ marginBottom: '1rem' }}>
                   <label style={mobileLabelStyle}>Criticality</label>
-                  <select
-                    value={criticality}
-                    onChange={e => setCriticality(e.target.value)}
-                    style={{ ...mobileInputStyle, cursor: 'pointer' }}
-                  >
+                  <select value={criticality} onChange={e => setCriticality(e.target.value)} style={{ ...mobileInputStyle, cursor: 'pointer' }}>
                     {CRITICALITY_LEVELS.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
 
                 <div style={{ marginBottom: '1rem' }}>
                   <label style={mobileLabelStyle}>Function</label>
-                  <textarea
-                    value={functionText}
-                    onChange={e => setFunctionText(e.target.value)}
-                    placeholder="Supplies compressed air to the production line..."
-                    rows={3}
-                    style={{ ...mobileInputStyle, resize: 'vertical', fontFamily: 'Inter, sans-serif' }}
-                  />
+                  <textarea value={functionText} onChange={e => setFunctionText(e.target.value)} placeholder="Supplies compressed air to the production line..." rows={3} style={{ ...mobileInputStyle, resize: 'vertical', fontFamily: 'Inter, sans-serif' }} />
                 </div>
 
                 <div style={{ marginBottom: '1rem' }}>
                   <label style={mobileLabelStyle}>Manufacturer</label>
-                  <input
-                    type="text"
-                    value={manufacturer}
-                    onChange={e => setManufacturer(e.target.value)}
-                    placeholder="Ingersoll Rand"
-                    style={mobileInputStyle}
-                  />
+                  <input type="text" value={manufacturer} onChange={e => setManufacturer(e.target.value)} placeholder="Ingersoll Rand" style={mobileInputStyle} />
                 </div>
 
                 <div style={{ marginBottom: '1rem' }}>
                   <label style={mobileLabelStyle}>Model</label>
-                  <input
-                    type="text"
-                    value={model}
-                    onChange={e => setModel(e.target.value)}
-                    placeholder="SSR-EP25"
-                    style={mobileInputStyle}
-                  />
+                  <input type="text" value={model} onChange={e => setModel(e.target.value)} placeholder="SSR-EP25" style={mobileInputStyle} />
                 </div>
 
                 <div style={{ marginBottom: '1rem' }}>
                   <label style={mobileLabelStyle}>Serial Number</label>
-                  <input
-                    type="text"
-                    value={serialNumber}
-                    onChange={e => setSerialNumber(e.target.value)}
-                    placeholder="SN-12345"
-                    style={mobileInputStyle}
-                  />
+                  <input type="text" value={serialNumber} onChange={e => setSerialNumber(e.target.value)} placeholder="SN-12345" style={mobileInputStyle} />
                 </div>
 
                 <div style={{ marginBottom: '1.25rem' }}>
                   <label style={mobileLabelStyle}>Install Date</label>
-                  <input
-                    type="date"
-                    value={installDate}
-                    onChange={e => setInstallDate(e.target.value)}
-                    style={mobileInputStyle}
-                  />
+                  <input type="date" value={installDate} onChange={e => setInstallDate(e.target.value)} style={mobileInputStyle} />
                 </div>
 
-                {/* CUSTOM FIELDS */}
                 {customFieldDefs && customFieldDefs.length > 0 && (
                   <>
                     <div style={{ height: '1px', background: 'rgba(201,168,76,0.12)', margin: '0.5rem 0 1.25rem' }} />
-                    <p style={{
-                      fontSize: '0.7rem',
-                      letterSpacing: '0.18em',
-                      textTransform: 'uppercase',
-                      color: '#c9a84c',
-                      marginBottom: '1rem',
-                      fontWeight: '500'
-                    }}>
+                    <p style={{ fontSize: '0.7rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c9a84c', marginBottom: '1rem', fontWeight: '500' }}>
                       Custom Fields
                     </p>
                     {customFieldDefs.map(def => (
@@ -665,90 +592,25 @@ export default function MobileAssetDetail({ profile }) {
                 )}
 
                 {error && (
-                  <p style={{
-                    color: '#e06c75',
-                    fontSize: '0.88rem',
-                    marginBottom: '1rem',
-                    padding: '0.7rem 0.9rem',
-                    background: 'rgba(224,108,117,0.1)',
-                    borderRadius: '8px',
-                    border: '1px solid rgba(224,108,117,0.2)',
-                    lineHeight: 1.4
-                  }}>
+                  <p style={{ color: '#e06c75', fontSize: '0.88rem', marginBottom: '1rem', padding: '0.7rem 0.9rem', background: 'rgba(224,108,117,0.1)', borderRadius: '8px', border: '1px solid rgba(224,108,117,0.2)', lineHeight: 1.4 }}>
                     {error}
                   </p>
                 )}
 
-                {/* SAVE BUTTON */}
-                <button
-                  type="submit"
-                  disabled={isSaving}
-                  style={{
-                    width: '100%',
-                    background: 'linear-gradient(135deg, #c9a84c, #e8c97a)',
-                    color: '#1a1a2e',
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '0.95rem',
-                    fontSize: '0.88rem',
-                    fontWeight: '700',
-                    letterSpacing: '0.06em',
-                    textTransform: 'uppercase',
-                    cursor: isSaving ? 'not-allowed' : 'pointer',
-                    opacity: isSaving ? 0.7 : 1,
-                    fontFamily: 'Inter, sans-serif',
-                    marginBottom: '0.75rem'
-                  }}
-                >
+                <button type="submit" disabled={isSaving} style={{ width: '100%', background: 'linear-gradient(135deg, #c9a84c, #e8c97a)', color: '#1a1a2e', border: 'none', borderRadius: '8px', padding: '0.95rem', fontSize: '0.88rem', fontWeight: '700', letterSpacing: '0.06em', textTransform: 'uppercase', cursor: isSaving ? 'not-allowed' : 'pointer', opacity: isSaving ? 0.7 : 1, fontFamily: 'Inter, sans-serif', marginBottom: '0.75rem' }}>
                   {uploadingPhoto ? 'Uploading photo...' : submitting ? 'Saving...' : isCreating ? 'Create Asset' : 'Save Changes'}
                 </button>
 
-                {/* DELETE BUTTON — edit mode only */}
                 {!isCreating && (
-                  <button
-                    type="button"
-                    onClick={handleDelete}
-                    disabled={deleting}
-                    style={{
-                      width: '100%',
-                      background: 'none',
-                      border: '1px solid rgba(224,108,117,0.4)',
-                      color: '#e06c75',
-                      borderRadius: '8px',
-                      padding: '0.85rem',
-                      fontSize: '0.85rem',
-                      cursor: deleting ? 'not-allowed' : 'pointer',
-                      fontFamily: 'Inter, sans-serif',
-                      opacity: deleting ? 0.6 : 1,
-                      marginBottom: '0.75rem'
-                    }}
-                  >
+                  <button type="button" onClick={handleDelete} disabled={deleting} style={{ width: '100%', background: 'none', border: '1px solid rgba(224,108,117,0.4)', color: '#e06c75', borderRadius: '8px', padding: '0.85rem', fontSize: '0.85rem', cursor: deleting ? 'not-allowed' : 'pointer', fontFamily: 'Inter, sans-serif', opacity: deleting ? 0.6 : 1, marginBottom: '0.75rem' }}>
                     {deleting ? 'Deleting...' : 'Delete Asset'}
                   </button>
                 )}
 
-                {/* CREATE WORK ORDER BUTTON — edit mode only */}
                 {!isCreating && (
                   <>
                     <div style={{ height: '1px', background: 'rgba(201,168,76,0.12)', margin: '0.5rem 0 0.75rem' }} />
-                    <button
-                      type="button"
-                      onClick={handleCreateWorkOrderForAsset}
-                      style={{
-                        width: '100%',
-                        background: 'none',
-                        border: '1px solid rgba(201,168,76,0.3)',
-                        color: '#c9a84c',
-                        borderRadius: '8px',
-                        padding: '0.85rem',
-                        fontSize: '0.85rem',
-                        fontWeight: '500',
-                        letterSpacing: '0.05em',
-                        textTransform: 'uppercase',
-                        cursor: 'pointer',
-                        fontFamily: 'Inter, sans-serif'
-                      }}
-                    >
+                    <button type="button" onClick={handleCreateWorkOrderForAsset} style={{ width: '100%', background: 'none', border: '1px solid rgba(201,168,76,0.3)', color: '#c9a84c', borderRadius: '8px', padding: '0.85rem', fontSize: '0.85rem', fontWeight: '500', letterSpacing: '0.05em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
                       + Create Work Order for This Asset
                     </button>
                   </>
@@ -756,75 +618,24 @@ export default function MobileAssetDetail({ profile }) {
               </form>
             )}
 
-            {/* WORK ORDERS TAB */}
             {!isCreating && tab === 'history' && (
               <div>
                 {workOrders.length === 0 ? (
-                  <div style={{
-                    background: 'rgba(255,255,255,0.03)',
-                    border: '1px dashed rgba(201,168,76,0.2)',
-                    borderRadius: '10px',
-                    padding: '2rem 1.5rem',
-                    textAlign: 'center'
-                  }}>
-                    <p style={{ fontSize: '0.9rem', color: '#9a9db5', lineHeight: 1.55, marginBottom: '1.25rem' }}>
-                      No work orders for this asset yet.
-                    </p>
-                    <button
-                      onClick={handleCreateWorkOrderForAsset}
-                      style={{
-                        background: 'none',
-                        border: '1px solid rgba(201,168,76,0.3)',
-                        color: '#c9a84c',
-                        borderRadius: '8px',
-                        padding: '0.7rem 1.25rem',
-                        fontSize: '0.82rem',
-                        fontWeight: '500',
-                        letterSpacing: '0.05em',
-                        textTransform: 'uppercase',
-                        cursor: 'pointer',
-                        fontFamily: 'Inter, sans-serif'
-                      }}
-                    >
+                  <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(201,168,76,0.2)', borderRadius: '10px', padding: '2rem 1.5rem', textAlign: 'center' }}>
+                    <p style={{ fontSize: '0.9rem', color: '#9a9db5', lineHeight: 1.55, marginBottom: '1.25rem' }}>No work orders for this asset yet.</p>
+                    <button onClick={handleCreateWorkOrderForAsset} style={{ background: 'none', border: '1px solid rgba(201,168,76,0.3)', color: '#c9a84c', borderRadius: '8px', padding: '0.7rem 1.25rem', fontSize: '0.82rem', fontWeight: '500', letterSpacing: '0.05em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
                       + Create First Work Order
                     </button>
                   </div>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
                     {workOrders.map(wo => (
-                      <div
-                        key={wo.id}
-                        onClick={() => navigate(`/work-order/${wo.id}`)}
-                        style={{
-                          background: '#1e2245',
-                          border: '1px solid rgba(201,168,76,0.18)',
-                          borderRadius: '10px',
-                          padding: '0.95rem 1rem',
-                          cursor: 'pointer'
-                        }}
-                      >
+                      <div key={wo.id} onClick={() => navigate(`/work-order/${wo.id}`)} style={{ background: '#1e2245', border: '1px solid rgba(201,168,76,0.18)', borderRadius: '10px', padding: '0.95rem 1rem', cursor: 'pointer' }}>
                         <div style={{ display: 'flex', gap: '0.45rem', marginBottom: '0.4rem', flexWrap: 'wrap' }}>
-                          <span style={{
-                            padding: '0.18rem 0.55rem',
-                            borderRadius: '20px',
-                            fontSize: '0.62rem',
-                            fontWeight: '700',
-                            letterSpacing: '0.1em',
-                            textTransform: 'uppercase',
-                            color: PRIORITY_COLOR[wo.priority] || '#9a9db5',
-                            border: `1px solid ${PRIORITY_COLOR[wo.priority] || '#9a9db5'}`
-                          }}>
+                          <span style={{ padding: '0.18rem 0.55rem', borderRadius: '20px', fontSize: '0.62rem', fontWeight: '700', letterSpacing: '0.1em', textTransform: 'uppercase', color: PRIORITY_COLOR[wo.priority] || '#9a9db5', border: `1px solid ${PRIORITY_COLOR[wo.priority] || '#9a9db5'}` }}>
                             {wo.priority}
                           </span>
-                          <span style={{
-                            padding: '0.18rem 0.55rem',
-                            borderRadius: '20px',
-                            fontSize: '0.62rem',
-                            letterSpacing: '0.08em',
-                            textTransform: 'capitalize',
-                            color: STATUS_COLOR[wo.status] || '#9a9db5',
-                            border: `1px solid ${STATUS_COLOR[wo.status] || '#9a9db5'}`
-                          }}>
+                          <span style={{ padding: '0.18rem 0.55rem', borderRadius: '20px', fontSize: '0.62rem', letterSpacing: '0.08em', textTransform: 'capitalize', color: STATUS_COLOR[wo.status] || '#9a9db5', border: `1px solid ${STATUS_COLOR[wo.status] || '#9a9db5'}` }}>
                             {wo.status}
                           </span>
                         </div>
@@ -836,23 +647,7 @@ export default function MobileAssetDetail({ profile }) {
                         </p>
                       </div>
                     ))}
-                    <button
-                      onClick={handleCreateWorkOrderForAsset}
-                      style={{
-                        background: 'none',
-                        border: '1px solid rgba(201,168,76,0.25)',
-                        color: '#c9a84c',
-                        borderRadius: '8px',
-                        padding: '0.85rem',
-                        fontSize: '0.85rem',
-                        fontWeight: '500',
-                        letterSpacing: '0.05em',
-                        textTransform: 'uppercase',
-                        cursor: 'pointer',
-                        fontFamily: 'Inter, sans-serif',
-                        marginTop: '0.25rem'
-                      }}
-                    >
+                    <button onClick={handleCreateWorkOrderForAsset} style={{ background: 'none', border: '1px solid rgba(201,168,76,0.25)', color: '#c9a84c', borderRadius: '8px', padding: '0.85rem', fontSize: '0.85rem', fontWeight: '500', letterSpacing: '0.05em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Inter, sans-serif', marginTop: '0.25rem' }}>
                       + Create Work Order
                     </button>
                   </div>
@@ -862,20 +657,136 @@ export default function MobileAssetDetail({ profile }) {
 
             {/* PM SCHEDULE TAB */}
             {!isCreating && tab === 'pm' && (
-              <div style={{
-                background: 'rgba(201,168,76,0.04)',
-                border: '1px dashed rgba(201,168,76,0.2)',
-                borderRadius: '10px',
-                padding: '2.5rem 1.5rem',
-                textAlign: 'center'
-              }}>
-                <p style={{ fontSize: '2rem', marginBottom: '0.75rem', opacity: 0.5 }}>🗓️</p>
-                <p style={{ fontSize: '0.95rem', color: '#f8f6f1', fontWeight: '500', marginBottom: '0.5rem' }}>
-                  PM Scheduling Coming Soon
-                </p>
-                <p style={{ fontSize: '0.82rem', color: '#9a9db5', lineHeight: 1.55 }}>
-                  Once PM scheduling launches, this tab will let you create recurring maintenance tasks for this asset.
-                </p>
+              <div>
+                {pmView === 'list' && (
+                  <>
+                    {pmLoading ? (
+                      <p style={{ color: '#9a9db5', textAlign: 'center', padding: '1.5rem' }}>Loading PM tasks...</p>
+                    ) : pmList.length === 0 ? (
+                      <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(201,168,76,0.2)', borderRadius: '10px', padding: '2rem 1.5rem', textAlign: 'center', marginBottom: '0.75rem' }}>
+                        <p style={{ fontSize: '0.9rem', color: '#9a9db5', lineHeight: 1.55 }}>
+                          No PM tasks for this asset yet. Add one below to schedule recurring maintenance.
+                        </p>
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem', marginBottom: '0.75rem' }}>
+                        {pmList.map(pm => {
+                          const relText = getRelativeDueText(pm.next_due_at)
+                          const isOverdue = relText.startsWith('Overdue') || relText === 'Due today'
+                          return (
+                            <div key={pm.id} style={{ background: '#1e2245', border: '1px solid rgba(201,168,76,0.18)', borderRadius: '10px', padding: '0.95rem 1rem', opacity: pm.is_active ? 1 : 0.65 }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '0.45rem' }}>
+                                <p style={{ fontFamily: 'Georgia, serif', fontSize: '0.98rem', fontWeight: '600', color: '#f8f6f1', margin: 0, flex: 1 }}>
+                                  {pm.title}
+                                </p>
+                                <span style={{ padding: '0.15rem 0.55rem', borderRadius: '12px', fontSize: '0.62rem', fontWeight: '700', letterSpacing: '0.08em', textTransform: 'uppercase', color: pm.is_active ? '#c9a84c' : '#6a6d85', border: `1px solid ${pm.is_active ? '#c9a84c' : '#6a6d85'}`, whiteSpace: 'nowrap', flexShrink: 0 }}>
+                                  {pm.is_active ? 'Active' : 'Paused'}
+                                </span>
+                              </div>
+                              <p style={{ fontSize: '0.78rem', color: '#9a9db5', marginBottom: '0.3rem' }}>
+                                {formatFrequency(pm.frequency_value, pm.frequency_unit)}{' '}
+                                <span style={{ display: 'inline-block', padding: '0.08rem 0.45rem', borderRadius: '10px', fontSize: '0.62rem', fontWeight: '700', letterSpacing: '0.08em', textTransform: 'uppercase', color: PRIORITY_COLOR[pm.priority], border: `1px solid ${PRIORITY_COLOR[pm.priority]}`, marginLeft: '0.3rem' }}>
+                                  {pm.priority}
+                                </span>
+                              </p>
+                              <p style={{ fontSize: '0.78rem', color: '#9a9db5', marginBottom: '0.55rem' }}>
+                                <span style={{ color: '#c9a84c' }}>Next due:</span> {formatDueDate(pm.next_due_at)}
+                                {relText && <span style={{ color: isOverdue ? '#e06c75' : '#9a9db5' }}> · {relText}</span>}
+                              </p>
+                              {pm.assigned_to && (
+                                <p style={{ fontSize: '0.72rem', color: '#9a9db5', marginBottom: '0.55rem' }}>
+                                  <span style={{ color: '#c9a84c' }}>Assigned:</span> {getTechName(pm.assigned_to)}
+                                </p>
+                              )}
+                              <div style={{ display: 'flex', gap: '0.5rem', paddingTop: '0.5rem', borderTop: '0.5px solid rgba(154,157,181,0.15)' }}>
+                                <button onClick={() => openEditPm(pm)} style={{ background: 'none', border: 'none', color: '#9a9db5', fontSize: '0.82rem', cursor: 'pointer', padding: '0.3rem 0.5rem', fontFamily: 'Inter, sans-serif' }}>
+                                  Edit
+                                </button>
+                                <button onClick={() => togglePmActive(pm)} style={{ background: 'none', border: 'none', color: '#9a9db5', fontSize: '0.82rem', cursor: 'pointer', padding: '0.3rem 0.5rem', fontFamily: 'Inter, sans-serif' }}>
+                                  {pm.is_active ? 'Pause' : 'Resume'}
+                                </button>
+                                <button onClick={() => deletePm(pm)} style={{ background: 'none', border: 'none', color: '#e06c75', fontSize: '0.82rem', cursor: 'pointer', padding: '0.3rem 0.5rem', fontFamily: 'Inter, sans-serif', marginLeft: 'auto' }}>
+                                  Delete
+                                </button>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                    <button onClick={openCreatePm} style={{ width: '100%', background: 'linear-gradient(135deg, #c9a84c, #e8c97a)', color: '#1a1a2e', border: 'none', borderRadius: '8px', padding: '0.95rem', fontSize: '0.88rem', fontWeight: '700', letterSpacing: '0.06em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
+                      + Add PM Task
+                    </button>
+                  </>
+                )}
+
+                {pmView === 'form' && (
+                  <div>
+                    <p style={{ fontSize: '0.7rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c9a84c', marginBottom: '1rem', fontWeight: '500' }}>
+                      {editingPmId ? 'Edit PM Task' : 'New PM Task'}
+                    </p>
+
+                    <div style={{ marginBottom: '1rem' }}>
+                      <label style={mobileLabelStyle}>Task Title *</label>
+                      <input type="text" value={pmTitle} onChange={e => setPmTitle(e.target.value)} placeholder="Oil change, filter inspection..." style={mobileInputStyle} />
+                    </div>
+
+                    <div style={{ marginBottom: '1rem' }}>
+                      <label style={mobileLabelStyle}>Description</label>
+                      <textarea value={pmDescription} onChange={e => setPmDescription(e.target.value)} placeholder="Steps, parts needed, special instructions..." rows={3} style={{ ...mobileInputStyle, resize: 'vertical', fontFamily: 'Inter, sans-serif' }} />
+                    </div>
+
+                    <div style={{ marginBottom: '1rem' }}>
+                      <label style={mobileLabelStyle}>Every</label>
+                      <input type="number" min="1" value={pmFrequencyValue} onChange={e => setPmFrequencyValue(e.target.value)} placeholder="30" style={mobileInputStyle} />
+                    </div>
+
+                    <div style={{ marginBottom: '1rem' }}>
+                      <label style={mobileLabelStyle}>Unit</label>
+                      <select value={pmFrequencyUnit} onChange={e => setPmFrequencyUnit(e.target.value)} style={{ ...mobileInputStyle, cursor: 'pointer' }}>
+                        {FREQUENCY_UNITS.map(u => <option key={u} value={u}>{u.charAt(0).toUpperCase() + u.slice(1)}</option>)}
+                      </select>
+                    </div>
+
+                    <div style={{ marginBottom: '1rem' }}>
+                      <label style={mobileLabelStyle}>Next Due Date *</label>
+                      <input type="date" value={pmNextDueDate} onChange={e => setPmNextDueDate(e.target.value)} style={mobileInputStyle} />
+                    </div>
+
+                    <div style={{ marginBottom: '1rem' }}>
+                      <label style={mobileLabelStyle}>Priority</label>
+                      <select value={pmPriority} onChange={e => setPmPriority(e.target.value)} style={{ ...mobileInputStyle, cursor: 'pointer' }}>
+                        {PRIORITY_OPTIONS.map(p => <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>)}
+                      </select>
+                    </div>
+
+                    <div style={{ marginBottom: '1rem' }}>
+                      <label style={mobileLabelStyle}>Assigned To (optional)</label>
+                      <select value={pmAssignedTo} onChange={e => setPmAssignedTo(e.target.value)} style={{ ...mobileInputStyle, cursor: 'pointer' }}>
+                        <option value="">Any technician</option>
+                        {(profiles || []).filter(p => p.is_active !== false).map(p => <option key={p.id} value={p.id}>{p.full_name}</option>)}
+                      </select>
+                    </div>
+
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.7rem', color: '#f8f6f1', fontSize: '0.95rem', cursor: 'pointer', padding: '0.6rem 0', marginBottom: '0.5rem' }}>
+                      <input type="checkbox" checked={pmIsActive} onChange={e => setPmIsActive(e.target.checked)} style={{ width: '20px', height: '20px', accentColor: '#c9a84c', cursor: 'pointer' }} />
+                      Active
+                    </label>
+
+                    {pmError && (
+                      <p style={{ color: '#e06c75', fontSize: '0.88rem', marginBottom: '1rem', padding: '0.7rem 0.9rem', background: 'rgba(224,108,117,0.1)', borderRadius: '8px', border: '1px solid rgba(224,108,117,0.2)', lineHeight: 1.4 }}>
+                        {pmError}
+                      </p>
+                    )}
+
+                    <button onClick={savePm} disabled={pmSaving} style={{ width: '100%', background: 'linear-gradient(135deg, #c9a84c, #e8c97a)', color: '#1a1a2e', border: 'none', borderRadius: '8px', padding: '0.95rem', fontSize: '0.88rem', fontWeight: '700', letterSpacing: '0.06em', textTransform: 'uppercase', cursor: pmSaving ? 'not-allowed' : 'pointer', opacity: pmSaving ? 0.7 : 1, fontFamily: 'Inter, sans-serif', marginBottom: '0.5rem' }}>
+                      {pmSaving ? 'Saving...' : 'Save PM Task'}
+                    </button>
+                    <button onClick={cancelPmForm} style={{ width: '100%', background: 'none', color: '#9a9db5', border: '1px solid rgba(154,157,181,0.3)', borderRadius: '8px', padding: '0.85rem', fontSize: '0.85rem', letterSpacing: '0.05em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
+                      Cancel
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </>
