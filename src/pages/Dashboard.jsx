@@ -53,6 +53,12 @@ function formatDueDate(dateString) {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
+function getUpcomingCutoff() {
+  const d = new Date()
+  d.setDate(d.getDate() + 7)
+  return d.toISOString().split('T')[0]
+}
+
 const navBtnStyle = {
   background: 'none',
   border: '1px solid rgba(201,168,76,0.18)',
@@ -110,6 +116,7 @@ export default function Dashboard({ profile }) {
   const [assets, setAssets] = useState([])
   const [organization, setOrganization] = useState(null)
   const [customFieldDefs, setCustomFieldDefs] = useState([])
+  const [upcomingPms, setUpcomingPms] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('all')
   const [selectedAsset, setSelectedAsset] = useState(null)
@@ -131,7 +138,8 @@ export default function Dashboard({ profile }) {
 
   async function fetchAll() {
     setLoading(true)
-    const [woRes, profRes, assetRes, orgRes, cfdRes] = await Promise.all([
+    const cutoff = getUpcomingCutoff()
+    const [woRes, profRes, assetRes, orgRes, cfdRes, pmRes] = await Promise.all([
       supabase
         .from('work_orders')
         .select('*')
@@ -148,13 +156,21 @@ export default function Dashboard({ profile }) {
         .from('custom_field_definitions')
         .select('*')
         .eq('organization_id', profile.organization_id)
-        .order('display_order', { ascending: true })
+        .order('display_order', { ascending: true }),
+      supabase
+        .from('pm_schedules')
+        .select('*, assets(id, name)')
+        .eq('organization_id', profile.organization_id)
+        .eq('is_active', true)
+        .lte('next_due_at', cutoff)
+        .order('next_due_at', { ascending: true })
     ])
     setWorkOrders(woRes.data || [])
     setProfiles(profRes.data || [])
     setAssets(assetRes.data || [])
     setOrganization(orgRes.data || null)
     setCustomFieldDefs(cfdRes.data || [])
+    setUpcomingPms(pmRes.data || [])
     setLoading(false)
   }
 
@@ -169,13 +185,23 @@ export default function Dashboard({ profile }) {
     setFlyoutOpen(true)
   }
 
-  function openEditAsset(asset) {
+  function openEditAsset(asset, initialTab = 'details') {
     setFlyoutMode('edit')
     setFlyoutAsset(asset)
-    setFlyoutTab('details')
+    setFlyoutTab(initialTab)
     setFlyoutOpen(true)
     setSearchQuery('')
     setSearchFocused(false)
+  }
+
+  function openPmInAsset(pm) {
+    const asset = assets.find(a => a.id === pm.asset_id) || pm.assets
+    if (asset) openEditAsset(asset, 'pm')
+  }
+
+  function generateWorkOrderFromPm(pm, e) {
+    if (e) e.stopPropagation()
+    navigate(`/work-order/new?asset=${pm.asset_id}&from_pm=${pm.id}`)
   }
 
   function closeFlyout() {
@@ -429,16 +455,98 @@ export default function Dashboard({ profile }) {
               }}>
                 Maintenance Coming Up · 7 Days
               </p>
-              <div style={{
-                background: 'rgba(201,168,76,0.04)',
-                border: '1px dashed rgba(201,168,76,0.2)',
-                borderRadius: '8px', padding: '1rem', textAlign: 'center'
-              }}>
-                <p style={{ fontSize: '1rem', marginBottom: '0.5rem', opacity: 0.6 }}>🗓️</p>
-                <p style={{ fontSize: '0.78rem', color: '#9a9db5', lineHeight: '1.55' }}>
-                  PM scheduling launching soon. This list will populate once you create your first PM task.
-                </p>
-              </div>
+
+              {upcomingPms.length === 0 ? (
+                <div style={{
+                  background: 'rgba(201,168,76,0.04)',
+                  border: '1px dashed rgba(201,168,76,0.2)',
+                  borderRadius: '8px', padding: '1rem', textAlign: 'center'
+                }}>
+                  <p style={{ fontSize: '0.78rem', color: '#9a9db5', lineHeight: '1.55' }}>
+                    No PMs due in the next 7 days. You're all caught up.
+                  </p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {upcomingPms.map(pm => {
+                    const relText = getRelativeDueText(pm.next_due_at)
+                    const isOverdue = relText.startsWith('Overdue') || relText === 'Due today'
+                    return (
+                      <div
+                        key={pm.id}
+                        onClick={() => openPmInAsset(pm)}
+                        style={{
+                          background: '#1e2245',
+                          border: `1px solid ${isOverdue ? 'rgba(224,108,117,0.35)' : 'rgba(201,168,76,0.18)'}`,
+                          borderRadius: '8px',
+                          padding: '0.65rem 0.75rem',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <p style={{
+                          fontFamily: 'Georgia, serif',
+                          fontSize: '0.85rem',
+                          fontWeight: '600',
+                          color: '#f8f6f1',
+                          margin: '0 0 0.2rem 0',
+                          lineHeight: 1.3
+                        }}>
+                          {pm.title}
+                        </p>
+                        <p style={{
+                          fontSize: '0.7rem',
+                          color: '#9a9db5',
+                          margin: '0 0 0.3rem 0',
+                          lineHeight: 1.3
+                        }}>
+                          {pm.assets?.name || 'Unknown asset'}
+                        </p>
+                        <p style={{
+                          fontSize: '0.68rem',
+                          margin: '0 0 0.5rem 0',
+                          color: isOverdue ? '#e06c75' : '#9a9db5',
+                          lineHeight: 1.3
+                        }}>
+                          {relText || formatDueDate(pm.next_due_at)}
+                          <span style={{
+                            display: 'inline-block',
+                            marginLeft: '0.4rem',
+                            padding: '0.05rem 0.4rem',
+                            borderRadius: '8px',
+                            fontSize: '0.6rem',
+                            fontWeight: '700',
+                            letterSpacing: '0.08em',
+                            textTransform: 'uppercase',
+                            color: PRIORITY_COLOR[pm.priority],
+                            border: `1px solid ${PRIORITY_COLOR[pm.priority]}`
+                          }}>
+                            {pm.priority}
+                          </span>
+                        </p>
+                        <button
+                          onClick={(e) => generateWorkOrderFromPm(pm, e)}
+                          style={{
+                            width: '100%',
+                            background: 'none',
+                            border: '1px solid rgba(201,168,76,0.35)',
+                            color: '#c9a84c',
+                            borderRadius: '6px',
+                            padding: '0.35rem 0.5rem',
+                            fontSize: '0.66rem',
+                            fontWeight: '500',
+                            letterSpacing: '0.06em',
+                            textTransform: 'uppercase',
+                            cursor: 'pointer',
+                            fontFamily: 'Inter, sans-serif'
+                          }}
+                        >
+                          + Generate WO
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -673,7 +781,6 @@ function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, cus
   const [submitting, setSubmitting] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
-  // PM state
   const [pmList, setPmList] = useState([])
   const [pmLoading, setPmLoading] = useState(false)
   const [pmView, setPmView] = useState('list')
@@ -793,6 +900,11 @@ function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, cus
     if (!confirm(`Delete "${pm.title}"? This cannot be undone.`)) return
     const { error } = await supabase.from('pm_schedules').delete().eq('id', pm.id)
     if (!error) await fetchPmList()
+  }
+
+  function generateWorkOrderFromPm(pm) {
+    onClose()
+    navigate(`/work-order/new?asset=${asset.id}&from_pm=${pm.id}`)
   }
 
   function updateCustomFieldValue(defId, value) {
@@ -1117,7 +1229,6 @@ function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, cus
             </form>
           )}
 
-          {/* WORK ORDER HISTORY TAB */}
           {mode === 'edit' && tab === 'history' && (
             <div>
               {assetWorkOrders.length === 0 ? (
@@ -1155,7 +1266,6 @@ function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, cus
             </div>
           )}
 
-          {/* PM SCHEDULE TAB */}
           {mode === 'edit' && tab === 'pm' && (
             <div>
               {pmView === 'list' && (
@@ -1198,12 +1308,15 @@ function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, cus
                                 <span style={{ color: '#c9a84c' }}>Assigned:</span> {getTechName(pm.assigned_to)}
                               </p>
                             )}
-                            <div style={{ display: 'flex', gap: '0.5rem', paddingTop: '0.5rem', borderTop: '0.5px solid rgba(154,157,181,0.15)' }}>
+                            <div style={{ display: 'flex', gap: '0.5rem', paddingTop: '0.5rem', borderTop: '0.5px solid rgba(154,157,181,0.15)', flexWrap: 'wrap' }}>
                               <button onClick={() => openEditPm(pm)} style={{ background: 'none', border: 'none', color: '#9a9db5', fontSize: '0.78rem', cursor: 'pointer', padding: '0.25rem 0.4rem', fontFamily: 'Inter, sans-serif' }}>
                                 Edit
                               </button>
                               <button onClick={() => togglePmActive(pm)} style={{ background: 'none', border: 'none', color: '#9a9db5', fontSize: '0.78rem', cursor: 'pointer', padding: '0.25rem 0.4rem', fontFamily: 'Inter, sans-serif' }}>
                                 {pm.is_active ? 'Pause' : 'Resume'}
+                              </button>
+                              <button onClick={() => generateWorkOrderFromPm(pm)} style={{ background: 'none', border: 'none', color: '#c9a84c', fontSize: '0.78rem', cursor: 'pointer', padding: '0.25rem 0.4rem', fontFamily: 'Inter, sans-serif' }}>
+                                Generate WO
                               </button>
                               <button onClick={() => deletePm(pm)} style={{ background: 'none', border: 'none', color: '#e06c75', fontSize: '0.78rem', cursor: 'pointer', padding: '0.25rem 0.4rem', fontFamily: 'Inter, sans-serif', marginLeft: 'auto' }}>
                                 Delete
