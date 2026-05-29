@@ -14,6 +14,8 @@ export default function WorkOrderForm({ profile }) {
   const [status, setStatus] = useState('open')
   const [assetId, setAssetId] = useState('')
   const [assignedTo, setAssignedTo] = useState('')
+  const [pmScheduleId, setPmScheduleId] = useState(null)
+  const [pmPreFilled, setPmPreFilled] = useState(false)
   const [assets, setAssets] = useState([])
   const [technicians, setTechnicians] = useState([])
   const [organization, setOrganization] = useState(null)
@@ -38,6 +40,11 @@ export default function WorkOrderForm({ profile }) {
     const prefilledAsset = searchParams.get('asset')
     if (isNew && prefilledAsset) {
       setAssetId(prefilledAsset)
+    }
+    // Pre-fill everything from a PM Task
+    const fromPm = searchParams.get('from_pm')
+    if (isNew && fromPm) {
+      fetchPmAndPrefill(fromPm)
     }
   }, [id])
 
@@ -70,8 +77,28 @@ export default function WorkOrderForm({ profile }) {
       setStatus(data.status)
       setAssetId(data.asset_id || '')
       setAssignedTo(data.assigned_to || '')
+      setPmScheduleId(data.pm_schedule_id || null)
     }
     setFetching(false)
+  }
+
+  async function fetchPmAndPrefill(pmId) {
+    const { data } = await supabase
+      .from('pm_schedules')
+      .select('*')
+      .eq('id', pmId)
+      .single()
+    if (!data) return
+    setTitle(data.title || '')
+    setDescription(data.description || '')
+    setPriority(data.priority || 'standard')
+    setAssetId(data.asset_id || '')
+    // Only managers can change assignees, so only override for them
+    if (data.assigned_to && profile?.role === 'manager') {
+      setAssignedTo(data.assigned_to)
+    }
+    setPmScheduleId(data.id)
+    setPmPreFilled(true)
   }
 
   async function handleAddAsset(e) {
@@ -123,6 +150,7 @@ export default function WorkOrderForm({ profile }) {
       asset_id: assetId || null,
       assigned_to: assignedTo || null,
       organization_id: profile.organization_id,
+      pm_schedule_id: pmScheduleId || null,
       closed_at: status === 'closed' ? new Date().toISOString() : null
     }
 
@@ -245,8 +273,32 @@ export default function WorkOrderForm({ profile }) {
 
       <div style={{ padding: '2.5rem 5%', maxWidth: '680px', margin: '0 auto' }}>
 
-        {/* ASSET PRE-FILL NOTICE */}
-        {isNew && searchParams.get('asset') && assetId && (
+        {/* PM PRE-FILL NOTICE (takes precedence over asset notice) */}
+        {isNew && pmPreFilled && (
+          <div style={{
+            background: 'rgba(201,168,76,0.08)',
+            border: '1px solid rgba(201,168,76,0.35)',
+            borderRadius: '10px',
+            padding: '0.85rem 1.1rem',
+            marginBottom: '1.5rem',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '0.7rem'
+          }}>
+            <span style={{ color: '#c9a84c', fontSize: '1.1rem', lineHeight: 1 }}>📋</span>
+            <div>
+              <p style={{ color: '#c9a84c', fontSize: '0.88rem', fontWeight: '600', marginBottom: '0.15rem' }}>
+                Generated from a PM Task
+              </p>
+              <p style={{ color: '#e8c97a', fontSize: '0.8rem', lineHeight: '1.5' }}>
+                Title, description, priority, asset, and assignee pre-filled from the schedule. Adjust anything before saving.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* ASSET PRE-FILL NOTICE (only when not from a PM) */}
+        {isNew && !pmPreFilled && searchParams.get('asset') && assetId && (
           <div style={{
             background: 'rgba(201,168,76,0.06)',
             border: '1px solid rgba(201,168,76,0.25)',
