@@ -23,12 +23,38 @@ const STATUS_COLOR = {
   closed: '#6a6d85'
 }
 
+function getRelativeDueText(dateString) {
+  if (!dateString) return ''
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const due = new Date(dateString + 'T00:00:00')
+  const diffMs = due - today
+  const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24))
+  if (diffDays === 0) return 'Due today'
+  if (diffDays < 0) return `Overdue by ${Math.abs(diffDays)} ${Math.abs(diffDays) === 1 ? 'day' : 'days'}`
+  if (diffDays <= 14) return `Due in ${diffDays} ${diffDays === 1 ? 'day' : 'days'}`
+  return ''
+}
+
+function formatDueDate(dateString) {
+  if (!dateString) return ''
+  const d = new Date(dateString + 'T00:00:00')
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+function getUpcomingCutoff() {
+  const d = new Date()
+  d.setDate(d.getDate() + 7)
+  return d.toISOString().split('T')[0]
+}
+
 export default function MobileWorkOrders({ profile }) {
   const navigate = useNavigate()
   const [workOrders, setWorkOrders] = useState([])
   const [profiles, setProfiles] = useState([])
   const [assets, setAssets] = useState([])
   const [organization, setOrganization] = useState(null)
+  const [upcomingPms, setUpcomingPms] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('all')
 
@@ -38,16 +64,25 @@ export default function MobileWorkOrders({ profile }) {
 
   async function fetchAll() {
     setLoading(true)
-    const [woRes, profRes, assetRes, orgRes] = await Promise.all([
+    const cutoff = getUpcomingCutoff()
+    const [woRes, profRes, assetRes, orgRes, pmRes] = await Promise.all([
       supabase.from('work_orders').select('*').neq('status', 'closed').order('created_at', { ascending: false }),
       supabase.from('profiles').select('*'),
       supabase.from('assets').select('*'),
-      supabase.from('organizations').select('*').eq('id', profile.organization_id).single()
+      supabase.from('organizations').select('*').eq('id', profile.organization_id).single(),
+      supabase
+        .from('pm_schedules')
+        .select('*, assets(id, name)')
+        .eq('organization_id', profile.organization_id)
+        .eq('is_active', true)
+        .lte('next_due_at', cutoff)
+        .order('next_due_at', { ascending: true })
     ])
     setWorkOrders(woRes.data || [])
     setProfiles(profRes.data || [])
     setAssets(assetRes.data || [])
     setOrganization(orgRes.data || null)
+    setUpcomingPms(pmRes.data || [])
     setLoading(false)
   }
 
@@ -63,6 +98,15 @@ export default function MobileWorkOrders({ profile }) {
   function getAssetName(id) {
     const asset = assets.find(a => a.id === id)
     return asset ? asset.name : 'No asset'
+  }
+
+  function openPmAsset(pm) {
+    navigate(`/m/assets/${pm.asset_id}`)
+  }
+
+  function generateWorkOrderFromPm(pm, e) {
+    if (e) e.stopPropagation()
+    navigate(`/work-order/new?asset=${pm.asset_id}&from_pm=${pm.id}`)
   }
 
   const firstName = profile?.full_name?.split(' ')[0] || 'there'
@@ -195,6 +239,116 @@ export default function MobileWorkOrders({ profile }) {
             </div>
           ))}
         </div>
+
+        {/* COMING UP SECTION (Pro only) */}
+        {isPro && (
+          <div style={{ marginBottom: '1.25rem' }}>
+            <p style={{
+              fontSize: '0.65rem',
+              letterSpacing: '0.18em',
+              textTransform: 'uppercase',
+              color: '#c9a84c',
+              marginBottom: '0.65rem',
+              fontWeight: '500'
+            }}>
+              Maintenance Coming Up · 7 Days
+            </p>
+
+            {upcomingPms.length === 0 ? (
+              <div style={{
+                background: 'rgba(201,168,76,0.04)',
+                border: '1px dashed rgba(201,168,76,0.2)',
+                borderRadius: '10px',
+                padding: '1.1rem 1rem',
+                textAlign: 'center'
+              }}>
+                <p style={{ fontSize: '0.82rem', color: '#9a9db5', lineHeight: '1.5' }}>
+                  No PMs due in the next 7 days. You're all caught up.
+                </p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                {upcomingPms.map(pm => {
+                  const relText = getRelativeDueText(pm.next_due_at)
+                  const isOverdue = relText.startsWith('Overdue') || relText === 'Due today'
+                  return (
+                    <div
+                      key={pm.id}
+                      onClick={() => openPmAsset(pm)}
+                      style={{
+                        background: '#1e2245',
+                        border: `1px solid ${isOverdue ? 'rgba(224,108,117,0.35)' : 'rgba(201,168,76,0.18)'}`,
+                        borderRadius: '10px',
+                        padding: '0.85rem 0.95rem',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <p style={{
+                        fontFamily: 'Georgia, serif',
+                        fontSize: '0.95rem',
+                        fontWeight: '600',
+                        color: '#f8f6f1',
+                        margin: '0 0 0.25rem 0',
+                        lineHeight: 1.3
+                      }}>
+                        {pm.title}
+                      </p>
+                      <p style={{
+                        fontSize: '0.75rem',
+                        color: '#9a9db5',
+                        margin: '0 0 0.35rem 0',
+                        lineHeight: 1.3
+                      }}>
+                        {pm.assets?.name || 'Unknown asset'}
+                      </p>
+                      <p style={{
+                        fontSize: '0.72rem',
+                        margin: '0 0 0.6rem 0',
+                        color: isOverdue ? '#e06c75' : '#9a9db5',
+                        lineHeight: 1.3
+                      }}>
+                        {relText || formatDueDate(pm.next_due_at)}
+                        <span style={{
+                          display: 'inline-block',
+                          marginLeft: '0.4rem',
+                          padding: '0.08rem 0.45rem',
+                          borderRadius: '10px',
+                          fontSize: '0.62rem',
+                          fontWeight: '700',
+                          letterSpacing: '0.08em',
+                          textTransform: 'uppercase',
+                          color: PRIORITY_COLOR[pm.priority],
+                          border: `1px solid ${PRIORITY_COLOR[pm.priority]}`
+                        }}>
+                          {pm.priority}
+                        </span>
+                      </p>
+                      <button
+                        onClick={(e) => generateWorkOrderFromPm(pm, e)}
+                        style={{
+                          width: '100%',
+                          background: 'none',
+                          border: '1px solid rgba(201,168,76,0.35)',
+                          color: '#c9a84c',
+                          borderRadius: '6px',
+                          padding: '0.5rem',
+                          fontSize: '0.72rem',
+                          fontWeight: '500',
+                          letterSpacing: '0.06em',
+                          textTransform: 'uppercase',
+                          cursor: 'pointer',
+                          fontFamily: 'Inter, sans-serif'
+                        }}
+                      >
+                        + Generate Work Order
+                      </button>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* NEW WORK ORDER BUTTON */}
         <button
