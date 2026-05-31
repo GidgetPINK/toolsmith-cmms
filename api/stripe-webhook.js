@@ -105,18 +105,20 @@ export default async function handler(req, res) {
         const customerEmail = session.metadata?.customer_email || session.customer_email
 
         // Handle CMMS subscription checkout
-        if (organizationId && session.subscription) {
-          const isPro = await isProSubscription(session.subscription)
-          await supabase
-            .from('organizations')
-            .update({
-              is_upgraded: isPro,
-              stripe_customer_id: session.customer,
-              stripe_subscription_id: session.subscription,
-              upgraded_at: new Date().toISOString()
-            })
-            .eq('id', organizationId)
-        }
+        // Handle CMMS subscription checkout
+if (organizationId && session.subscription) {
+  const isPro = await isProSubscription(session.subscription)
+  await supabase
+    .from('organizations')
+    .update({
+      is_upgraded: isPro,
+      setup_complete: true,
+      stripe_customer_id: session.customer,
+      stripe_subscription_id: session.subscription,
+      upgraded_at: new Date().toISOString()
+    })
+    .eq('id', organizationId)
+}
 
         // Handle template purchase checkout
         if (product === 'pm_scheduler' && customerEmail) {

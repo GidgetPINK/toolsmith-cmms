@@ -247,24 +247,6 @@ export default function Upgrade({ profile }) {
           {loading ? 'Redirecting to checkout...' : `Upgrade to ${selectedPlan.name}`}
         </button>
 
-        <button
-          onClick={() => navigate('/')}
-          style={{
-            width: '100%',
-            background: 'none',
-            border: '1px solid rgba(201,168,76,0.18)',
-            color: '#9a9db5',
-            borderRadius: '8px',
-            padding: '0.9rem',
-            fontSize: '0.85rem',
-            letterSpacing: '0.06em',
-            textTransform: 'uppercase',
-            cursor: 'pointer',
-            fontFamily: 'Inter, sans-serif'
-          }}
-        >
-          Maybe Later
-        </button>
 
         <p style={{
           color: '#9a9db5',

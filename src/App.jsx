@@ -18,6 +18,7 @@ import Settings from './pages/Settings'
 import MobileWorkOrders from './pages/MobileWorkOrders'
 import MobileAssets from './pages/MobileAssets'
 import MobileAssetDetail from './pages/MobileAssetDetail'
+import CompletePaymentSetup from './pages/CompletePaymentSetup'
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(
@@ -114,17 +115,24 @@ function DisabledScreen() {
 function App() {
   const [session, setSession] = useState(undefined)
   const [profile, setProfile] = useState(undefined)
+  const [organization, setOrganization] = useState(undefined)
   const isMobile = useIsMobile()
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
-      if (!session) setProfile(null)
+      if (!session) {
+        setProfile(null)
+        setOrganization(null)
+      }
     })
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setSession(session)
-        if (!session) setProfile(null)
+        if (!session) {
+          setProfile(null)
+          setOrganization(null)
+        }
       }
     )
     return () => subscription.unsubscribe()
@@ -141,7 +149,20 @@ function App() {
     }
   }, [session])
 
-  if (session === undefined || profile === undefined) {
+  useEffect(() => {
+    if (profile?.organization_id) {
+      supabase
+        .from('organizations')
+        .select('*')
+        .eq('id', profile.organization_id)
+        .single()
+        .then(({ data }) => setOrganization(data))
+    } else if (profile === null) {
+      setOrganization(null)
+    }
+  }, [profile])
+
+  if (session === undefined || profile === undefined || organization === undefined) {
     return (
       <div style={{
         minHeight: '100vh',
@@ -160,6 +181,12 @@ function App() {
     return <DisabledScreen />
   }
 
+  // Payment gate: if logged in but setup not complete, force them to CompletePaymentSetup
+  // Managers only since they're the ones who handle billing
+  const needsPaymentSetup = session && profile && organization &&
+    profile.role === 'manager' &&
+    organization.setup_complete === false
+
   return (
     <BrowserRouter>
       <Routes>
@@ -173,6 +200,18 @@ function App() {
           path="/register"
           element={
             session ? <Navigate to="/" replace /> : <Register />
+          }
+        />
+        <Route
+          path="/complete-setup"
+          element={
+            !session ? (
+              <Navigate to="/login" replace />
+            ) : !needsPaymentSetup ? (
+              <Navigate to="/" replace />
+            ) : (
+              <CompletePaymentSetup profile={profile} />
+            )
           }
         />
         <Route
@@ -190,6 +229,8 @@ function App() {
           element={
             !session ? (
               <Navigate to="/login" replace />
+            ) : needsPaymentSetup ? (
+              <Navigate to="/complete-setup" replace />
             ) : (
               <Upgrade profile={profile} />
             )
@@ -214,6 +255,8 @@ function App() {
           element={
             !session ? (
               <Navigate to="/login" replace />
+            ) : needsPaymentSetup ? (
+              <Navigate to="/complete-setup" replace />
             ) : profile?.role !== 'manager' ? (
               <Queue profile={profile} />
             ) : isMobile ? (
@@ -228,6 +271,8 @@ function App() {
           element={
             !session ? (
               <Navigate to="/login" replace />
+            ) : needsPaymentSetup ? (
+              <Navigate to="/complete-setup" replace />
             ) : (
               <WorkOrderForm profile={profile} />
             )
@@ -238,6 +283,8 @@ function App() {
           element={
             !session ? (
               <Navigate to="/login" replace />
+            ) : needsPaymentSetup ? (
+              <Navigate to="/complete-setup" replace />
             ) : (
               <WorkOrderForm profile={profile} />
             )
@@ -248,6 +295,8 @@ function App() {
           element={
             !session ? (
               <Navigate to="/login" replace />
+            ) : needsPaymentSetup ? (
+              <Navigate to="/complete-setup" replace />
             ) : profile?.role !== 'manager' ? (
               <Navigate to="/" replace />
             ) : (
@@ -260,6 +309,8 @@ function App() {
           element={
             !session ? (
               <Navigate to="/login" replace />
+            ) : needsPaymentSetup ? (
+              <Navigate to="/complete-setup" replace />
             ) : profile?.role !== 'manager' ? (
               <Navigate to="/" replace />
             ) : (
@@ -272,6 +323,8 @@ function App() {
           element={
             !session ? (
               <Navigate to="/login" replace />
+            ) : needsPaymentSetup ? (
+              <Navigate to="/complete-setup" replace />
             ) : (
               <Settings profile={profile} />
             )
@@ -282,6 +335,8 @@ function App() {
           element={
             !session ? (
               <Navigate to="/login" replace />
+            ) : needsPaymentSetup ? (
+              <Navigate to="/complete-setup" replace />
             ) : profile?.role !== 'manager' ? (
               <Navigate to="/" replace />
             ) : (
@@ -294,6 +349,8 @@ function App() {
           element={
             !session ? (
               <Navigate to="/login" replace />
+            ) : needsPaymentSetup ? (
+              <Navigate to="/complete-setup" replace />
             ) : profile?.role !== 'manager' ? (
               <Navigate to="/" replace />
             ) : (
@@ -306,6 +363,8 @@ function App() {
           element={
             !session ? (
               <Navigate to="/login" replace />
+            ) : needsPaymentSetup ? (
+              <Navigate to="/complete-setup" replace />
             ) : (
               <MobileAssets profile={profile} />
             )
@@ -316,6 +375,8 @@ function App() {
           element={
             !session ? (
               <Navigate to="/login" replace />
+            ) : needsPaymentSetup ? (
+              <Navigate to="/complete-setup" replace />
             ) : (
               <MobileAssetDetail profile={profile} />
             )
@@ -326,6 +387,8 @@ function App() {
           element={
             !session ? (
               <Navigate to="/login" replace />
+            ) : needsPaymentSetup ? (
+              <Navigate to="/complete-setup" replace />
             ) : (
               <MobileAssetDetail profile={profile} />
             )
