@@ -155,15 +155,27 @@ export default function Register() {
 
       if (signInError) throw signInError
 
-      const stripeResponse = await fetch('/api/create-checkout-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          priceId: selectedPlan.priceId,
-          organizationId: accountData.organizationId,
-          email
-        })
-      })
+      // Make sure the new user is signed in so we have a session token
+const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+  email,
+  password
+})
+
+if (signInError || !signInData?.session) {
+  setError('Account created but auto-login failed. Please log in manually.')
+  return
+}
+
+const stripeResponse = await fetch('/api/create-checkout-session', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${signInData.session.access_token}`
+  },
+  body: JSON.stringify({
+    priceId: selectedPlan.priceId
+  })
+})
 
       const { url, error: stripeError } = await stripeResponse.json()
       if (stripeError) throw new Error(stripeError)

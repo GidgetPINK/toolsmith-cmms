@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { supabase } from '../lib/supabase'
 
 export default function Upgrade({ profile }) {
   const [plan, setPlan] = useState('pro_monthly')
@@ -32,15 +33,23 @@ export default function Upgrade({ profile }) {
     setError(null)
 
     try {
-      const response = await fetch('/api/create-checkout-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          priceId: selectedPlan.priceId,
-          organizationId: profile.organization_id,
-          email: null
-        })
-      })
+  const { data: { session } } = await supabase.auth.getSession()
+
+  if (!session) {
+    setError('Your session expired. Please log in again.')
+    return
+  }
+
+  const response = await fetch('/api/create-checkout-session', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.access_token}`
+    },
+    body: JSON.stringify({
+      priceId: selectedPlan.priceId
+    })
+  })
 
       const { url, error: stripeError } = await response.json()
       if (stripeError) throw new Error(stripeError)
