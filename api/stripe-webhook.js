@@ -106,6 +106,7 @@ export default async function handler(req, res) {
 
         // Handle CMMS subscription checkout
         // Handle CMMS subscription checkout
+// Handle CMMS subscription checkout
 if (organizationId && session.subscription) {
   const isPro = await isProSubscription(session.subscription)
   await supabase
@@ -118,6 +119,59 @@ if (organizationId && session.subscription) {
       upgraded_at: new Date().toISOString()
     })
     .eq('id', organizationId)
+
+  // Send welcome email
+  try {
+    // Look up the manager's name and email for this org
+    const { data: managerProfile } = await supabase
+      .from('profiles')
+      .select('full_name, id')
+      .eq('organization_id', organizationId)
+      .eq('role', 'manager')
+      .limit(1)
+      .maybeSingle()
+
+    let managerEmail = session.customer_email
+    if (managerProfile?.id) {
+      const { data: { user } } = await supabase.auth.admin.getUserById(managerProfile.id)
+      if (user?.email) managerEmail = user.email
+    }
+
+    if (managerEmail && managerProfile?.full_name) {
+      // Calculate trial end date from subscription
+      const subscription = await stripe.subscriptions.retrieve(session.subscription)
+      const trialEndTimestamp = subscription.trial_end
+      const trialEndDate = trialEndTimestamp
+        ? new Date(trialEndTimestamp * 1000).toLocaleDateString('en-US', {
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric'
+          })
+        : 'the end of your trial period'
+
+      // Map price ID to plan name
+      const paidPriceId = subscription.items.data[0]?.price?.id
+      let planName = 'Lite'
+      if (paidPriceId === process.env.STRIPE_PRICE_PRO_MONTHLY) planName = 'Pro Monthly'
+      else if (paidPriceId === process.env.STRIPE_PRICE_PRO_YEARLY) planName = 'Pro Annual'
+      else if (paidPriceId === process.env.STRIPE_PRICE_LITE_YEARLY) planName = 'Lite Annual'
+      else if (paidPriceId === process.env.STRIPE_PRICE_LITE_MONTHLY) planName = 'Lite Monthly'
+
+      await fetch(`${process.env.VITE_APP_URL}/api/send-welcome-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: managerEmail,
+          name: managerProfile.full_name,
+          planName,
+          trialEndDate
+        })
+      })
+    }
+  } catch (emailError) {
+    // Don't fail the webhook if email fails
+    console.error('Failed to send welcome email:', emailError.message)
+  }
 }
 
         // Handle template purchase checkout
