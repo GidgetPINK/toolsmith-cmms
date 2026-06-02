@@ -35,8 +35,8 @@ export default function Team({ profile }) {
     setError(null)
     setSuccess(null)
 
-    if (invitePassword.length < 6) {
-      setError('Password must be at least 6 characters.')
+    if (invitePassword.length < 8) {
+      setError('Password must be at least 8 characters.')
       setSubmitting(false)
       return
     }
@@ -456,7 +456,7 @@ export default function Team({ profile }) {
                     value={invitePassword}
                     onChange={e => setInvitePassword(e.target.value)}
                     required
-                    placeholder="Min 6 characters"
+                    placeholder="Min 8 characters"
                     style={passwordInputStyle}
                   />
                   <button

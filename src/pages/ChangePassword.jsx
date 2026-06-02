@@ -54,8 +54,8 @@ export default function ChangePassword({ profile }) {
     e.preventDefault()
     setError(null)
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters.')
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters.')
       return
     }
 
@@ -156,7 +156,7 @@ export default function ChangePassword({ profile }) {
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   required
-                  placeholder="Min 6 characters"
+                  placeholder="Min 8 characters"
                   autoComplete="new-password"
                   style={inputStyle}
                 />
