@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import TrialBanner from '../components/TrialBanner'
 
 const PRIORITY_COLOR = {
   critical: '#e06c75',
@@ -556,30 +557,11 @@ export default function Dashboard({ profile }) {
           className="main-content"
           style={{ flex: 1, padding: '2rem 2.5rem', minWidth: 0, boxSizing: 'border-box' }}
         >
-          {!organization?.stripe_subscription_id && (
-            <div style={{
-              background: 'rgba(232,201,122,0.08)', border: '1px solid rgba(232,201,122,0.4)',
-              borderRadius: '10px', padding: '0.85rem 1.25rem', marginBottom: '1.75rem',
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              flexWrap: 'wrap', gap: '0.75rem'
-            }}>
-              <p style={{ color: '#e8c97a', fontSize: '0.88rem', lineHeight: '1.6' }}>
-                ⚠ Your payment setup is incomplete. Add a payment method to keep access after your trial ends.
-              </p>
-              <button
-                onClick={() => navigate('/upgrade')}
-                style={{
-                  background: 'linear-gradient(135deg, #c9a84c, #e8c97a)', color: '#1a1a2e',
-                  border: 'none', borderRadius: '6px', padding: '0.45rem 1rem',
-                  fontSize: '0.8rem', fontWeight: '700', letterSpacing: '0.06em',
-                  textTransform: 'uppercase', cursor: 'pointer',
-                  fontFamily: 'Inter, sans-serif', whiteSpace: 'nowrap'
-                }}
-              >
-                Complete Setup
-              </button>
-            </div>
-          )}
+          <TrialBanner
+            organization={organization}
+            profile={profile}
+            onManage={() => navigate('/upgrade')}
+          />
 
           <div style={{ marginBottom: '1.75rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.35rem', flexWrap: 'wrap' }}>
