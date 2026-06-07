@@ -19,6 +19,7 @@ import MobileWorkOrders from './pages/MobileWorkOrders'
 import MobileAssets from './pages/MobileAssets'
 import MobileAssetDetail from './pages/MobileAssetDetail'
 import CompletePaymentSetup from './pages/CompletePaymentSetup'
+import SubscriptionRequired from './pages/SubscriptionRequired'
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(
@@ -187,6 +188,13 @@ function App() {
     profile.role === 'manager' &&
     organization.setup_complete === false
 
+  // Subscription gate: if setup is complete but subscription is no longer active
+  // This catches canceled subscriptions and failed trial-end charges
+  // Applies to both managers and techs (techs need their manager to fix it)
+  const needsSubscription = session && profile && organization &&
+    organization.setup_complete === true &&
+    organization.is_upgraded === false
+
   return (
     <BrowserRouter>
       <Routes>
@@ -200,6 +208,18 @@ function App() {
           path="/register"
           element={
             session ? <Navigate to="/" replace /> : <Register />
+          }
+        />
+        <Route
+          path="/subscription-required"
+          element={
+            !session ? (
+              <Navigate to="/login" replace />
+            ) : !needsSubscription ? (
+              <Navigate to="/" replace />
+            ) : (
+              <SubscriptionRequired profile={profile} organization={organization} />
+            )
           }
         />
         <Route
@@ -231,6 +251,8 @@ function App() {
               <Navigate to="/login" replace />
             ) : needsPaymentSetup ? (
               <Navigate to="/complete-setup" replace />
+            ) : needsSubscription ? (
+              <Navigate to="/subscription-required" replace />
             ) : (
               <Upgrade profile={profile} />
             )
@@ -257,6 +279,8 @@ function App() {
               <Navigate to="/login" replace />
             ) : needsPaymentSetup ? (
               <Navigate to="/complete-setup" replace />
+            ) : needsSubscription ? (
+              <Navigate to="/subscription-required" replace />
             ) : profile?.role !== 'manager' ? (
               <Queue profile={profile} />
             ) : isMobile ? (
@@ -273,6 +297,8 @@ function App() {
               <Navigate to="/login" replace />
             ) : needsPaymentSetup ? (
               <Navigate to="/complete-setup" replace />
+            ) : needsSubscription ? (
+              <Navigate to="/subscription-required" replace />
             ) : (
               <WorkOrderForm profile={profile} />
             )
@@ -285,6 +311,8 @@ function App() {
               <Navigate to="/login" replace />
             ) : needsPaymentSetup ? (
               <Navigate to="/complete-setup" replace />
+            ) : needsSubscription ? (
+              <Navigate to="/subscription-required" replace />
             ) : (
               <WorkOrderForm profile={profile} />
             )
@@ -297,6 +325,8 @@ function App() {
               <Navigate to="/login" replace />
             ) : needsPaymentSetup ? (
               <Navigate to="/complete-setup" replace />
+            ) : needsSubscription ? (
+              <Navigate to="/subscription-required" replace />
             ) : profile?.role !== 'manager' ? (
               <Navigate to="/" replace />
             ) : (
@@ -311,6 +341,8 @@ function App() {
               <Navigate to="/login" replace />
             ) : needsPaymentSetup ? (
               <Navigate to="/complete-setup" replace />
+            ) : needsSubscription ? (
+              <Navigate to="/subscription-required" replace />
             ) : profile?.role !== 'manager' ? (
               <Navigate to="/" replace />
             ) : (
@@ -325,6 +357,8 @@ function App() {
               <Navigate to="/login" replace />
             ) : needsPaymentSetup ? (
               <Navigate to="/complete-setup" replace />
+            ) : needsSubscription ? (
+              <Navigate to="/subscription-required" replace />
             ) : (
               <Settings profile={profile} />
             )
@@ -337,6 +371,8 @@ function App() {
               <Navigate to="/login" replace />
             ) : needsPaymentSetup ? (
               <Navigate to="/complete-setup" replace />
+            ) : needsSubscription ? (
+              <Navigate to="/subscription-required" replace />
             ) : profile?.role !== 'manager' ? (
               <Navigate to="/" replace />
             ) : (
@@ -351,6 +387,8 @@ function App() {
               <Navigate to="/login" replace />
             ) : needsPaymentSetup ? (
               <Navigate to="/complete-setup" replace />
+            ) : needsSubscription ? (
+              <Navigate to="/subscription-required" replace />
             ) : profile?.role !== 'manager' ? (
               <Navigate to="/" replace />
             ) : (
@@ -365,6 +403,8 @@ function App() {
               <Navigate to="/login" replace />
             ) : needsPaymentSetup ? (
               <Navigate to="/complete-setup" replace />
+            ) : needsSubscription ? (
+              <Navigate to="/subscription-required" replace />
             ) : (
               <MobileAssets profile={profile} />
             )
@@ -377,6 +417,8 @@ function App() {
               <Navigate to="/login" replace />
             ) : needsPaymentSetup ? (
               <Navigate to="/complete-setup" replace />
+            ) : needsSubscription ? (
+              <Navigate to="/subscription-required" replace />
             ) : (
               <MobileAssetDetail profile={profile} />
             )
@@ -389,6 +431,8 @@ function App() {
               <Navigate to="/login" replace />
             ) : needsPaymentSetup ? (
               <Navigate to="/complete-setup" replace />
+            ) : needsSubscription ? (
+              <Navigate to="/subscription-required" replace />
             ) : (
               <MobileAssetDetail profile={profile} />
             )
