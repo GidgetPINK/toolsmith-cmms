@@ -109,6 +109,11 @@ export default async function handler(req, res) {
 // Handle CMMS subscription checkout
 if (organizationId && session.subscription) {
   const isPro = await isProSubscription(session.subscription)
+  const subscriptionForTrial = await stripe.subscriptions.retrieve(session.subscription)
+  const trialEndISO = subscriptionForTrial.trial_end
+    ? new Date(subscriptionForTrial.trial_end * 1000).toISOString()
+    : null
+
   await supabase
     .from('organizations')
     .update({
@@ -116,6 +121,7 @@ if (organizationId && session.subscription) {
       setup_complete: true,
       stripe_customer_id: session.customer,
       stripe_subscription_id: session.subscription,
+      trial_end: trialEndISO,
       upgraded_at: new Date().toISOString()
     })
     .eq('id', organizationId)
