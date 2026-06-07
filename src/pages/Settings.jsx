@@ -6,6 +6,7 @@ export default function Settings({ profile }) {
   const navigate = useNavigate()
   const [isUpgraded, setIsUpgraded] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [portalLoading, setPortalLoading] = useState(false)
 
   useEffect(() => {
     if (!profile) return
@@ -24,6 +25,39 @@ export default function Settings({ profile }) {
       .single()
     setIsUpgraded(!!data?.is_upgraded)
     setLoading(false)
+  }
+
+  async function handleManageSubscription() {
+    setPortalLoading(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        alert('Please sign in again')
+        setPortalLoading(false)
+        return
+      }
+
+      const response = await fetch('/api/create-portal-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        }
+      })
+
+      const data = await response.json()
+      if (!response.ok) {
+        alert(data.error || 'Could not open billing portal')
+        setPortalLoading(false)
+        return
+      }
+
+      window.location.href = data.url
+    } catch (err) {
+      console.error('Portal error:', err)
+      alert('Could not open billing portal. Please try again.')
+      setPortalLoading(false)
+    }
   }
 
   const isManager = profile?.role === 'manager'
@@ -182,6 +216,23 @@ export default function Settings({ profile }) {
               <div style={{ flex: 1 }}>
                 <h3 style={settingTitle}>Team Management</h3>
                 <p style={settingDesc}>Invite technicians, manage roles, deactivate accounts</p>
+              </div>
+              <span style={chevron}>›</span>
+            </button>
+
+            <div style={sectionLabel}>Billing</div>
+            <button
+              style={settingRow}
+              onClick={handleManageSubscription}
+              disabled={portalLoading}
+            >
+              <div style={{ flex: 1 }}>
+                <h3 style={settingTitle}>Manage Subscription</h3>
+                <p style={settingDesc}>
+                  {portalLoading
+                    ? 'Opening Stripe portal...'
+                    : 'Update payment method, view invoices, change plans, or cancel'}
+                </p>
               </div>
               <span style={chevron}>›</span>
             </button>
