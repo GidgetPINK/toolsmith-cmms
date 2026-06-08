@@ -41,7 +41,8 @@ export default function Parts({ profile }) {
     background: '#1a1a2e',
     color: '#f8f6f1',
     fontFamily: 'Inter, sans-serif',
-    padding: '2rem 2.5rem'
+    padding: '2rem 2.5rem',
+    boxSizing: 'border-box'
   }
 
   const container = {
@@ -154,37 +155,48 @@ export default function Parts({ profile }) {
   }
 
   return (
-    <div style={page}>
+    <div style={page} className="parts-page">
+      <style>{`
+        @media (max-width: 768px) {
+          .parts-page { padding: 1rem 1rem !important; }
+          .parts-stats { grid-template-columns: repeat(2, 1fr) !important; gap: 0.5rem !important; }
+          .parts-stat-card { padding: 0.85rem 1rem !important; }
+          .parts-stat-value { font-size: 1.35rem !important; }
+          .parts-stat-label { font-size: 0.65rem !important; letter-spacing: 0.12em !important; }
+          .parts-heading { font-size: 1.4rem !important; }
+          .parts-empty-state { padding: 2.5rem 1.25rem !important; }
+        }
+      `}</style>
       <div style={container}>
         <div style={headerRow}>
           <button style={backBtn} onClick={() => navigate('/')}>← Back</button>
-          <h1 style={heading}>Parts and inventory</h1>
+          <h1 style={heading} className="parts-heading">Parts and inventory</h1>
         </div>
         <p style={subhead}>
           Manage parts, track usage, monitor stock levels
         </p>
 
-        <div style={statsRow}>
-          <div style={statCard}>
-            <p style={statLabel}>Total parts</p>
-            <p style={statValue}>{totalParts}</p>
+        <div style={statsRow} className="parts-stats">
+          <div style={statCard} className="parts-stat-card">
+            <p style={statLabel} className="parts-stat-label">Total parts</p>
+            <p style={statValue} className="parts-stat-value">{totalParts}</p>
           </div>
-          <div style={statCard}>
-            <p style={statLabel}>Below reorder</p>
-            <p style={{ ...statValue, color: lowStockCount > 0 ? '#e8c97a' : '#f8f6f1' }}>{lowStockCount}</p>
+          <div style={statCard} className="parts-stat-card">
+            <p style={statLabel} className="parts-stat-label">Below reorder</p>
+            <p style={{ ...statValue, color: lowStockCount > 0 ? '#e8c97a' : '#f8f6f1' }} className="parts-stat-value">{lowStockCount}</p>
           </div>
-          <div style={statCard}>
-            <p style={statLabel}>Out of stock</p>
-            <p style={{ ...statValue, color: outOfStockCount > 0 ? '#e06c75' : '#f8f6f1' }}>{outOfStockCount}</p>
+          <div style={statCard} className="parts-stat-card">
+            <p style={statLabel} className="parts-stat-label">Out of stock</p>
+            <p style={{ ...statValue, color: outOfStockCount > 0 ? '#e06c75' : '#f8f6f1' }} className="parts-stat-value">{outOfStockCount}</p>
           </div>
-          <div style={statCard}>
-            <p style={statLabel}>Inventory value</p>
-            <p style={statValue}>${inventoryValue.toFixed(2)}</p>
+          <div style={statCard} className="parts-stat-card">
+            <p style={statLabel} className="parts-stat-label">Inventory value</p>
+            <p style={statValue} className="parts-stat-value">${inventoryValue.toFixed(2)}</p>
           </div>
         </div>
 
         {parts.length === 0 ? (
-          <div style={emptyState}>
+          <div style={emptyState} className="parts-empty-state">
             <p style={emptyText}>
               Your parts inventory is empty.<br />
               Add your first part to get started.
