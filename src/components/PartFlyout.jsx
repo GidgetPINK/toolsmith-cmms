@@ -123,13 +123,15 @@ export default function PartFlyout({ mode, part, organizationId, onClose, onSave
     background: 'rgba(0,0,0,0.6)',
     zIndex: 100,
     display: 'flex',
-    justifyContent: 'flex-end'
+    justifyContent: 'flex-end',
+    overflow: 'hidden'
   }
 
   const panel = {
     width: '480px',
     maxWidth: '100vw',
     height: '100vh',
+    maxHeight: '100dvh',
     background: '#1a1a2e',
     borderLeft: '1px solid rgba(201,168,76,0.25)',
     display: 'flex',

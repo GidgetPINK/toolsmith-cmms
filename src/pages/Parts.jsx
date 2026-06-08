@@ -263,13 +263,15 @@ export default function Parts({ profile }) {
                 type="text"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                placeholder="Search by part number, name, or supplier"
+                placeholder="Search parts"
                 style={{
                   flex: '1 1 240px',
+                  minWidth: 0,
+                  height: '42px',
                   background: 'rgba(255,255,255,0.05)',
                   border: '1px solid rgba(201,168,76,0.18)',
                   borderRadius: '8px',
-                  padding: '0.7rem 0.9rem',
+                  padding: '0 0.9rem',
                   fontSize: '0.9rem',
                   color: '#f8f6f1',
                   fontFamily: 'Inter, sans-serif',
