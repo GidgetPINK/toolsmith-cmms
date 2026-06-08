@@ -1,11 +1,36 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import PartFlyout from '../components/PartFlyout'
 
 export default function Parts({ profile }) {
   const navigate = useNavigate()
   const [parts, setParts] = useState([])
   const [loading, setLoading] = useState(true)
+  const [flyoutOpen, setFlyoutOpen] = useState(false)
+  const [flyoutMode, setFlyoutMode] = useState('create')
+  const [flyoutPart, setFlyoutPart] = useState(null)
+
+  function openCreateFlyout() {
+    setFlyoutMode('create')
+    setFlyoutPart(null)
+    setFlyoutOpen(true)
+  }
+
+  function openEditFlyout(part) {
+    setFlyoutMode('edit')
+    setFlyoutPart(part)
+    setFlyoutOpen(true)
+  }
+
+  function closeFlyout() {
+    setFlyoutOpen(false)
+    setFlyoutPart(null)
+  }
+
+  function handleSaved() {
+    fetchParts()
+  }
 
   useEffect(() => {
     if (!profile?.organization_id) return
@@ -201,7 +226,7 @@ export default function Parts({ profile }) {
               Your parts inventory is empty.<br />
               Add your first part to get started.
             </p>
-            <button style={primaryBtn}>+ Add part</button>
+            <button style={primaryBtn} onClick={openCreateFlyout}>+ Add part</button>
           </div>
         ) : (
           <div style={{ color: '#9a9db5', textAlign: 'center', padding: '2rem' }}>
@@ -209,6 +234,16 @@ export default function Parts({ profile }) {
           </div>
         )}
       </div>
+
+      {flyoutOpen && (
+        <PartFlyout
+          mode={flyoutMode}
+          part={flyoutPart}
+          organizationId={profile.organization_id}
+          onClose={closeFlyout}
+          onSaved={handleSaved}
+        />
+      )}
     </div>
   )
 }
