@@ -13,6 +13,7 @@ export default function Parts({ profile }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
   const [lowStockOnly, setLowStockOnly] = useState(false)
+  const [showDeactivated, setShowDeactivated] = useState(false)
 
   function openCreateFlyout() {
     setFlyoutMode('create')
@@ -38,16 +39,21 @@ export default function Parts({ profile }) {
   useEffect(() => {
     if (!profile?.organization_id) return
     fetchParts()
-  }, [profile])
+  }, [profile, showDeactivated])
 
   async function fetchParts() {
     setLoading(true)
-    const { data, error } = await supabase
+    let query = supabase
       .from('parts')
       .select('*')
       .eq('organization_id', profile.organization_id)
-      .eq('is_active', true)
       .order('part_number', { ascending: true })
+
+    if (!showDeactivated) {
+      query = query.eq('is_active', true)
+    }
+
+    const { data, error } = await query
 
     if (error) {
       console.error('Error fetching parts:', error)
@@ -58,10 +64,11 @@ export default function Parts({ profile }) {
   }
 
   // ============ COMPUTED VALUES ============
-  const totalParts = parts.length
-  const lowStockCount = parts.filter(p => p.quantity_on_hand <= p.reorder_point && p.quantity_on_hand > 0).length
-  const outOfStockCount = parts.filter(p => p.quantity_on_hand === 0).length
-  const inventoryValue = parts.reduce((sum, p) => sum + (p.quantity_on_hand * (p.unit_cost || 0)), 0)
+  const activeParts = parts.filter(p => p.is_active)
+  const totalParts = activeParts.length
+  const lowStockCount = activeParts.filter(p => p.quantity_on_hand <= p.reorder_point && p.quantity_on_hand > 0).length
+  const outOfStockCount = activeParts.filter(p => p.quantity_on_hand === 0).length
+  const inventoryValue = activeParts.reduce((sum, p) => sum + (p.quantity_on_hand * (p.unit_cost || 0)), 0)
 
   const availableCategories = [...new Set(parts.map(p => p.category).filter(Boolean))].sort()
 
@@ -314,6 +321,23 @@ export default function Parts({ profile }) {
                 />
                 Low stock only
               </label>
+              <label style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                color: '#9a9db5',
+                fontSize: '0.85rem',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap'
+              }}>
+                <input
+                  type="checkbox"
+                  checked={showDeactivated}
+                  onChange={e => setShowDeactivated(e.target.checked)}
+                  style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                />
+                Show deactivated
+              </label>
               <button onClick={openCreateFlyout} style={primaryBtn}>
                 + Add part
               </button>
@@ -352,23 +376,42 @@ export default function Parts({ profile }) {
                         const isOut = p.quantity_on_hand === 0
                         const isLow = !isOut && p.quantity_on_hand <= p.reorder_point
                         const stockColor = isOut ? '#e06c75' : isLow ? '#e8c97a' : '#f8f6f1'
+                        const isDeactivated = !p.is_active
+                        const baseTextColor = isDeactivated ? '#6a6d85' : '#f8f6f1'
+                        const mutedTextColor = isDeactivated ? '#4a4d65' : '#9a9db5'
                         return (
                           <tr
                             key={p.id}
                             onClick={() => openEditFlyout(p)}
                             style={{
                               borderTop: '1px solid rgba(154,157,181,0.1)',
-                              cursor: 'pointer'
+                              cursor: 'pointer',
+                              opacity: isDeactivated ? 0.6 : 1
                             }}
                             onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}
                             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                           >
-                            <td style={{ padding: '0.85rem 1rem', fontFamily: 'monospace', fontSize: '0.82rem', color: '#f8f6f1' }}>
+                            <td style={{ padding: '0.85rem 1rem', fontFamily: 'monospace', fontSize: '0.82rem', color: baseTextColor }}>
                               {p.part_number}
                             </td>
-                            <td style={{ padding: '0.85rem 1rem', color: '#f8f6f1' }}>
+                            <td style={{ padding: '0.85rem 1rem', color: baseTextColor }}>
                               {p.name}
-                              {p.category && (
+                              {isDeactivated && (
+                                <span style={{
+                                  marginLeft: '0.5rem',
+                                  fontSize: '0.65rem',
+                                  color: '#9a9db5',
+                                  letterSpacing: '0.1em',
+                                  textTransform: 'uppercase',
+                                  background: 'rgba(154,157,181,0.15)',
+                                  padding: '0.15rem 0.45rem',
+                                  borderRadius: '4px',
+                                  fontWeight: 700
+                                }}>
+                                  Deactivated
+                                </span>
+                              )}
+                              {p.category && !isDeactivated && (
                                 <span style={{
                                   marginLeft: '0.5rem',
                                   fontSize: '0.7rem',
@@ -380,13 +423,13 @@ export default function Parts({ profile }) {
                               )}
                             </td>
                             <td style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>
-                              <span style={{ fontWeight: 600, color: stockColor }}>{p.quantity_on_hand}</span>
-                              <span style={{ color: '#6a6d85' }}> / {p.reorder_point}</span>
+                              <span style={{ fontWeight: 600, color: isDeactivated ? '#6a6d85' : stockColor }}>{p.quantity_on_hand}</span>
+                              <span style={{ color: mutedTextColor }}> / {p.reorder_point}</span>
                             </td>
-                            <td style={{ padding: '0.85rem 1rem', textAlign: 'right', color: '#f8f6f1' }}>
+                            <td style={{ padding: '0.85rem 1rem', textAlign: 'right', color: baseTextColor }}>
                               ${(p.unit_cost || 0).toFixed(2)}
                             </td>
-                            <td style={{ padding: '0.85rem 1rem', color: '#9a9db5', fontSize: '0.85rem' }}>
+                            <td style={{ padding: '0.85rem 1rem', color: mutedTextColor, fontSize: '0.85rem' }}>
                               {p.supplier_name || '-'}
                             </td>
                           </tr>
