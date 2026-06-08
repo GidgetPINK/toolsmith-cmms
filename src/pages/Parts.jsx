@@ -10,6 +10,9 @@ export default function Parts({ profile }) {
   const [flyoutOpen, setFlyoutOpen] = useState(false)
   const [flyoutMode, setFlyoutMode] = useState('create')
   const [flyoutPart, setFlyoutPart] = useState(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState('')
+  const [lowStockOnly, setLowStockOnly] = useState(false)
 
   function openCreateFlyout() {
     setFlyoutMode('create')
@@ -59,6 +62,21 @@ export default function Parts({ profile }) {
   const lowStockCount = parts.filter(p => p.quantity_on_hand <= p.reorder_point && p.quantity_on_hand > 0).length
   const outOfStockCount = parts.filter(p => p.quantity_on_hand === 0).length
   const inventoryValue = parts.reduce((sum, p) => sum + (p.quantity_on_hand * (p.unit_cost || 0)), 0)
+
+  const availableCategories = [...new Set(parts.map(p => p.category).filter(Boolean))].sort()
+
+  const filteredParts = parts.filter(p => {
+    if (categoryFilter && p.category !== categoryFilter) return false
+    if (lowStockOnly && p.quantity_on_hand > p.reorder_point) return false
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase()
+      const matchesNumber = p.part_number?.toLowerCase().includes(q)
+      const matchesName = p.name?.toLowerCase().includes(q)
+      const matchesSupplier = p.supplier_name?.toLowerCase().includes(q)
+      if (!matchesNumber && !matchesName && !matchesSupplier) return false
+    }
+    return true
+  })
 
   // ============ STYLES ============
   const page = {
@@ -190,6 +208,10 @@ export default function Parts({ profile }) {
           .parts-stat-label { font-size: 0.65rem !important; letter-spacing: 0.12em !important; }
           .parts-heading { font-size: 1.4rem !important; }
           .parts-empty-state { padding: 2.5rem 1.25rem !important; }
+          .parts-action-bar { flex-direction: column !important; align-items: stretch !important; }
+          .parts-action-bar > * { width: 100% !important; }
+          .parts-table { font-size: 0.8rem !important; }
+          .parts-table th, .parts-table td { padding: 0.6rem 0.5rem !important; }
         }
       `}</style>
       <div style={container}>
@@ -229,9 +251,160 @@ export default function Parts({ profile }) {
             <button style={primaryBtn} onClick={openCreateFlyout}>+ Add part</button>
           </div>
         ) : (
-          <div style={{ color: '#9a9db5', textAlign: 'center', padding: '2rem' }}>
-            Parts table coming next
-          </div>
+          <>
+            <div className="parts-action-bar" style={{
+              display: 'flex',
+              gap: '0.75rem',
+              marginBottom: '1.25rem',
+              alignItems: 'center',
+              flexWrap: 'wrap'
+            }}>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Search by part number, name, or supplier"
+                style={{
+                  flex: '1 1 240px',
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid rgba(201,168,76,0.18)',
+                  borderRadius: '8px',
+                  padding: '0.7rem 0.9rem',
+                  fontSize: '0.9rem',
+                  color: '#f8f6f1',
+                  fontFamily: 'Inter, sans-serif',
+                  boxSizing: 'border-box'
+                }}
+              />
+              <select
+                value={categoryFilter}
+                onChange={e => setCategoryFilter(e.target.value)}
+                style={{
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid rgba(201,168,76,0.18)',
+                  borderRadius: '8px',
+                  padding: '0.7rem 0.9rem',
+                  fontSize: '0.9rem',
+                  color: '#f8f6f1',
+                  fontFamily: 'Inter, sans-serif',
+                  cursor: 'pointer'
+                }}
+              >
+                <option value="">All categories</option>
+                {availableCategories.map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+              <label style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                color: '#9a9db5',
+                fontSize: '0.85rem',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap'
+              }}>
+                <input
+                  type="checkbox"
+                  checked={lowStockOnly}
+                  onChange={e => setLowStockOnly(e.target.checked)}
+                  style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                />
+                Low stock only
+              </label>
+              <button onClick={openCreateFlyout} style={primaryBtn}>
+                + Add part
+              </button>
+            </div>
+
+            <div style={{
+              background: '#16213e',
+              border: '1px solid rgba(154,157,181,0.15)',
+              borderRadius: '12px',
+              overflow: 'hidden'
+            }}>
+              <div style={{ overflowX: 'auto' }}>
+                <table className="parts-table" style={{
+                  width: '100%',
+                  borderCollapse: 'collapse',
+                  fontSize: '0.88rem'
+                }}>
+                  <thead>
+                    <tr style={{ background: 'rgba(255,255,255,0.03)' }}>
+                      <th style={{ textAlign: 'left', padding: '0.85rem 1rem', color: '#9a9db5', fontWeight: 500, fontSize: '0.75rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Part number</th>
+                      <th style={{ textAlign: 'left', padding: '0.85rem 1rem', color: '#9a9db5', fontWeight: 500, fontSize: '0.75rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Name</th>
+                      <th style={{ textAlign: 'right', padding: '0.85rem 1rem', color: '#9a9db5', fontWeight: 500, fontSize: '0.75rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Stock</th>
+                      <th style={{ textAlign: 'right', padding: '0.85rem 1rem', color: '#9a9db5', fontWeight: 500, fontSize: '0.75rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Cost</th>
+                      <th style={{ textAlign: 'left', padding: '0.85rem 1rem', color: '#9a9db5', fontWeight: 500, fontSize: '0.75rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Supplier</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredParts.length === 0 ? (
+                      <tr>
+                        <td colSpan="5" style={{ padding: '2rem 1rem', textAlign: 'center', color: '#9a9db5' }}>
+                          No parts match your filters
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredParts.map(p => {
+                        const isOut = p.quantity_on_hand === 0
+                        const isLow = !isOut && p.quantity_on_hand <= p.reorder_point
+                        const stockColor = isOut ? '#e06c75' : isLow ? '#e8c97a' : '#f8f6f1'
+                        return (
+                          <tr
+                            key={p.id}
+                            onClick={() => openEditFlyout(p)}
+                            style={{
+                              borderTop: '1px solid rgba(154,157,181,0.1)',
+                              cursor: 'pointer'
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                          >
+                            <td style={{ padding: '0.85rem 1rem', fontFamily: 'monospace', fontSize: '0.82rem', color: '#f8f6f1' }}>
+                              {p.part_number}
+                            </td>
+                            <td style={{ padding: '0.85rem 1rem', color: '#f8f6f1' }}>
+                              {p.name}
+                              {p.category && (
+                                <span style={{
+                                  marginLeft: '0.5rem',
+                                  fontSize: '0.7rem',
+                                  color: '#6a6d85',
+                                  letterSpacing: '0.05em'
+                                }}>
+                                  {p.category}
+                                </span>
+                              )}
+                            </td>
+                            <td style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>
+                              <span style={{ fontWeight: 600, color: stockColor }}>{p.quantity_on_hand}</span>
+                              <span style={{ color: '#6a6d85' }}> / {p.reorder_point}</span>
+                            </td>
+                            <td style={{ padding: '0.85rem 1rem', textAlign: 'right', color: '#f8f6f1' }}>
+                              ${(p.unit_cost || 0).toFixed(2)}
+                            </td>
+                            <td style={{ padding: '0.85rem 1rem', color: '#9a9db5', fontSize: '0.85rem' }}>
+                              {p.supplier_name || '-'}
+                            </td>
+                          </tr>
+                        )
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              <div style={{
+                padding: '0.75rem 1rem',
+                borderTop: '1px solid rgba(154,157,181,0.1)',
+                background: 'rgba(255,255,255,0.02)',
+                color: '#9a9db5',
+                fontSize: '0.8rem'
+              }}>
+                Showing {filteredParts.length} of {parts.length} {parts.length === 1 ? 'part' : 'parts'}
+              </div>
+            </div>
+          </>
         )}
       </div>
 
