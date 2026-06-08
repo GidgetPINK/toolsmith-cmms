@@ -209,7 +209,7 @@ export default function Parts({ profile }) {
           .parts-heading { font-size: 1.4rem !important; }
           .parts-empty-state { padding: 2.5rem 1.25rem !important; }
           .parts-action-bar { flex-direction: column !important; align-items: stretch !important; }
-          .parts-action-bar > * { width: 100% !important; }
+          .parts-action-bar > * { width: 100% !important; flex: 0 0 auto !important; }
           .parts-table { font-size: 0.8rem !important; }
           .parts-table th, .parts-table td { padding: 0.6rem 0.5rem !important; }
         }
