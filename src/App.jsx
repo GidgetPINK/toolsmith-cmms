@@ -14,6 +14,7 @@ import Success from './pages/Success'
 import Upgrade from './pages/Upgrade'
 import Assets from './pages/Assets'
 import CustomFields from './pages/CustomFields'
+import Parts from './pages/Parts'
 import Settings from './pages/Settings'
 import MobileWorkOrders from './pages/MobileWorkOrders'
 import MobileAssets from './pages/MobileAssets'
@@ -361,6 +362,22 @@ function App() {
               <Navigate to="/subscription-required" replace />
             ) : (
               <Settings profile={profile} />
+            )
+          }
+        />
+        <Route
+          path="/parts"
+          element={
+            !session ? (
+              <Navigate to="/login" replace />
+            ) : needsPaymentSetup ? (
+              <Navigate to="/complete-setup" replace />
+            ) : needsSubscription ? (
+              <Navigate to="/subscription-required" replace />
+            ) : profile?.role !== 'manager' ? (
+              <Navigate to="/" replace />
+            ) : (
+              <Parts profile={profile} />
             )
           }
         />

@@ -237,6 +237,25 @@ export default function Settings({ profile }) {
               <span style={chevron}>›</span>
             </button>
 
+            <div style={sectionLabel}>Inventory</div>
+            <button
+              style={settingRow}
+              onClick={() => navigate('/parts')}
+            >
+              <div style={{ flex: 1 }}>
+                <h3 style={settingTitle}>
+                  Parts and Inventory
+                  {!isUpgraded && <span style={proBadge}>Pro</span>}
+                </h3>
+                <p style={settingDesc}>
+                  {isUpgraded
+                    ? 'Manage parts, track usage, monitor stock levels'
+                    : 'Manage parts inventory. Available on the Pro plan.'}
+                </p>
+              </div>
+              <span style={chevron}>›</span>
+            </button>
+
             <div style={sectionLabel}>Asset Configuration</div>
             <button
               style={settingRow}
