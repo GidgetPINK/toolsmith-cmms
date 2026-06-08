@@ -116,6 +116,33 @@ export default function PartFlyout({ mode, part, organizationId, onClose, onSave
     onClose()
   }
 
+  async function handleDeactivate() {
+    if (!part?.id) return
+
+    const confirmed = window.confirm(
+      `Deactivate "${part.name}"?\n\nThis part will be removed from your active inventory. Its history on past work orders will be preserved.`
+    )
+    if (!confirmed) return
+
+    setSubmitting(true)
+    setError('')
+
+    const { error: deactivateError } = await supabase
+      .from('parts')
+      .update({ is_active: false })
+      .eq('id', part.id)
+
+    setSubmitting(false)
+
+    if (deactivateError) {
+      setError(deactivateError.message || 'Could not deactivate part')
+      return
+    }
+
+    if (onSaved) onSaved(null)
+    onClose()
+  }
+
   // ============ STYLES ============
   const overlay = {
     position: 'fixed',
@@ -241,6 +268,20 @@ export default function PartFlyout({ mode, part, organizationId, onClose, onSave
     textTransform: 'uppercase',
     cursor: 'pointer',
     fontFamily: 'Inter, sans-serif'
+  }
+
+  const destructiveBtn = {
+    background: 'transparent',
+    color: '#e06c75',
+    border: '1px solid rgba(224,108,117,0.4)',
+    borderRadius: '8px',
+    padding: '0.65rem 1.25rem',
+    fontSize: '0.85rem',
+    letterSpacing: '0.06em',
+    textTransform: 'uppercase',
+    cursor: submitting ? 'wait' : 'pointer',
+    fontFamily: 'Inter, sans-serif',
+    opacity: submitting ? 0.6 : 1
   }
 
   return (
@@ -433,6 +474,16 @@ export default function PartFlyout({ mode, part, organizationId, onClose, onSave
         </div>
 
         <div style={footer}>
+          {mode === 'edit' && (
+            <button
+              onClick={handleDeactivate}
+              disabled={submitting}
+              style={destructiveBtn}
+            >
+              Deactivate
+            </button>
+          )}
+          <div style={{ flex: 1 }} />
           <button onClick={onClose} style={ghostBtn}>Cancel</button>
           <button onClick={handleSubmit} style={primaryBtn} disabled={submitting}>
             {submitting ? 'Saving...' : mode === 'edit' ? 'Save changes' : 'Add part'}
