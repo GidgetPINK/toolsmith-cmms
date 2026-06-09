@@ -211,7 +211,8 @@ export default function PartFlyout({ mode, part, organizationId, onClose, onSave
     borderTop: '1px solid rgba(201,168,76,0.18)',
     display: 'flex',
     gap: '0.5rem',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     flexShrink: 0,
     flexWrap: 'wrap'
   }
@@ -499,28 +500,31 @@ export default function PartFlyout({ mode, part, organizationId, onClose, onSave
         </div>
 
         <div style={footer}>
-          {mode === 'edit' && !isDeactivated && (
-            <button
-              onClick={handleDeactivate}
-              disabled={submitting}
-              style={destructiveBtn}
-            >
-              Deactivate
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            {mode === 'edit' && !isDeactivated && (
+              <button
+                onClick={handleDeactivate}
+                disabled={submitting}
+                style={destructiveBtn}
+              >
+                Deactivate
+              </button>
+            )}
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button onClick={onClose} style={ghostBtn}>
+              {isDeactivated ? 'Close' : 'Cancel'}
             </button>
-          )}
-          <div style={{ flex: 1 }} />
-          <button onClick={onClose} style={ghostBtn}>
-            {isDeactivated ? 'Close' : 'Cancel'}
-          </button>
-          {isDeactivated ? (
-            <button onClick={handleReactivate} style={primaryBtn} disabled={submitting}>
-              {submitting ? 'Reactivating...' : 'Reactivate'}
-            </button>
-          ) : (
-            <button onClick={handleSubmit} style={primaryBtn} disabled={submitting}>
-              {submitting ? 'Saving...' : mode === 'edit' ? 'Save changes' : 'Add part'}
-            </button>
-          )}
+            {isDeactivated ? (
+              <button onClick={handleReactivate} style={primaryBtn} disabled={submitting}>
+                {submitting ? 'Reactivating...' : 'Reactivate'}
+              </button>
+            ) : (
+              <button onClick={handleSubmit} style={primaryBtn} disabled={submitting}>
+                {submitting ? 'Saving...' : mode === 'edit' ? 'Save changes' : 'Add part'}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
