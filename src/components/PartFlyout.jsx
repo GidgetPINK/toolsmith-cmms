@@ -210,9 +210,10 @@ export default function PartFlyout({ mode, part, organizationId, onClose, onSave
     padding: '1rem 1.5rem',
     borderTop: '1px solid rgba(201,168,76,0.18)',
     display: 'flex',
-    gap: '0.75rem',
+    gap: '0.5rem',
     justifyContent: 'flex-end',
-    flexShrink: 0
+    flexShrink: 0,
+    flexWrap: 'wrap'
   }
 
   const sectionLabel = {
@@ -271,7 +272,7 @@ export default function PartFlyout({ mode, part, organizationId, onClose, onSave
     color: '#1a1a2e',
     border: 'none',
     borderRadius: '8px',
-    padding: '0.65rem 1.5rem',
+    padding: '0.65rem 1.1rem',
     fontSize: '0.85rem',
     fontWeight: 700,
     letterSpacing: '0.06em',
@@ -286,7 +287,7 @@ export default function PartFlyout({ mode, part, organizationId, onClose, onSave
     color: '#9a9db5',
     border: '1px solid rgba(154,157,181,0.3)',
     borderRadius: '8px',
-    padding: '0.65rem 1.5rem',
+    padding: '0.65rem 1.1rem',
     fontSize: '0.85rem',
     letterSpacing: '0.06em',
     textTransform: 'uppercase',
@@ -299,7 +300,7 @@ export default function PartFlyout({ mode, part, organizationId, onClose, onSave
     color: '#e06c75',
     border: '1px solid rgba(224,108,117,0.4)',
     borderRadius: '8px',
-    padding: '0.65rem 1.25rem',
+    padding: '0.65rem 1.1rem',
     fontSize: '0.85rem',
     letterSpacing: '0.06em',
     textTransform: 'uppercase',
