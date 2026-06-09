@@ -1,0 +1,165 @@
+# Toolsmith CMMS Backlog
+
+Deferred features, bug fixes, and product decisions that need attention but aren't blocking current work. Items roughly ordered by priority within each category.
+
+When picking up an item from this file, move it to the relevant phase plan or open a ticket, then remove it from here.
+
+Last updated: June 2026
+
+---
+
+## Open product decisions
+
+These need a decision before they can be built.
+
+### Status workflow: add Completed status
+
+**Current state:** Open → In Progress → Closed (3 statuses)
+
+**Possible expansion:** Open → In Progress → Completed → Closed (4 statuses)
+
+The 4-status model is industry standard for CMMS. Techs mark work Completed when finished. Managers review and move to Closed.
+
+**Why deferred:** Small teams often don't need the manager review step. The current 3-status workflow may be sufficient for the target customer.
+
+**Decision needed:** Stick with 3 statuses, expand to 4, or make the review step configurable per organization.
+
+---
+
+## High priority backlog
+
+These are real product gaps that should be addressed before broader rollout.
+
+### Tech permissions for assets
+
+**Problem:** Techs cannot see assets or create work orders against them. Currently only managers have asset access.
+
+**Required behavior:**
+- Techs CAN view assets (read-only)
+- Techs CAN create work orders against any asset
+- Techs CANNOT edit asset details
+- Techs CANNOT deactivate assets
+- Techs CANNOT edit custom fields
+- Techs CAN edit work orders they are assigned to
+
+**Implementation notes:**
+- Update RLS policies on `assets` to allow tech select
+- Add manager check on Assets.jsx edit/delete buttons
+- Allow tech access to asset detail view (read-only mode)
+- Update MobileAssetDetail similarly
+- Verify work order creation flow lets techs select any asset
+
+---
+
+### Tech invitation email
+
+**Problem:** When a manager creates a tech account, the tech does not receive an email with access details. They have no way to log in unless the manager tells them their credentials out of band.
+
+**Required behavior:**
+- When a manager invites a tech, an email is sent to the tech's address
+- Email contains: welcome message, organization name, login URL, instructions to set their initial password
+- Email uses a password reset token so the tech sets their own password rather than receiving one in plaintext
+
+**Implementation notes:**
+- New API endpoint `/api/invite-tech` that creates auth user with random temp password, sends password reset email
+- Frontend Team.jsx update to call the new endpoint instead of creating user directly
+- Email template needs to be created (Resend or similar)
+- Verify ResetPassword.jsx flow works for first-time setup
+
+---
+
+### Scheduled work orders not tied to assets
+
+**Problem:** Currently, scheduled recurring work can only be created via PM Scheduling, which lives inside the Asset detail flow. There's no way to schedule routine non-asset work like trash removal, facility checks, or other generic recurring tasks.
+
+**Required behavior:**
+- Standalone scheduled work orders that recur on a defined frequency
+- Can be created without selecting an asset
+- Same scheduling primitives as PM (every N days/weeks/months/years)
+- Auto-generate work orders on schedule
+
+**Implementation notes:**
+- New table or extension to existing `pm_schedules` (or a similar table) with nullable asset_id
+- New "Schedule" creation flow accessible from WorkOrderForm when no asset is selected, or from a dedicated Schedules page
+- Background job (Supabase Edge Function or pg_cron) to materialize work orders on their due date
+- Visible to techs on their Queue/dashboard once Phase 5 of Parts completes
+
+---
+
+### Techs cannot see upcoming work
+
+**Problem:** Techs can see assigned work orders in their Queue, but there's no surface for upcoming PMs they're assigned to, or work scheduled for them in the future.
+
+**Required behavior:**
+- Tech dashboard shows upcoming work items beyond just open Queue items
+- Could be a "My Schedule" section or expanded Queue with future items
+
+**Implementation notes:**
+- Decide between adding to Queue.jsx or building a dedicated schedule view
+- Pull from `pm_schedules` filtered by assigned_to = current tech
+- Pull from future-dated work orders assigned to tech
+- Sort by due date
+
+**Depends on:** Scheduled work orders feature above
+
+---
+
+### Tech routine card on dashboard
+
+**Problem:** Managers see various dashboard cards including upcoming PMs. Techs don't have an equivalent surface for their routine work.
+
+**Required behavior:**
+- Tech dashboard (Queue.jsx or new page) shows a card or section for their assigned routine work
+- Filterable by today, this week, overdue
+
+**Depends on:** Tech permissions for assets, scheduled work orders, "techs cannot see upcoming work" above
+
+---
+
+## Polish and quality of life
+
+These improve the product but aren't blocking.
+
+### Tappable stat cards on Parts page
+
+**Behavior:** Clicking "Out of stock" card filters table to out-of-stock parts. Clicking "Below reorder" filters to low stock. Clicking "Total parts" clears filters.
+
+**Effort:** ~30 minutes
+
+---
+
+### Same pattern for Dashboard stat cards
+
+Once Parts cards are tappable, apply the same pattern to the Dashboard work order stat cards.
+
+**Effort:** ~30 minutes
+
+---
+
+## Post-launch (deferred infrastructure)
+
+These were noted earlier but parked until after initial launch.
+
+- Welcome email diagnosis (code exists, didn't deliver on first test)
+- Terms of Service generation (needs paid generator or alternative)
+- Sentry error monitoring
+- Photo bucket → private with signed URLs
+- Rate limiting on public endpoints
+- CAPTCHA on signup
+- Phase 2a Gidget AI onboarding entry points
+- First-run experience for empty dashboards
+- Optional: edit Termly published Privacy Policy to remove "Anthropic" from AI providers list
+
+---
+
+## Current build focus
+
+In active development:
+
+- **Parts and Inventory** — Phase 2 complete (manual management with create/edit/deactivate/reactivate). Phase 3 next (stock adjustment modal).
+
+Remaining Pro features after Parts and Inventory:
+
+- Downtime Tracking
+- Cost Reporting
+- Work Order Chat
