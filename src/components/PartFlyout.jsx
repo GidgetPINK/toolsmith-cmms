@@ -5,6 +5,22 @@ import StockAdjustmentModal from './StockAdjustmentModal'
 const CATEGORIES = ['Mechanical', 'Electrical', 'HVAC', 'Plumbing', 'Vehicle', 'Safety', 'Other']
 const UNITS = ['each', 'box', 'case', 'foot', 'gallon', 'pound', 'liter', 'meter']
 
+function formatAdjustmentDate(isoString) {
+  if (!isoString) return ''
+  const date = new Date(isoString)
+  const now = new Date()
+  const diffMs = now - date
+  const diffMinutes = Math.floor(diffMs / 60000)
+  const diffHours = Math.floor(diffMs / 3600000)
+  const diffDays = Math.floor(diffMs / 86400000)
+
+  if (diffMinutes < 1) return 'just now'
+  if (diffMinutes < 60) return `${diffMinutes} ${diffMinutes === 1 ? 'minute' : 'minutes'} ago`
+  if (diffHours < 24) return `${diffHours} ${diffHours === 1 ? 'hour' : 'hours'} ago`
+  if (diffDays < 7) return `${diffDays} ${diffDays === 1 ? 'day' : 'days'} ago`
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
 export default function PartFlyout({ mode, part, organizationId, onClose, onSaved }) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -12,6 +28,34 @@ export default function PartFlyout({ mode, part, organizationId, onClose, onSave
   const isDeactivated = mode === 'edit' && part?.is_active === false
 
   const [adjustModalOpen, setAdjustModalOpen] = useState(false)
+  const [adjustments, setAdjustments] = useState([])
+  const [adjustmentsLoading, setAdjustmentsLoading] = useState(false)
+
+  async function fetchAdjustments() {
+    if (!part?.id) return
+    setAdjustmentsLoading(true)
+    const { data, error: fetchError } = await supabase
+      .from('part_adjustments')
+      .select(`
+        id,
+        quantity_change,
+        quantity_before,
+        quantity_after,
+        reason,
+        notes,
+        adjusted_at,
+        adjusted_by,
+        profiles:adjusted_by ( full_name )
+      `)
+      .eq('part_id', part.id)
+      .order('adjusted_at', { ascending: false })
+      .limit(20)
+
+    setAdjustmentsLoading(false)
+    if (!fetchError) {
+      setAdjustments(data || [])
+    }
+  }
 
   function handleAdjustmentSaved() {
     if (onSaved) onSaved(null)
@@ -45,6 +89,7 @@ export default function PartFlyout({ mode, part, organizationId, onClose, onSave
       setSupplierPartNumber(part.supplier_part_number || '')
       setSupplierUrl(part.supplier_url || '')
       setNotes(part.notes || '')
+      fetchAdjustments()
     }
   }, [mode, part])
 
@@ -489,6 +534,65 @@ export default function PartFlyout({ mode, part, organizationId, onClose, onSave
               maxLength={1000}
             />
           </div>
+
+          {mode === 'edit' && (
+            <>
+              <div style={sectionLabel}>Adjustment history</div>
+              {adjustmentsLoading ? (
+                <p style={{ color: '#9a9db5', fontSize: '0.85rem', padding: '0.5rem 0' }}>
+                  Loading history...
+                </p>
+              ) : adjustments.length === 0 ? (
+                <p style={{ color: '#6a6d85', fontSize: '0.85rem', fontStyle: 'italic', padding: '0.5rem 0' }}>
+                  No adjustments yet
+                </p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                  {adjustments.map(adj => {
+                    const isAdd = adj.quantity_change > 0
+                    const changeColor = isAdd ? '#98c379' : '#e06c75'
+                    return (
+                      <div
+                        key={adj.id}
+                        style={{
+                          background: 'rgba(255,255,255,0.03)',
+                          border: '1px solid rgba(154,157,181,0.15)',
+                          borderLeft: `3px solid ${changeColor}`,
+                          borderRadius: '8px',
+                          padding: '0.7rem 0.85rem'
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.5rem', marginBottom: '0.25rem', flexWrap: 'wrap' }}>
+                          <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
+                            <span style={{ color: changeColor, fontWeight: 700, fontSize: '0.95rem' }}>
+                              {isAdd ? '+' : ''}{adj.quantity_change}
+                            </span>
+                            <span style={{ color: '#6a6d85', fontSize: '0.78rem' }}>
+                              {adj.quantity_before} → {adj.quantity_after}
+                            </span>
+                          </div>
+                          <span style={{ color: '#9a9db5', fontSize: '0.75rem' }}>
+                            {formatAdjustmentDate(adj.adjusted_at)}
+                          </span>
+                        </div>
+                        <p style={{ color: '#f8f6f1', fontSize: '0.82rem', margin: '0.15rem 0 0 0' }}>
+                          {adj.reason}
+                          {adj.profiles?.full_name && (
+                            <span style={{ color: '#6a6d85' }}> · {adj.profiles.full_name}</span>
+                          )}
+                        </p>
+                        {adj.notes && (
+                          <p style={{ color: '#9a9db5', fontSize: '0.78rem', margin: '0.35rem 0 0 0', lineHeight: 1.4, fontStyle: 'italic' }}>
+                            {adj.notes}
+                          </p>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </>
+          )}
 
           {error && (
             <div style={{
