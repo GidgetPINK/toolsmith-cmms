@@ -615,7 +615,7 @@ export default function BulkImportModal({ organizationId, onClose, onImported })
                             {row.name || <span style={{ color: '#6a6d85', fontStyle: 'italic' }}>missing</span>}
                           </td>
                           <td style={{ padding: '0.5rem 0.6rem', textAlign: 'right' }}>
-                            {row.quantity_on_hand}
+                            {row.raw.quantity_on_hand !== undefined && row.raw.quantity_on_hand !== '' ? row.raw.quantity_on_hand : '0'}
                           </td>
                           <td style={{ padding: '0.5rem 0.6rem', color: row.isValid ? '#98c379' : '#e06c75', fontSize: '0.78rem' }}>
                             {row.isValid ? 'Ready to import' : row.errors[0]}
