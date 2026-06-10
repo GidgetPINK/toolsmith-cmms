@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import PartFlyout from '../components/PartFlyout'
+import BulkImportModal from '../components/BulkImportModal'
 
 export default function Parts({ profile }) {
   const navigate = useNavigate()
@@ -14,6 +15,11 @@ export default function Parts({ profile }) {
   const [categoryFilter, setCategoryFilter] = useState('')
   const [lowStockOnly, setLowStockOnly] = useState(false)
   const [showDeactivated, setShowDeactivated] = useState(false)
+  const [bulkImportOpen, setBulkImportOpen] = useState(false)
+
+  function handleBulkImported(count) {
+    fetchParts()
+  }
 
   function openCreateFlyout() {
     setFlyoutMode('create')
@@ -338,6 +344,22 @@ export default function Parts({ profile }) {
                 />
                 Show deactivated
               </label>
+              <button onClick={() => setBulkImportOpen(true)} style={{
+                background: 'transparent',
+                color: '#c9a84c',
+                border: '1px solid rgba(201,168,76,0.4)',
+                borderRadius: '8px',
+                padding: '0.7rem 1.25rem',
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                cursor: 'pointer',
+                fontFamily: 'Inter, sans-serif',
+                whiteSpace: 'nowrap'
+              }}>
+                Bulk import
+              </button>
               <button onClick={openCreateFlyout} style={primaryBtn}>
                 + Add part
               </button>
@@ -460,6 +482,14 @@ export default function Parts({ profile }) {
           organizationId={profile.organization_id}
           onClose={closeFlyout}
           onSaved={handleSaved}
+        />
+      )}
+
+      {bulkImportOpen && (
+        <BulkImportModal
+          organizationId={profile.organization_id}
+          onClose={() => setBulkImportOpen(false)}
+          onImported={handleBulkImported}
         />
       )}
     </div>
