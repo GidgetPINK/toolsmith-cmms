@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import StockAdjustmentModal from './StockAdjustmentModal'
 
 const CATEGORIES = ['Mechanical', 'Electrical', 'HVAC', 'Plumbing', 'Vehicle', 'Safety', 'Other']
 const UNITS = ['each', 'box', 'case', 'foot', 'gallon', 'pound', 'liter', 'meter']
@@ -9,6 +10,13 @@ export default function PartFlyout({ mode, part, organizationId, onClose, onSave
   const [error, setError] = useState('')
 
   const isDeactivated = mode === 'edit' && part?.is_active === false
+
+  const [adjustModalOpen, setAdjustModalOpen] = useState(false)
+
+  function handleAdjustmentSaved() {
+    if (onSaved) onSaved(null)
+    onClose()
+  }
 
   const [partNumber, setPartNumber] = useState('')
   const [name, setName] = useState('')
@@ -502,13 +510,22 @@ export default function PartFlyout({ mode, part, organizationId, onClose, onSave
         <div style={footer}>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             {mode === 'edit' && !isDeactivated && (
-              <button
-                onClick={handleDeactivate}
-                disabled={submitting}
-                style={destructiveBtn}
-              >
-                Deactivate
-              </button>
+              <>
+                <button
+                  onClick={() => setAdjustModalOpen(true)}
+                  disabled={submitting}
+                  style={ghostBtn}
+                >
+                  Adjust stock
+                </button>
+                <button
+                  onClick={handleDeactivate}
+                  disabled={submitting}
+                  style={destructiveBtn}
+                >
+                  Deactivate
+                </button>
+              </>
             )}
           </div>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -527,6 +544,14 @@ export default function PartFlyout({ mode, part, organizationId, onClose, onSave
           </div>
         </div>
       </div>
+
+      {adjustModalOpen && (
+        <StockAdjustmentModal
+          part={part}
+          onClose={() => setAdjustModalOpen(false)}
+          onSaved={handleAdjustmentSaved}
+        />
+      )}
     </div>
   )
 }
