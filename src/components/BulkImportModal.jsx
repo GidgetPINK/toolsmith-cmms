@@ -39,10 +39,12 @@ export default function BulkImportModal({ organizationId, onClose, onImported })
 
   // ============ TEMPLATE DOWNLOAD ============
   function downloadTemplate() {
-    const csv = Papa.unparse({
+    const warningRow = ['DO NOT EDIT THIS ROW. Headers below must match exactly. Delete example rows below to add your own.']
+    const headerCsv = Papa.unparse({
       fields: COLUMNS,
       data: EXAMPLE_ROWS
     })
+    const csv = Papa.unparse([warningRow]) + '\n' + headerCsv
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
@@ -77,11 +79,44 @@ export default function BulkImportModal({ organizationId, onClose, onImported })
     setExistingPartNumbers(existingSet)
 
     Papa.parse(file, {
-      header: true,
+      header: false,
       skipEmptyLines: true,
       complete: (results) => {
-        const rows = results.data.map((row, idx) => {
-          return validateRow(row, idx + 2, existingSet, results.data)
+        let allRows = results.data || []
+
+        // Skip warning row if present (first row contains the warning text)
+        if (allRows.length > 0 && allRows[0][0]?.startsWith('DO NOT EDIT')) {
+          allRows = allRows.slice(1)
+        }
+
+        if (allRows.length < 2) {
+          setError('File appears to be empty or missing headers')
+          setParsing(false)
+          return
+        }
+
+        const headers = allRows[0].map(h => (h || '').trim())
+        const dataRows = allRows.slice(1)
+
+        // Validate header structure
+        const missingColumns = COLUMNS.filter(col => !headers.includes(col))
+        if (missingColumns.length > 0) {
+          setError(`Missing required columns: ${missingColumns.join(', ')}. Download a fresh template.`)
+          setParsing(false)
+          return
+        }
+
+        // Convert array rows to objects keyed by header
+        const objectRows = dataRows.map(row => {
+          const obj = {}
+          headers.forEach((header, idx) => {
+            obj[header] = row[idx] !== undefined ? row[idx] : ''
+          })
+          return obj
+        })
+
+        const rows = objectRows.map((row, idx) => {
+          return validateRow(row, idx + 3, existingSet, objectRows)
         })
         setParsedRows(rows)
         setParsing(false)
@@ -99,19 +134,49 @@ export default function BulkImportModal({ organizationId, onClose, onImported })
 
     const partNumber = (row.part_number || '').trim()
     const name = (row.name || '').trim()
+    const description = (row.description || '').trim()
+    const supplierName = (row.supplier_name || '').trim()
+    const supplierPartNumber = (row.supplier_part_number || '').trim()
+    const supplierUrl = (row.supplier_url || '').trim()
+    const notes = (row.notes || '').trim()
 
+    // Part number validation
     if (!partNumber) {
       errors.push('Part number is required')
-    } else if (partNumber.length > 50) {
-      errors.push('Part number exceeds 50 characters')
+    } else {
+      if (partNumber.length > 50) {
+        errors.push('Part number exceeds 50 characters')
+      }
+      if (!/^[A-Za-z0-9\-_./]+$/.test(partNumber)) {
+        errors.push('Part number contains invalid characters. Allowed: letters, numbers, hyphens, underscores, dots, slashes')
+      }
     }
 
+    // Name validation
     if (!name) {
       errors.push('Name is required')
     } else if (name.length > 100) {
       errors.push('Name exceeds 100 characters')
     }
 
+    // Text length validation
+    if (description.length > 500) {
+      errors.push('Description exceeds 500 characters')
+    }
+    if (supplierName.length > 100) {
+      errors.push('Supplier name exceeds 100 characters')
+    }
+    if (supplierPartNumber.length > 100) {
+      errors.push('Supplier part number exceeds 100 characters')
+    }
+    if (supplierUrl.length > 500) {
+      errors.push('Supplier URL exceeds 500 characters')
+    }
+    if (notes.length > 1000) {
+      errors.push('Notes exceed 1000 characters')
+    }
+
+    // Duplicate detection
     if (partNumber && existingSet.has(partNumber.toLowerCase())) {
       errors.push('Part number already exists in database')
     }
@@ -125,32 +190,60 @@ export default function BulkImportModal({ organizationId, onClose, onImported })
       }
     }
 
+    // Numeric validation
     const qty = parseInt(row.quantity_on_hand)
-    if (row.quantity_on_hand && (isNaN(qty) || qty < 0)) {
-      errors.push('Stock must be a non-negative number')
+    if (row.quantity_on_hand && row.quantity_on_hand.toString().trim() !== '') {
+      if (isNaN(qty)) {
+        errors.push('Stock must be a number')
+      } else if (qty < 0) {
+        errors.push('Stock cannot be negative')
+      } else if (qty > 999999) {
+        errors.push('Stock exceeds 999,999 limit')
+      } else if (!Number.isInteger(parseFloat(row.quantity_on_hand))) {
+        errors.push('Stock must be a whole number')
+      }
     }
 
     const reorder = parseInt(row.reorder_point)
-    if (row.reorder_point && (isNaN(reorder) || reorder < 0)) {
-      errors.push('Reorder point must be a non-negative number')
+    if (row.reorder_point && row.reorder_point.toString().trim() !== '') {
+      if (isNaN(reorder)) {
+        errors.push('Reorder point must be a number')
+      } else if (reorder < 0) {
+        errors.push('Reorder point cannot be negative')
+      } else if (reorder > 999999) {
+        errors.push('Reorder point exceeds 999,999 limit')
+      } else if (!Number.isInteger(parseFloat(row.reorder_point))) {
+        errors.push('Reorder point must be a whole number')
+      }
     }
 
     const cost = parseFloat(row.unit_cost)
-    if (row.unit_cost && (isNaN(cost) || cost < 0)) {
-      errors.push('Unit cost must be a non-negative number')
+    if (row.unit_cost && row.unit_cost.toString().trim() !== '') {
+      if (isNaN(cost)) {
+        errors.push('Unit cost must be a number')
+      } else if (cost < 0) {
+        errors.push('Unit cost cannot be negative')
+      } else if (cost > 99999999) {
+        errors.push('Unit cost exceeds limit')
+      }
     }
 
-    if (row.category && !VALID_CATEGORIES.includes(row.category.trim())) {
+    // Enum validation
+    if (row.category && row.category.trim() && !VALID_CATEGORIES.includes(row.category.trim())) {
       errors.push(`Category must be one of: ${VALID_CATEGORIES.join(', ')}`)
     }
 
-    if (row.unit_of_measure && !VALID_UNITS.includes(row.unit_of_measure.trim())) {
+    if (row.unit_of_measure && row.unit_of_measure.trim() && !VALID_UNITS.includes(row.unit_of_measure.trim())) {
       errors.push(`Unit must be one of: ${VALID_UNITS.join(', ')}`)
     }
 
-    if (row.supplier_url && row.supplier_url.trim()) {
+    // URL validation
+    if (supplierUrl) {
       try {
-        new URL(row.supplier_url.trim())
+        const parsed = new URL(supplierUrl)
+        if (!['http:', 'https:'].includes(parsed.protocol)) {
+          errors.push('Supplier URL must start with http:// or https://')
+        }
       } catch {
         errors.push('Supplier URL is not a valid URL')
       }

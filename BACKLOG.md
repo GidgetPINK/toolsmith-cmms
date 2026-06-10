@@ -136,6 +136,23 @@ Once Parts cards are tappable, apply the same pattern to the Dashboard work orde
 
 ---
 
+### Upgrade CSV import template to xlsx format
+
+**Current state:** Bulk import uses CSV templates with a warning text row instructing users not to edit the headers. Validation catches header mismatches but cannot prevent them at file edit time.
+
+**Possible upgrade:** Generate xlsx template files using SheetJS with:
+- Frozen header row (always visible while scrolling)
+- Protected/locked header cells (user cannot edit without unprotecting)
+- Data validation dropdowns for category and unit_of_measure (Excel rejects invalid values at entry time)
+- Number formatting on quantity and cost columns
+- Accept both .xlsx and .csv on upload
+
+**Why deferred:** SheetJS adds ~400KB to the bundle and the current CSV flow works correctly. Validation catches all the edge cases the lock/freeze would prevent. Should be prioritized when a real customer asks for it.
+
+**Effort:** ~1-2 hours
+
+---
+
 ## Post-launch (deferred infrastructure)
 
 These were noted earlier but parked until after initial launch.
