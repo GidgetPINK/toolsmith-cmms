@@ -136,6 +136,40 @@ Once Parts cards are tappable, apply the same pattern to the Dashboard work orde
 
 ---
 
+### Set up Supabase custom auth domain
+
+**Current state:** Password reset and invitation links route through Supabase's auth servers, so users briefly see a `supabase.co` URL when clicking links from emails.
+
+**Required behavior:** Configure a custom auth subdomain (e.g., `auth.thetoolsmithapp.com`) so all auth-related URLs use your domain instead of Supabase's.
+
+**Implementation notes:**
+- Supabase dashboard: configure custom auth domain
+- Cloudflare DNS: add CNAME record pointing `auth.thetoolsmithapp.com` to Supabase
+- Wait for DNS propagation (usually under 5 minutes with Cloudflare)
+- Verify in Supabase dashboard
+- Test that reset and invitation links use the new domain
+
+**Effort:** ~15 minutes
+
+---
+
+### Set up Supabase custom auth domain
+
+**Current state:** Password reset and invitation links route through Supabase's auth servers, so users briefly see a `supabase.co` URL when clicking links from emails.
+
+**Required behavior:** Configure a custom auth subdomain (e.g., `auth.thetoolsmithapp.com`) so all auth-related URLs use your domain instead of Supabase's.
+
+**Implementation notes:**
+- Supabase dashboard: configure custom auth domain
+- Cloudflare DNS: add CNAME record pointing `auth.thetoolsmithapp.com` to Supabase
+- Wait for DNS propagation (usually under 5 minutes with Cloudflare)
+- Verify in Supabase dashboard
+- Test that reset and invitation links use the new domain
+
+**Effort:** ~15 minutes
+
+---
+
 ### Upgrade CSV import template to xlsx format
 
 **Current state:** Bulk import uses CSV templates with a warning text row instructing users not to edit the headers. Validation catches header mismatches but cannot prevent them at file edit time.
