@@ -8,8 +8,8 @@ export default function Team({ profile }) {
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteName, setInviteName] = useState('')
   const [inviteRole, setInviteRole] = useState('technician')
-  const [invitePassword, setInvitePassword] = useState('')
-  const [showInvitePassword, setShowInvitePassword] = useState(false)
+  
+  
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(null)
   const [submitting, setSubmitting] = useState(false)
@@ -35,33 +35,46 @@ export default function Team({ profile }) {
     setError(null)
     setSuccess(null)
 
-    if (invitePassword.length < 8) {
-      setError('Password must be at least 8 characters.')
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        setError('Your session has expired. Please sign in again.')
+        setSubmitting(false)
+        return
+      }
+
+      const response = await fetch('/api/invite-team-member', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          email: inviteEmail,
+          name: inviteName,
+          role: inviteRole
+        })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setError(data.error || 'Could not send invitation')
+        setSubmitting(false)
+        return
+      }
+
+      setSuccess(inviteName + ' has been invited. They will receive an email with instructions to set their password.')
+      setInviteEmail('')
+      setInviteName('')
+      setInviteRole('technician')
+      fetchMembers()
+    } catch (err) {
+      console.error('Invitation error:', err)
+      setError('Something went wrong. Please try again.')
+    } finally {
       setSubmitting(false)
-      return
     }
-
-    const { data, error } = await supabase.rpc('create_team_member', {
-      member_email: inviteEmail,
-      member_password: invitePassword,
-      member_name: inviteName,
-      member_role: inviteRole,
-      member_org_id: profile.organization_id
-    })
-
-    if (error) {
-      setError(error.message)
-      setSubmitting(false)
-      return
-    }
-
-    setSuccess(inviteName + ' has been added to your team.')
-    setInviteEmail('')
-    setInviteName('')
-    setInvitePassword('')
-    setInviteRole('technician')
-    fetchMembers()
-    setSubmitting(false)
   }
 
   async function handleRoleChange(memberId, newRole) {
@@ -103,10 +116,7 @@ export default function Team({ profile }) {
     boxSizing: 'border-box'
   }
 
-  const passwordInputStyle = {
-    ...inputStyle,
-    padding: '0.8rem 3rem 0.8rem 1rem'
-  }
+  
 
   const labelStyle = {
     display: 'block',
@@ -118,21 +128,7 @@ export default function Team({ profile }) {
     fontWeight: '500'
   }
 
-  const showBtnStyle = {
-    position: 'absolute',
-    right: '0.75rem',
-    top: '50%',
-    transform: 'translateY(-50%)',
-    background: 'none',
-    border: 'none',
-    cursor: 'pointer',
-    color: '#9a9db5',
-    fontSize: '0.78rem',
-    letterSpacing: '0.05em',
-    textTransform: 'uppercase',
-    fontFamily: 'Inter, sans-serif',
-    padding: '0'
-  }
+  
 
   return (
     <div style={{
@@ -440,45 +436,16 @@ export default function Team({ profile }) {
               </div>
             </div>
 
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: '1.25rem',
-              marginBottom: '1.5rem'
-            }}>
-              <div>
-                <label style={labelStyle}>Temporary Password</label>
-                <div style={{ position: 'relative' }}>
-                  <input
-                    type={showInvitePassword ? 'text' : 'password'}
-                    name="member-password"
-                    autoComplete="new-password"
-                    value={invitePassword}
-                    onChange={e => setInvitePassword(e.target.value)}
-                    required
-                    placeholder="Min 8 characters"
-                    style={passwordInputStyle}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowInvitePassword(!showInvitePassword)}
-                    style={showBtnStyle}
-                  >
-                    {showInvitePassword ? 'Hide' : 'Show'}
-                  </button>
-                </div>
-              </div>
-              <div>
-                <label style={labelStyle}>Role</label>
-                <select
-                  value={inviteRole}
-                  onChange={e => setInviteRole(e.target.value)}
-                  style={{ ...inputStyle, cursor: 'pointer' }}
-                >
-                  <option value="technician">Technician</option>
-                  <option value="manager">Manager</option>
-                </select>
-              </div>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={labelStyle}>Role</label>
+              <select
+                value={inviteRole}
+                onChange={e => setInviteRole(e.target.value)}
+                style={{ ...inputStyle, cursor: 'pointer' }}
+              >
+                <option value="technician">Technician</option>
+                <option value="manager">Manager</option>
+              </select>
             </div>
 
             {error && (
