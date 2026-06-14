@@ -22,12 +22,15 @@ export default function LowStockWidget({ organizationId, isPro }) {
       .select('id, part_number, name, quantity_on_hand, reorder_point, unit_of_measure')
       .eq('organization_id', organizationId)
       .eq('is_active', true)
-      .or('quantity_on_hand.eq.0,and(quantity_on_hand.lte.reorder_point,reorder_point.gt.0)')
       .order('quantity_on_hand', { ascending: true })
-      .limit(20)
 
     if (!error) {
-      setParts(data || [])
+      const filtered = (data || []).filter(p => {
+        const isOut = p.quantity_on_hand === 0
+        const isLow = p.quantity_on_hand > 0 && p.reorder_point > 0 && p.quantity_on_hand <= p.reorder_point
+        return isOut || isLow
+      })
+      setParts(filtered.slice(0, 20))
     }
     setLoading(false)
   }
