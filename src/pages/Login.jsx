@@ -81,12 +81,20 @@ export default function Login() {
         width: '100%',
         maxWidth: '400px'
       }}>
+        <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+          <img 
+            src="/favicon.png" 
+            alt="The Toolsmith" 
+            style={{ width: '72px', height: 'auto' }} 
+          />
+        </div>
         <h1 style={{
           fontFamily: 'Georgia, serif',
           color: '#c9a84c',
           fontSize: '1.8rem',
           marginBottom: '0.25rem',
-          fontWeight: '600'
+          fontWeight: '600',
+          textAlign: 'center'
         }}>
           The Toolsmith
         </h1>
@@ -95,7 +103,8 @@ export default function Login() {
           fontSize: '0.88rem',
           marginBottom: '2rem',
           letterSpacing: '0.06em',
-          textTransform: 'uppercase'
+          textTransform: 'uppercase',
+          textAlign: 'center'
         }}>
           CMMS — Sign In
         </p>
