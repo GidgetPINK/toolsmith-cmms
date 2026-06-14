@@ -6,6 +6,21 @@ export default function LowStockWidget({ organizationId, isPro }) {
   const navigate = useNavigate()
   const [parts, setParts] = useState([])
   const [loading, setLoading] = useState(true)
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem('lowStockWidgetCollapsed') === 'true'
+    } catch {
+      return false
+    }
+  })
+
+  function toggleCollapsed() {
+    const newState = !collapsed
+    setCollapsed(newState)
+    try {
+      localStorage.setItem('lowStockWidgetCollapsed', String(newState))
+    } catch {}
+  }
 
   useEffect(() => {
     if (!organizationId || !isPro) {
@@ -85,29 +100,50 @@ export default function LowStockWidget({ organizationId, isPro }) {
             {outOfStock.length === 0 && lowStock.length > 0 && `${lowStock.length} ${lowStock.length === 1 ? 'part' : 'parts'} running low`}
           </h3>
         </div>
-        <button
-          onClick={() => navigate('/parts')}
-          style={{
-            background: 'transparent',
-            color: '#c9a84c',
-            border: '1px solid rgba(201,168,76,0.4)',
-            borderRadius: '6px',
-            padding: '0.5rem 1rem',
-            fontSize: '0.78rem',
-            fontWeight: 600,
-            letterSpacing: '0.06em',
-            textTransform: 'uppercase',
-            cursor: 'pointer',
-            fontFamily: 'Inter, sans-serif',
-            whiteSpace: 'nowrap'
-          }}
-        >
-          View all parts
-        </button>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <button
+            onClick={() => navigate('/parts')}
+            style={{
+              background: 'transparent',
+              color: '#c9a84c',
+              border: '1px solid rgba(201,168,76,0.4)',
+              borderRadius: '6px',
+              padding: '0.5rem 1rem',
+              fontSize: '0.78rem',
+              fontWeight: 600,
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
+              cursor: 'pointer',
+              fontFamily: 'Inter, sans-serif',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            View all parts
+          </button>
+          <button
+            onClick={toggleCollapsed}
+            aria-label={collapsed ? 'Expand' : 'Collapse'}
+            style={{
+              background: 'transparent',
+              border: '1px solid rgba(154,157,181,0.3)',
+              color: '#9a9db5',
+              borderRadius: '6px',
+              padding: '0.5rem 0.65rem',
+              cursor: 'pointer',
+              fontSize: '0.85rem',
+              fontFamily: 'Inter, sans-serif',
+              lineHeight: 1,
+              transition: 'transform 0.2s'
+            }}
+          >
+            {collapsed ? '▼' : '▲'}
+          </button>
+        </div>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-        {topCritical.map(p => {
+      {!collapsed && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          {topCritical.map(p => {
           const isOut = p.quantity_on_hand === 0
           return (
             <div
@@ -177,8 +213,9 @@ export default function LowStockWidget({ organizationId, isPro }) {
           )
         })}
       </div>
+      )}
 
-      {parts.length > 5 && (
+      {!collapsed && parts.length > 5 && (
         <p style={{
           margin: '0.75rem 0 0 0',
           fontSize: '0.78rem',

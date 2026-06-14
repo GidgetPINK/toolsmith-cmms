@@ -226,7 +226,12 @@ export default function MobileWorkOrders({ profile }) {
           ].map(stat => (
             <div
               key={stat.label}
-              onClick={() => setFilter(stat.filterKey)}
+              onClick={() => {
+                setFilter(stat.filterKey)
+                setTimeout(() => {
+                  document.getElementById('mobile-work-orders-list')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                }, 50)
+              }}
               style={{
                 background: filter === stat.filterKey ? 'rgba(201,168,76,0.08)' : '#1e2245',
                 border: `1px solid ${filter === stat.filterKey ? '#c9a84c' : 'rgba(201,168,76,0.18)'}`,
@@ -411,6 +416,7 @@ export default function MobileWorkOrders({ profile }) {
         </div>
 
         {/* WORK ORDER LIST */}
+        <div id="mobile-work-orders-list">
         {loading ? (
           <p style={{ color: '#9a9db5', textAlign: 'center', padding: '2rem' }}>Loading work orders...</p>
         ) : filtered.length === 0 ? (
@@ -491,8 +497,8 @@ export default function MobileWorkOrders({ profile }) {
             ))}
           </div>
         )}
+        </div>
       </div>
-
       <MobileBottomNav />
     </div>
   )

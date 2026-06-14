@@ -595,7 +595,12 @@ export default function Dashboard({ profile }) {
             ].map(stat => (
               <div
                 key={stat.label}
-                onClick={() => setFilter(stat.filterKey)}
+                onClick={() => {
+                  setFilter(stat.filterKey)
+                  setTimeout(() => {
+                    document.getElementById('work-orders-list')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                  }, 50)
+                }}
                 style={{
                   background: filter === stat.filterKey ? 'rgba(201,168,76,0.08)' : '#1e2245',
                   border: `1px solid ${filter === stat.filterKey ? '#c9a84c' : 'rgba(201,168,76,0.18)'}`,
@@ -664,7 +669,7 @@ export default function Dashboard({ profile }) {
               + New Work Order
             </button>
           </div>
-
+          <div id="work-orders-list">
           {loading ? (
             <p style={{ color: '#9a9db5' }}>Loading work orders...</p>
           ) : displayedOrders.length === 0 ? (
@@ -729,9 +734,9 @@ export default function Dashboard({ profile }) {
               ))}
             </div>
           )}
+          </div>
         </div>
       </div>
-
       {flyoutOpen && (
         <AssetFlyout
           mode={flyoutMode}

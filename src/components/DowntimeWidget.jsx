@@ -45,6 +45,21 @@ export default function DowntimeWidget({ organizationId, isPro }) {
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
   const [tickCounter, setTickCounter] = useState(0)
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem('downtimeWidgetCollapsed') === 'true'
+    } catch {
+      return false
+    }
+  })
+
+  function toggleCollapsed() {
+    const newState = !collapsed
+    setCollapsed(newState)
+    try {
+      localStorage.setItem('downtimeWidgetCollapsed', String(newState))
+    } catch {}
+  }
 
   // Re-render every minute to update elapsed time displays
   useEffect(() => {
@@ -163,28 +178,48 @@ export default function DowntimeWidget({ organizationId, isPro }) {
                 : `${activeEvents.length} ${activeEvents.length === 1 ? 'asset' : 'assets'} currently down`}
             </h3>
           </div>
-          <button
-            onClick={() => setModalOpen(true)}
-            style={{
-              background: 'transparent',
-              color: '#c9a84c',
-              border: '1px solid rgba(201,168,76,0.4)',
-              borderRadius: '6px',
-              padding: '0.5rem 1rem',
-              fontSize: '0.78rem',
-              fontWeight: 600,
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase',
-              cursor: 'pointer',
-              fontFamily: 'Inter, sans-serif',
-              whiteSpace: 'nowrap'
-            }}
-          >
-            + Log downtime
-          </button>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <button
+              onClick={() => setModalOpen(true)}
+              style={{
+                background: 'transparent',
+                color: '#c9a84c',
+                border: '1px solid rgba(201,168,76,0.4)',
+                borderRadius: '6px',
+                padding: '0.5rem 1rem',
+                fontSize: '0.78rem',
+                fontWeight: 600,
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                cursor: 'pointer',
+                fontFamily: 'Inter, sans-serif',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              + Log downtime
+            </button>
+            <button
+              onClick={toggleCollapsed}
+              aria-label={collapsed ? 'Expand' : 'Collapse'}
+              style={{
+                background: 'transparent',
+                border: '1px solid rgba(154,157,181,0.3)',
+                color: '#9a9db5',
+                borderRadius: '6px',
+                padding: '0.5rem 0.65rem',
+                cursor: 'pointer',
+                fontSize: '0.85rem',
+                fontFamily: 'Inter, sans-serif',
+                lineHeight: 1,
+                transition: 'transform 0.2s'
+              }}
+            >
+              {collapsed ? '▼' : '▲'}
+            </button>
+          </div>
         </div>
 
-        {activeEvents.length > 0 && (
+        {!collapsed && activeEvents.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
             {activeEvents.map(event => {
               const isUnplanned = event.downtime_type === 'unplanned'
@@ -245,6 +280,7 @@ export default function DowntimeWidget({ organizationId, isPro }) {
           </div>
         )}
 
+        {!collapsed && (
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(3, 1fr)',
@@ -313,8 +349,8 @@ export default function DowntimeWidget({ organizationId, isPro }) {
             }}>{monthlyEventCount}</p>
           </div>
         </div>
+        )}
       </div>
-
       {modalOpen && (
         <LogDowntimeModal
           organizationId={organizationId}
