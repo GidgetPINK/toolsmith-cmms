@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import MobileBottomNav from '../components/MobileBottomNav'
 import LowStockWidget from '../components/LowStockWidget'
+import DowntimeWidget from '../components/DowntimeWidget'
 
 const PRIORITY_COLOR = {
   critical: '#e06c75',
@@ -247,7 +248,11 @@ export default function MobileWorkOrders({ profile }) {
             isPro={isPro}
           />
         )}
-        
+        <DowntimeWidget
+          organizationId={profile.organization_id}
+          isPro={isPro}
+        />
+
         {/* COMING UP SECTION (Pro only) */}
         {isPro && (
           <div style={{ marginBottom: '1.25rem' }}>
