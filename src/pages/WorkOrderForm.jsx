@@ -29,10 +29,16 @@ export default function WorkOrderForm({ profile }) {
   const [newAssetCategory, setNewAssetCategory] = useState('')
   const [addAssetError, setAddAssetError] = useState(null)
   const [addAssetSubmitting, setAddAssetSubmitting] = useState(false)
+  const [workOrderParts, setWorkOrderParts] = useState([])
+  const [partsPickerOpen, setPartsPickerOpen] = useState(false)
+  const [partsLoading, setPartsLoading] = useState(false)
 
   useEffect(() => {
     fetchSelectData()
-    if (!isNew) fetchWorkOrder()
+    if (!isNew) {
+      fetchWorkOrder()
+      fetchWorkOrderParts()
+    }
     if (isNew && profile?.role === 'technician') {
       setAssignedTo(profile.id)
     }
@@ -80,6 +86,53 @@ export default function WorkOrderForm({ profile }) {
       setPmScheduleId(data.pm_schedule_id || null)
     }
     setFetching(false)
+  }
+
+  async function fetchWorkOrderParts() {
+    if (!id) return
+    setPartsLoading(true)
+    const { data, error: fetchError } = await supabase
+      .from('work_order_parts')
+      .select(`
+        id,
+        quantity_used,
+        unit_cost_at_time,
+        total_cost,
+        added_at,
+        added_by,
+        notes,
+        part_id,
+        parts:part_id ( id, part_number, name, unit_of_measure ),
+        profiles:added_by ( full_name )
+      `)
+      .eq('work_order_id', id)
+      .order('added_at', { ascending: false })
+
+    setPartsLoading(false)
+    if (!fetchError) {
+      setWorkOrderParts(data || [])
+    }
+  }
+
+  async function handleRemovePart(workOrderPartId, partName) {
+    const confirmed = window.confirm(`Remove ${partName} from this work order? Stock will be restored.`)
+    if (!confirmed) return
+
+    const { error: deleteError } = await supabase
+      .from('work_order_parts')
+      .delete()
+      .eq('id', workOrderPartId)
+
+    if (deleteError) {
+      alert('Could not remove part: ' + deleteError.message)
+      return
+    }
+
+    fetchWorkOrderParts()
+  }
+
+  function handlePartAdded() {
+    fetchWorkOrderParts()
   }
 
   async function fetchPmAndPrefill(pmId) {
@@ -539,6 +592,160 @@ export default function WorkOrderForm({ profile }) {
             )}
           </div>
 
+          {!isNew && organization?.is_upgraded && (
+            <div style={{ marginBottom: '1.75rem' }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '0.75rem',
+                flexWrap: 'wrap',
+                gap: '0.5rem'
+              }}>
+                <p style={{
+                  fontSize: '0.72rem',
+                  letterSpacing: '0.22em',
+                  textTransform: 'uppercase',
+                  color: '#c9a84c',
+                  fontWeight: 500,
+                  margin: 0
+                }}>
+                  Parts Used
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setPartsPickerOpen(true)}
+                  style={{
+                    background: 'transparent',
+                    color: '#c9a84c',
+                    border: '1px solid rgba(201,168,76,0.4)',
+                    borderRadius: '6px',
+                    padding: '0.5rem 1rem',
+                    fontSize: '0.78rem',
+                    fontWeight: 600,
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                    cursor: 'pointer',
+                    fontFamily: 'Inter, sans-serif'
+                  }}
+                >
+                  + Add part
+                </button>
+              </div>
+
+              {partsLoading ? (
+                <p style={{ color: '#9a9db5', fontSize: '0.85rem', padding: '0.5rem 0', margin: 0 }}>
+                  Loading parts...
+                </p>
+              ) : workOrderParts.length === 0 ? (
+                <p style={{ color: '#6a6d85', fontSize: '0.85rem', fontStyle: 'italic', padding: '0.5rem 0', margin: 0 }}>
+                  No parts used yet
+                </p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {workOrderParts.map(wp => (
+                    <div
+                      key={wp.id}
+                      style={{
+                        background: 'rgba(255,255,255,0.03)',
+                        border: '1px solid rgba(154,157,181,0.15)',
+                        borderRadius: '8px',
+                        padding: '0.7rem 0.85rem',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        gap: '0.75rem',
+                        flexWrap: 'wrap'
+                      }}
+                    >
+                      <div style={{ flex: 1, minWidth: '200px' }}>
+                        <p style={{
+                          margin: 0,
+                          fontFamily: 'monospace',
+                          fontSize: '0.78rem',
+                          color: '#9a9db5'
+                        }}>
+                          {wp.parts?.part_number}
+                        </p>
+                        <p style={{
+                          margin: '0.15rem 0 0 0',
+                          fontSize: '0.92rem',
+                          color: '#f8f6f1'
+                        }}>
+                          {wp.parts?.name}
+                        </p>
+                        {wp.profiles?.full_name && (
+                          <p style={{
+                            margin: '0.25rem 0 0 0',
+                            fontSize: '0.72rem',
+                            color: '#6a6d85'
+                          }}>
+                            Added by {wp.profiles.full_name}
+                          </p>
+                        )}
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <p style={{ margin: 0, color: '#f8f6f1', fontSize: '0.9rem', fontWeight: 600 }}>
+                          {wp.quantity_used} {wp.parts?.unit_of_measure || 'each'}
+                        </p>
+                        <p style={{ margin: '0.15rem 0 0 0', color: '#c9a84c', fontSize: '0.82rem' }}>
+                          ${(wp.total_cost || 0).toFixed(2)}
+                        </p>
+                        <p style={{ margin: '0.15rem 0 0 0', color: '#6a6d85', fontSize: '0.72rem' }}>
+                          @ ${(wp.unit_cost_at_time || 0).toFixed(2)}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemovePart(wp.id, wp.parts?.name || 'this part')}
+                        aria-label="Remove part"
+                        style={{
+                          background: 'transparent',
+                          border: '1px solid rgba(224,108,117,0.4)',
+                          color: '#e06c75',
+                          borderRadius: '6px',
+                          padding: '0.35rem 0.65rem',
+                          fontSize: '0.78rem',
+                          cursor: 'pointer',
+                          fontFamily: 'Inter, sans-serif'
+                        }}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+
+                  <div style={{
+                    marginTop: '0.5rem',
+                    padding: '0.7rem 0.85rem',
+                    background: 'rgba(201,168,76,0.06)',
+                    border: '1px solid rgba(201,168,76,0.18)',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}>
+                    <span style={{
+                      fontSize: '0.78rem',
+                      letterSpacing: '0.1em',
+                      textTransform: 'uppercase',
+                      color: '#9a9db5'
+                    }}>
+                      Parts Total
+                    </span>
+                    <span style={{
+                      fontSize: '1rem',
+                      fontWeight: 600,
+                      color: '#c9a84c'
+                    }}>
+                      ${workOrderParts.reduce((sum, wp) => sum + (parseFloat(wp.total_cost) || 0), 0).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {error && (
             <p style={{
               color: '#e06c75', fontSize: '0.85rem', marginBottom: '1rem',
@@ -548,7 +755,6 @@ export default function WorkOrderForm({ profile }) {
               {error}
             </p>
           )}
-
           <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
             <button
               type="submit"
