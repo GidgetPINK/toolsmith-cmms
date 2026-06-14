@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import MobileBottomNav from '../components/MobileBottomNav'
+import LowStockWidget from '../components/LowStockWidget'
 
 const PRIORITY_COLOR = {
   critical: '#e06c75',
@@ -240,6 +241,13 @@ export default function MobileWorkOrders({ profile }) {
           ))}
         </div>
 
+        {profile?.role === 'manager' && (
+          <LowStockWidget
+            organizationId={profile.organization_id}
+            isPro={isPro}
+          />
+        )}
+        
         {/* COMING UP SECTION (Pro only) */}
         {isPro && (
           <div style={{ marginBottom: '1.25rem' }}>
