@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import PartsPicker from '../components/PartsPicker'
 
 export default function WorkOrderForm({ profile }) {
   const { id } = useParams()
@@ -790,6 +791,15 @@ export default function WorkOrderForm({ profile }) {
           </div>
         </form>
       </div>
+
+      {partsPickerOpen && (
+        <PartsPicker
+          organizationId={profile?.organization_id}
+          workOrderId={id}
+          onClose={() => setPartsPickerOpen(false)}
+          onAdded={handlePartAdded}
+        />
+      )}
     </div>
   )
 }
