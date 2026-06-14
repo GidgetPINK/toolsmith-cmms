@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import TrialBanner from '../components/TrialBanner'
+import LowStockWidget from '../components/LowStockWidget'
 
 const PRIORITY_COLOR = {
   critical: '#e06c75',
@@ -606,6 +607,13 @@ export default function Dashboard({ profile }) {
               </div>
             ))}
           </div>
+
+          {profile?.role === 'manager' && (
+            <LowStockWidget
+              organizationId={profile.organization_id}
+              isPro={isPro}
+            />
+          )}
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
             <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>

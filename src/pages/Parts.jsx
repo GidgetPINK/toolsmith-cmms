@@ -433,6 +433,36 @@ export default function Parts({ profile }) {
                                   Deactivated
                                 </span>
                               )}
+                              {isOut && !isDeactivated && (
+                                <span style={{
+                                  marginLeft: '0.5rem',
+                                  fontSize: '0.65rem',
+                                  color: '#e06c75',
+                                  letterSpacing: '0.1em',
+                                  textTransform: 'uppercase',
+                                  background: 'rgba(224,108,117,0.18)',
+                                  padding: '0.15rem 0.45rem',
+                                  borderRadius: '4px',
+                                  fontWeight: 700
+                                }}>
+                                  Out
+                                </span>
+                              )}
+                              {isLow && !isOut && !isDeactivated && (
+                                <span style={{
+                                  marginLeft: '0.5rem',
+                                  fontSize: '0.65rem',
+                                  color: '#f5c518',
+                                  letterSpacing: '0.1em',
+                                  textTransform: 'uppercase',
+                                  background: 'rgba(245,197,24,0.18)',
+                                  padding: '0.15rem 0.45rem',
+                                  borderRadius: '4px',
+                                  fontWeight: 700
+                                }}>
+                                  Low
+                                </span>
+                              )}
                               {p.category && !isDeactivated && (
                                 <span style={{
                                   marginLeft: '0.5rem',
