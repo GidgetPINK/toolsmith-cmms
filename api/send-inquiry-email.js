@@ -101,8 +101,9 @@ function buildInquiryEmail(name, email, company, teamSize, projectDescription) {
 <html>
 <body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,sans-serif;">
   <div style="max-width:600px;margin:0 auto;background:#ffffff;">
-    <div style="background:#1A1A2E;padding:24px 40px;text-align:center;">
-      <h1 style="color:#C9A84C;font-size:20px;margin:0;">The Toolsmith</h1>
+    <div style="background:#1A1A2E;padding:32px 40px;text-align:center;">
+      <img src="https://thetoolsmithapp.com/logo.png" alt="The Toolsmith" style="width:80px;height:auto;display:inline-block;margin-bottom:8px;" />
+      <h1 style="color:#C9A84C;font-size:20px;margin:8px 0 0 0;font-family:Georgia,serif;">The Toolsmith</h1>
       <p style="color:#9A9DB5;font-size:12px;margin:6px 0 0;">New Custom CMMS Inquiry</p>
     </div>
     <div style="padding:32px 40px;">
@@ -146,8 +147,9 @@ function buildConfirmationEmail(name) {
 <html>
 <body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,sans-serif;">
   <div style="max-width:600px;margin:0 auto;background:#ffffff;">
-    <div style="background:#1A1A2E;padding:24px 40px;text-align:center;">
-      <h1 style="color:#C9A84C;font-size:20px;margin:0;">The Toolsmith</h1>
+    <div style="background:#1A1A2E;padding:32px 40px;text-align:center;">
+      <img src="https://thetoolsmithapp.com/logo.png" alt="The Toolsmith" style="width:80px;height:auto;display:inline-block;margin-bottom:8px;" />
+      <h1 style="color:#C9A84C;font-size:20px;margin:8px 0 0 0;font-family:Georgia,serif;">The Toolsmith</h1>
       <p style="color:#9A9DB5;font-size:12px;margin:6px 0 0;">thetoolsmithapp.com</p>
     </div>
     <div style="padding:40px;">
