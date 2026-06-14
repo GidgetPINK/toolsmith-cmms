@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import PartsPicker from '../components/PartsPicker'
 
 export default function PartsPicker({ organizationId, workOrderId, onClose, onAdded }) {
   const [parts, setParts] = useState([])
