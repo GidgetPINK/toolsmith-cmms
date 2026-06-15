@@ -1,7 +1,22 @@
 import { useState, useRef, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import ReactMarkdown from 'react-markdown'
 import { supabase } from '../lib/supabase'
 
+const APP_ROUTES = ['/team', '/settings', '/assets', '/parts', '/upgrade', '/custom-fields', '/work-order']
+
+function convertRoutesToLinks(text) {
+  // Replace plain /route mentions with markdown links
+  let result = text
+  for (const route of APP_ROUTES) {
+    const regex = new RegExp(`(?<!\\])(${route.replace('/', '\\/')})(\\b|/)`, 'g')
+    result = result.replace(regex, `[$1$2](app:$1$2)`)
+  }
+  return result
+}
+
 export default function GidgetChatPanel({ contextType, contextData, onClose, initialMessage }) {
+  const navigate = useNavigate()
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
@@ -296,7 +311,55 @@ export default function GidgetChatPanel({ contextType, contextData, onClose, ini
               key={idx}
               style={msg.role === 'user' ? userMessageStyle() : assistantMessageStyle()}
             >
-              {msg.content}
+              {msg.role === 'user' ? (
+                msg.content
+              ) : (
+                <ReactMarkdown
+                  components={{
+                    p: ({ children }) => <p style={{ margin: '0 0 0.5rem 0', lineHeight: 1.6 }}>{children}</p>,
+                    ul: ({ children }) => <ul style={{ margin: '0.5rem 0', paddingLeft: '1.25rem', lineHeight: 1.5 }}>{children}</ul>,
+                    ol: ({ children }) => <ol style={{ margin: '0.5rem 0', paddingLeft: '1.25rem', lineHeight: 1.5 }}>{children}</ol>,
+                    li: ({ children }) => <li style={{ margin: '0.25rem 0' }}>{children}</li>,
+                    strong: ({ children }) => <strong style={{ color: '#c9a84c', fontWeight: 600 }}>{children}</strong>,
+                    em: ({ children }) => <em style={{ color: '#e8c97a' }}>{children}</em>,
+                    code: ({ children }) => <code style={{ background: 'rgba(255,255,255,0.08)', padding: '2px 6px', borderRadius: '4px', fontSize: '0.85em', fontFamily: 'monospace' }}>{children}</code>,
+                    h1: ({ children }) => <h3 style={{ fontSize: '1rem', margin: '0.5rem 0 0.25rem 0', color: '#f8f6f1', fontWeight: 600 }}>{children}</h3>,
+                    h2: ({ children }) => <h3 style={{ fontSize: '0.95rem', margin: '0.5rem 0 0.25rem 0', color: '#f8f6f1', fontWeight: 600 }}>{children}</h3>,
+                    h3: ({ children }) => <h3 style={{ fontSize: '0.9rem', margin: '0.5rem 0 0.25rem 0', color: '#f8f6f1', fontWeight: 600 }}>{children}</h3>,
+                    a: ({ href, children }) => {
+                      if (href && href.startsWith('app:')) {
+                        const route = href.replace('app:', '')
+                        return (
+                          <button
+                            onClick={() => {
+                              navigate(route)
+                              onClose()
+                            }}
+                            style={{
+                              background: 'rgba(201,168,76,0.2)',
+                              border: '1px solid rgba(201,168,76,0.5)',
+                              color: '#c9a84c',
+                              borderRadius: '4px',
+                              padding: '2px 10px',
+                              fontSize: '0.85em',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                              fontFamily: 'Inter, sans-serif',
+                              display: 'inline-block',
+                              margin: '0 2px'
+                            }}
+                          >
+                            {children}
+                          </button>
+                        )
+                      }
+                      return <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: '#c9a84c', textDecoration: 'underline' }}>{children}</a>
+                    }
+                  }}
+                >
+                  {convertRoutesToLinks(msg.content)}
+                </ReactMarkdown>
+              )}
             </div>
           ))}
 
