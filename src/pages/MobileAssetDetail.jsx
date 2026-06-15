@@ -795,7 +795,7 @@ export default function MobileAssetDetail({ profile }) {
             {!isCreating && tab === 'downtime' && (
               <div style={{ padding: '1rem' }}>
                 <AssetDowntimeTab
-                  asset={asset}
+                  asset={{ id, name }}
                   organizationId={organizationId}
                   profiles={profiles}
                 />
