@@ -118,6 +118,35 @@ These are real product gaps that should be addressed before broader rollout.
 
 ## Polish and quality of life
 
+### Auto-refresh Downtime Now widget when events change
+**Current state:** The dashboard DowntimeWidget only re-fetches data when its modal closes. If downtime is logged from the asset detail tab or another user's session, the dashboard widget shows stale data until manual refresh.
+**Required behavior:** Subscribe to changes on the `downtime_events` table via Supabase realtime. When ANY insert/update/delete happens for this org's events, re-fetch widget data automatically.
+**Implementation notes:**
+- Use `supabase.channel('downtime_events').on('postgres_changes', ...)` pattern
+- Subscribe on mount, unsubscribe on unmount
+- Filter to organization_id to avoid cross-org noise
+- Apply same pattern to LowStockWidget for parts changes
+**Effort:** ~15-20 minutes
+
+### Clickable event count on Downtime Now widget
+**Current state:** The "Events" metric in the Downtime Now widget shows a number but is not interactive.
+**Required behavior:** Clicking the event count opens a list of this month's downtime events. Either a modal or a dedicated /downtime page.
+**Implementation notes:**
+- Building a /downtime page is the better long-term choice since it lays groundwork for a full downtime reports view
+- Should show all events from current month with filters (planned/unplanned, by asset, by reason)
+- Stat cards at top mirror the widget metrics
+- Click event to navigate to that asset's downtime tab
+**Effort:** ~45-60 minutes for dedicated page, ~20 min for modal
+
+### Downtime tab on mobile asset detail
+**Current state:** The Downtime tab exists on desktop Asset Flyout but not on the mobile asset detail view.
+**Required behavior:** Add the same Downtime tab to MobileAssetDetail.jsx with the same metrics and event history.
+**Implementation notes:**
+- Import AssetDowntimeTab into MobileAssetDetail.jsx
+- Add Downtime to the mobile tab array
+- Render the AssetDowntimeTab component conditionally
+**Effort:** ~15-20 minutes
+
 These improve the product but aren't blocking.
 
 ### Tappable stat cards on Parts page
@@ -128,29 +157,12 @@ These improve the product but aren't blocking.
 
 ---
 
-### Same pattern for Dashboard stat cards
-
-Once Parts cards are tappable, apply the same pattern to the Dashboard work order stat cards.
-
-**Effort:** ~30 minutes
-
----
-
-### Set up Supabase custom auth domain
-
-**Current state:** Password reset and invitation links route through Supabase's auth servers, so users briefly see a `supabase.co` URL when clicking links from emails.
-
-**Required behavior:** Configure a custom auth subdomain (e.g., `auth.thetoolsmithapp.com`) so all auth-related URLs use your domain instead of Supabase's.
-
-**Implementation notes:**
-- Supabase dashboard: configure custom auth domain
-- Cloudflare DNS: add CNAME record pointing `auth.thetoolsmithapp.com` to Supabase
-- Wait for DNS propagation (usually under 5 minutes with Cloudflare)
-- Verify in Supabase dashboard
-- Test that reset and invitation links use the new domain
 
 **Effort:** ~15 minutes
 
+---
+
+### Upgrade CSV import template to xlsx format
 ---
 
 ### Set up Supabase custom auth domain
@@ -206,11 +218,8 @@ These were noted earlier but parked until after initial launch.
 ## Current build focus
 
 In active development:
+- **Downtime Tracking** — Core loop complete (log, end, dashboard widget, email alerts, asset detail tab). Work order integration remaining.
 
-- **Parts and Inventory** — Phase 2 complete (manual management with create/edit/deactivate/reactivate). Phase 3 next (stock adjustment modal).
-
-Remaining Pro features after Parts and Inventory:
-
-- Downtime Tracking
-- Cost Reporting
-- Work Order Chat
+Remaining Pro features after Downtime Tracking:
+- Cost Reporting (depends on Parts and Downtime data)
+- Work Order Chat (the big differentiator, ~6-8 hours)

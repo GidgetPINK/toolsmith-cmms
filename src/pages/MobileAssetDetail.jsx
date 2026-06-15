@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import MobileBottomNav from '../components/MobileBottomNav'
+import AssetDowntimeTab from '../components/AssetDowntimeTab'
 
 const CATEGORIES = ['Mechanical', 'Electrical', 'HVAC', 'Plumbing', 'Vehicle', 'Safety', 'Other']
 const CRITICALITY_LEVELS = ['Low', 'Standard', 'High', 'Critical']
@@ -466,7 +467,8 @@ export default function MobileAssetDetail({ profile }) {
           {[
             { id: 'details', label: 'Details' },
             { id: 'history', label: 'Work Orders' },
-            { id: 'pm', label: 'PM Schedule' }
+            { id: 'pm', label: 'PM Schedule' },
+            { id: 'downtime', label: 'Downtime' }
           ].map(t => (
             <button
               key={t.id}
@@ -789,10 +791,19 @@ export default function MobileAssetDetail({ profile }) {
                 )}
               </div>
             )}
+
+            {!isCreating && tab === 'downtime' && (
+              <div style={{ padding: '1rem' }}>
+                <AssetDowntimeTab
+                  asset={asset}
+                  organizationId={organizationId}
+                  profiles={profiles}
+                />
+              </div>
+            )}
           </>
         )}
       </div>
-
       <MobileBottomNav />
     </div>
   )
