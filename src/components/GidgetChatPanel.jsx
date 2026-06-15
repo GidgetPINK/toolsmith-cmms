@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import { supabase } from '../lib/supabase'
+import { getActionsForResponse } from './gidgetActions'
 
 const APP_ROUTES = ['/team', '/settings', '/assets', '/parts', '/upgrade', '/custom-fields', '/work-order']
 
@@ -128,6 +129,7 @@ export default function GidgetChatPanel({ contextType, contextData, onClose, ini
           width: 440px;
           max-width: 100vw;
           height: 100vh;
+          height: 100dvh;
           background: linear-gradient(180deg, #16213e 0%, #1a1a2e 100%);
           border-left: 1px solid rgba(201,168,76,0.25);
           display: flex;
@@ -137,10 +139,15 @@ export default function GidgetChatPanel({ contextType, contextData, onClose, ini
           font-family: 'Inter', sans-serif;
           animation: gidgetSlideIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        @media (max-width: 480px) {
+        .gidget-overlay {
+          height: 100vh;
+          height: 100dvh;
+        }
+        @media (max-width: 768px) {
           .gidget-panel {
             width: 100vw;
             max-width: 100vw;
+            border-left: none;
           }
         }
         .gidget-bubble-user {
@@ -451,6 +458,67 @@ export default function GidgetChatPanel({ contextType, contextData, onClose, ini
                     {convertRoutesToLinks(msg.content)}
                   </ReactMarkdown>
                 )}
+                {msg.role === 'assistant' && (() => {
+                  const actions = getActionsForResponse(msg.content, contextData?.page)
+                  if (actions.length === 0) return null
+                  return (
+                    <div style={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: '8px',
+                      marginTop: '12px',
+                      paddingTop: '12px',
+                      borderTop: '1px solid rgba(201,168,76,0.15)'
+                    }}>
+                      {actions.map(action => (
+                        <button
+                          key={action.id}
+                          onClick={() => {
+                            navigate(action.route)
+                            onClose()
+                          }}
+                          style={{
+                            background: action.primary
+                              ? 'linear-gradient(135deg, #c9a84c, #e8c97a)'
+                              : 'transparent',
+                            color: action.primary ? '#1a1a2e' : '#c9a84c',
+                            border: action.primary
+                              ? 'none'
+                              : '1px solid rgba(201,168,76,0.4)',
+                            borderRadius: '8px',
+                            padding: '8px 14px',
+                            fontSize: '0.78rem',
+                            fontWeight: 700,
+                            letterSpacing: '0.06em',
+                            textTransform: 'uppercase',
+                            cursor: 'pointer',
+                            fontFamily: 'Inter, sans-serif',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            boxShadow: action.primary ? '0 2px 6px rgba(201,168,76,0.25)' : 'none',
+                            transition: 'transform 0.15s, box-shadow 0.2s'
+                          }}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.transform = 'translateY(-1px)'
+                            if (action.primary) {
+                              e.currentTarget.style.boxShadow = '0 4px 12px rgba(201,168,76,0.4)'
+                            }
+                          }}
+                          onMouseLeave={e => {
+                            e.currentTarget.style.transform = 'translateY(0)'
+                            if (action.primary) {
+                              e.currentTarget.style.boxShadow = '0 2px 6px rgba(201,168,76,0.25)'
+                            }
+                          }}
+                        >
+                          {action.icon && <span>{action.icon}</span>}
+                          <span>{action.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )
+                })()}
               </div>
             ))}
 
