@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import TrialBanner from '../components/TrialBanner'
 import LowStockWidget from '../components/LowStockWidget'
 import DowntimeWidget from '../components/DowntimeWidget'
+import AssetDowntimeTab from '../components/AssetDowntimeTab'
 
 const PRIORITY_COLOR = {
   critical: '#e06c75',
@@ -1082,7 +1083,8 @@ function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, cus
             {[
               { id: 'details', label: 'Details' },
               { id: 'history', label: 'Work Order History' },
-              { id: 'pm', label: 'PM Schedule' }
+              { id: 'pm', label: 'PM Schedule' },
+              { id: 'downtime', label: 'Downtime' }
             ].map(t => (
               <button
                 key={t.id}
@@ -1404,6 +1406,14 @@ function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, cus
                 </div>
               )}
             </div>
+          )}
+
+          {mode === 'edit' && tab === 'downtime' && (
+            <AssetDowntimeTab
+              asset={asset}
+              organizationId={organizationId}
+              profiles={profiles}
+            />
           )}
         </div>
       </div>
