@@ -21,6 +21,7 @@ import MobileAssets from './pages/MobileAssets'
 import MobileAssetDetail from './pages/MobileAssetDetail'
 import CompletePaymentSetup from './pages/CompletePaymentSetup'
 import SubscriptionRequired from './pages/SubscriptionRequired'
+import GidgetButton from './components/GidgetButton'
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(
@@ -460,6 +461,12 @@ function App() {
           element={<TemplateSuccess />}
         />
       </Routes>
+      {session && profile && organization && (
+        <GidgetButton
+          profile={profile}
+          isPro={organization?.is_upgraded === true}
+        />
+      )}
     </BrowserRouter>
   )
 }
