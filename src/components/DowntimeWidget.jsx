@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import LogDowntimeModal from './LogDowntimeModal'
+import EndDowntimeModal from './EndDowntimeModal'
 
 function formatElapsed(startedAt) {
   const start = new Date(startedAt)
@@ -44,6 +45,7 @@ export default function DowntimeWidget({ organizationId, isPro }) {
   const [monthlyEventCount, setMonthlyEventCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
+  const [endingEvent, setEndingEvent] = useState(null)
   const [tickCounter, setTickCounter] = useState(0)
   const [collapsed, setCollapsed] = useState(() => {
     try {
@@ -257,22 +259,43 @@ export default function DowntimeWidget({ organizationId, isPro }) {
                       {isUnplanned ? 'Unplanned' : 'Planned'} · {event.reason}
                     </p>
                   </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <p style={{
-                      margin: 0,
-                      fontSize: '0.95rem',
-                      fontWeight: 600,
-                      color: accentColor
-                    }}>
-                      {formatElapsed(event.started_at)}
-                    </p>
-                    <p style={{
-                      margin: '0.2rem 0 0 0',
-                      fontSize: '0.7rem',
-                      color: '#6a6d85'
-                    }}>
-                      since {formatStartTime(event.started_at)}
-                    </p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <div style={{ textAlign: 'right' }}>
+                      <p style={{
+                        margin: 0,
+                        fontSize: '0.95rem',
+                        fontWeight: 600,
+                        color: accentColor
+                      }}>
+                        {formatElapsed(event.started_at)}
+                      </p>
+                      <p style={{
+                        margin: '0.2rem 0 0 0',
+                        fontSize: '0.7rem',
+                        color: '#6a6d85'
+                      }}>
+                        since {formatStartTime(event.started_at)}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setEndingEvent(event)}
+                      style={{
+                        background: 'transparent',
+                        color: '#98c379',
+                        border: '1px solid rgba(152,195,121,0.4)',
+                        borderRadius: '6px',
+                        padding: '0.45rem 0.85rem',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        letterSpacing: '0.06em',
+                        textTransform: 'uppercase',
+                        cursor: 'pointer',
+                        fontFamily: 'Inter, sans-serif',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      End
+                    </button>
                   </div>
                 </div>
               )
@@ -356,6 +379,17 @@ export default function DowntimeWidget({ organizationId, isPro }) {
           organizationId={organizationId}
           onClose={() => setModalOpen(false)}
           onLogged={handleLogged}
+        />
+      )}
+
+      {endingEvent && (
+        <EndDowntimeModal
+          event={endingEvent}
+          onClose={() => setEndingEvent(null)}
+          onEnded={() => {
+            setEndingEvent(null)
+            handleLogged()
+          }}
         />
       )}
     </>
