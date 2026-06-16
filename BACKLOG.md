@@ -118,6 +118,26 @@ These are real product gaps that should be addressed before broader rollout.
 
 ## Polish and quality of life
 
+### Gidget chat persistence with inactivity timeout
+**Current state:** Closing the Gidget chat panel discards all conversation history. If the user clicks an action button (like "Go to Parts") and then reopens Gidget, the previous conversation is gone.
+**Required behavior:** Persist chat history in browser sessionStorage so it survives panel close, navigation between pages, and page refreshes within a session. Auto-expire after 15-30 minutes of inactivity. Conversation clears when the browser tab is closed.
+**Implementation notes:**
+- Use sessionStorage to persist messages array with a timestamp
+- On panel mount, check timestamp — if more than 15 minutes since last activity, start fresh
+- Update timestamp on every new message
+- Clear from sessionStorage if user explicitly hits a "New chat" button (future addition)
+- This is Approach B from architecture discussion (vs in-memory only or database-backed)
+**Effort:** ~30-45 minutes
+
+### Verify and fix Gidget's mobile navigation knowledge
+**Current state:** Gidget tells mobile users to access Settings via "a hamburger menu (☰) in the top right" which does not exist in the actual mobile UI.
+**Required behavior:** Audit the actual mobile navigation structure (top bar buttons, bottom nav tabs, where Settings actually lives on mobile), then update Gidget's system prompt to accurately reflect it.
+**Implementation notes:**
+- Check src/pages/MobileWorkOrders.jsx and src/components/MobileBottomNav.jsx for actual mobile nav
+- Update the MOBILE NAVIGATION section in api/gidget-chat.js BASE_PERSONA
+- Test by asking Gidget mobile-specific questions
+**Effort:** ~15-20 minutes
+
 ### Auto-refresh Downtime Now widget when events change
 **Current state:** The dashboard DowntimeWidget only re-fetches data when its modal closes. If downtime is logged from the asset detail tab or another user's session, the dashboard widget shows stale data until manual refresh.
 **Required behavior:** Subscribe to changes on the `downtime_events` table via Supabase realtime. When ANY insert/update/delete happens for this org's events, re-fetch widget data automatically.
