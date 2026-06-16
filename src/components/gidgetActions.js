@@ -5,28 +5,21 @@ const ACTIONS = {
     icon: '✨',
     route: '/upgrade',
     primary: true,
-    keywords: ['upgrade to pro', 'upgrading to pro', 'pro plan', 'pro tier', '$49', 'pro features', 'unlock pro', 'upgrade now']
+    keywords: ['upgrade', 'pro plan', 'pro tier', '$49', 'pro features', 'unlock pro', 'pro feature', 'on lite', 'lite plan', 'lite tier']
   },
   team: {
     label: 'Go to Team',
     icon: '→',
     route: '/team',
     primary: true,
-    keywords: ['team page', 'invite a tech', 'invite technician', 'invite team member', 'add a tech', 'add technician', 'manage team', 'add team member', 'invite users', 'team management']
-  },
-  assets: {
-    label: 'View Assets',
-    icon: '→',
-    route: '/assets',
-    primary: true,
-    keywords: ['assets page', 'asset registry', 'add an asset', 'create an asset', 'add equipment', 'asset list', 'view assets', 'manage assets', 'register an asset']
+    keywords: ['team management', 'invite a tech', 'invite technician', 'invite team member', 'add a tech', 'add technician', 'manage team', 'add team member', 'invite users', 'team page']
   },
   parts: {
-    label: 'View Parts',
+    label: 'Go to Parts and Inventory',
     icon: '→',
     route: '/parts',
     primary: true,
-    keywords: ['parts page', 'parts inventory', 'add a part', 'manage parts', 'part stock', 'inventory page', 'low stock', 'out of stock']
+    keywords: ['parts and inventory', 'parts inventory', 'add a part', 'manage parts', 'part stock', 'inventory alert', 'low stock', 'out of stock', 'view all parts', 'parts page']
   },
   newWorkOrder: {
     label: 'New Work Order',
@@ -40,7 +33,7 @@ const ACTIONS = {
     icon: '→',
     route: '/settings',
     primary: false,
-    keywords: ['settings page', 'billing portal', 'manage billing', 'change password', 'organization settings', 'account settings', 'manage subscription']
+    keywords: ['billing portal', 'manage billing', 'change password', 'organization settings', 'account settings', 'manage subscription', 'click settings', 'go to settings']
   },
   customFields: {
     label: 'Custom Fields',
@@ -51,26 +44,39 @@ const ACTIONS = {
   }
 }
 
-// Special context-based suggestions
+// Special context-based suggestions based on current page
 const PAGE_DEFAULTS = {
-  'Dashboard': ['newWorkOrder'],
+  'Dashboard': [],
   'Work Order Detail': [],
-  'Assets': ['newWorkOrder'],
+  'Assets': [],
   'Parts and Inventory': [],
   'Settings': [],
   'Team Management': []
 }
 
-export function getActionsForResponse(responseText, currentPage) {
+// Priority order for primary buttons when multiple match
+// Lower number = higher priority
+const PRIMARY_PRIORITY = {
+  upgrade: 1,
+  parts: 2,
+  team: 3,
+  newWorkOrder: 4,
+  assets: 5
+}
+
+export function getActionsForResponse(responseText, currentPage, userMessage) {
   if (!responseText) return []
 
-  const lowerText = responseText.toLowerCase()
+  const lowerResponse = responseText.toLowerCase()
+  const lowerUserMessage = (userMessage || '').toLowerCase()
+  const combinedText = `${lowerUserMessage} ${lowerResponse}`
+
   const matched = new Set()
 
-  // Detect actions based on keywords in the response
+  // Detect actions based on keywords in BOTH user question and response
   for (const [actionId, action] of Object.entries(ACTIONS)) {
     for (const keyword of action.keywords) {
-      if (lowerText.includes(keyword.toLowerCase())) {
+      if (combinedText.includes(keyword.toLowerCase())) {
         matched.add(actionId)
         break
       }
@@ -82,12 +88,17 @@ export function getActionsForResponse(responseText, currentPage) {
     PAGE_DEFAULTS[currentPage].forEach(a => matched.add(a))
   }
 
-  // Convert to action objects, primary actions first, max 3
+  // Convert to action objects with priority sorting
   const actions = Array.from(matched)
     .map(id => ({ id, ...ACTIONS[id] }))
     .sort((a, b) => {
+      // Primary actions first
       if (a.primary && !b.primary) return -1
       if (!a.primary && b.primary) return 1
+      // Among primary actions, use priority order
+      if (a.primary && b.primary) {
+        return (PRIMARY_PRIORITY[a.id] || 99) - (PRIMARY_PRIORITY[b.id] || 99)
+      }
       return 0
     })
     .slice(0, 3)

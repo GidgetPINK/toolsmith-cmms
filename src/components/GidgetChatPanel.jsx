@@ -459,7 +459,11 @@ export default function GidgetChatPanel({ contextType, contextData, onClose, ini
                   </ReactMarkdown>
                 )}
                 {msg.role === 'assistant' && (() => {
-                  const actions = getActionsForResponse(msg.content, contextData?.page)
+                  // Find the user message that came immediately before this assistant message
+                  const prevUserMsg = idx > 0 && messages[idx - 1]?.role === 'user'
+                    ? messages[idx - 1].content
+                    : ''
+                  const actions = getActionsForResponse(msg.content, contextData?.page, prevUserMsg)
                   if (actions.length === 0) return null
                   return (
                     <div style={{
