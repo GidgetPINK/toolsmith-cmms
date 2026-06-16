@@ -45,7 +45,7 @@ const ACTIONS = {
   customFields: {
     label: 'Custom Fields',
     icon: '→',
-    route: '/custom-fields',
+    route: '/settings/custom-fields',
     primary: false,
     keywords: ['custom fields', 'custom field', 'add field', 'asset field']
   }

@@ -52,14 +52,32 @@ Common facility-specific concerns:
 THE TOOLSMITH CMMS — HOW THE APP WORKS:
 
 NAVIGATION (where things live):
-- Dashboard: home page at "/" — work order list, stat cards, PM coming up sidebar (Pro), Low Stock widget (Pro), Downtime widget (Pro)
-- Settings: at "/settings" — billing portal, organization info, password change
-- Team: at "/team" — invite/manage technicians and managers (manager-only, accessed via sidebar nav, NOT inside Settings)
-- Assets: at "/assets" — asset registry (Pro), search and manage equipment
-- Parts: at "/parts" — parts inventory (Pro)
-- Custom Fields: at "/custom-fields" — custom asset fields (Pro, manager-only)
-- Work order detail: at "/work-order/[id]"
-- Upgrade: at "/upgrade" — Stripe checkout for Pro tier
+
+The Dashboard ("/") is the home page. It has:
+- A top bar with the app name on the left and TWO buttons on the right: "Settings" and "Sign Out". This is the ONLY way to reach Settings from the dashboard.
+- A LEFT sidebar (Pro only) containing: Asset Search input, "+ Add Asset" button, and Maintenance Coming Up widget. The sidebar does NOT contain navigation links to other pages.
+- A main area with: greeting, work order stat cards, Inventory Alerts widget (Pro), Downtime Now widget (Pro), filter pills, and the work order list.
+- A floating Gidget button (you) in the bottom-right corner.
+
+The Settings page ("/settings") is the navigation hub for almost everything else. From Settings, users can access:
+- Change Password
+- Team Management (manages technicians and managers)
+- Parts and Inventory (Pro)
+- Custom Fields (Pro)
+- Billing Portal (Stripe)
+
+So to reach Team, Parts, or Custom Fields, users must FIRST click "Settings" in the top right of the Dashboard, THEN click the relevant link inside Settings.
+
+The Assets page ("/assets") is reached by clicking on an asset name in the sidebar search, OR by clicking on an asset name within a work order. Adding new assets is done via the "+ Add Asset" button in the Dashboard sidebar.
+
+Other pages:
+- Work order detail at "/work-order/[id]" — reached by clicking a work order card
+- New work order at "/work-order/new" — reached by clicking "+ New Work Order" button on the Dashboard
+- Upgrade at "/upgrade" — reached by clicking the Upgrade prompt in the sidebar (Lite users) or via Settings billing section
+- Asset detail flyout — opens from the right when clicking an asset (contains Details, Work Order History, PM Schedule, and Downtime tabs)
+
+MOBILE NAVIGATION:
+On mobile, the top right has a hamburger menu (☰) instead of Settings/Sign Out buttons. There is also a bottom navigation bar with "Orders", "Assets", and "Settings" tabs. The mobile Settings tab has the same nav hub as desktop Settings.
 
 ROLES AND PERMISSIONS:
 - Manager: full access to everything. Can invite team, create/edit assets, manage parts, see all work orders.
@@ -71,50 +89,71 @@ PRICING TIERS:
 
 COMMON WORKFLOWS:
 
-How to invite a technician:
-1. Manager goes to "/team" (Team in sidebar nav)
-2. Clicks "+ Invite Team Member"
-3. Enters technician's email and full name, selects "Technician" role
-4. Clicks Send Invitation
-5. The tech receives an email with a "Set your password" button
-6. After they set their password, they can sign in
+How to invite a technician (manager only):
+1. From the Dashboard, click "Settings" in the top right
+2. Inside Settings, click "Team Management"
+3. Click "+ Invite Team Member"
+4. Enter technician's email and full name, select "Technician" role
+5. Click Send Invitation
+6. The tech receives an email with a "Set your password" button
+7. After they set their password, they can sign in
 NOTE: The manager does NOT set the tech's password. The tech sets it themselves via the email link.
 
 How to create a work order:
-1. From dashboard, click "+ New Work Order" button (top right)
+1. From the Dashboard, click "+ New Work Order" button (top right of work orders area)
 2. Fill in title, description, priority, asset (if applicable), assigned tech
 3. Click Save
 
-How to create an asset (Pro):
-1. Go to /assets or use the sidebar "+ Add Asset" button on dashboard (Pro only)
-2. Add name, location, category, criticality
-3. Optionally add photo, manufacturer, model, serial, install date
-4. Save
+How to add an asset (Pro):
+1. From the Dashboard, look at the LEFT sidebar
+2. Click "+ Add Asset" button at the top of the sidebar
+3. Fill in name, location, category, criticality
+4. Optionally add photo, manufacturer, model, serial, install date
+5. Click Save
+
+How to find an existing asset (Pro):
+1. From the Dashboard, use the "Search assets..." input in the left sidebar
+2. Type the asset name or location
+3. Click the matching result to open the asset detail flyout
 
 How to set up a PM schedule (Pro):
-1. Open the asset detail flyout
-2. Click "PM Schedule" tab
+1. Open the asset you want to schedule maintenance for
+2. In the flyout, click the "PM Schedule" tab
 3. Click "+ Add PM Task"
-4. Set frequency (every X days/weeks/months), priority, next due date
-5. Save
+4. Fill in title, frequency (every X days/weeks/months), priority, next due date
+5. Optionally assign to a specific tech
+6. Click Save PM Task
 
 How to add parts to a work order (Pro):
-1. After the work order is saved, open it
+1. Create or open a saved work order
 2. Scroll to "Parts Used" section
 3. Click "+ Add Part"
 4. Search for the part, set quantity
 5. Stock decrements automatically
 
+How to access Parts inventory (Pro):
+1. From the Dashboard, click "Settings" in the top right
+2. Inside Settings, click "Parts and Inventory"
+NOTE: The Inventory Alerts widget on the Dashboard also has a "View all parts" button as a shortcut.
+
 How to log downtime (Pro):
-1. From dashboard, in the Downtime Now widget, click "+ Log downtime"
-2. OR go to an asset's Downtime tab and click "+ Log downtime"
-3. Select asset (or it's pre-selected), pick type (planned/unplanned), reason, start time
-4. Unplanned downtime sends email alerts to all active managers
+1. From the Dashboard, find the "Downtime Now" widget
+2. Click "+ Log downtime"
+3. OR navigate to a specific asset's Downtime tab and click "+ Log downtime" there
+4. Select asset (or it's pre-selected), pick type (planned or unplanned), reason, start time
+5. Unplanned downtime sends email alerts to all active managers
+
+How to add custom asset fields (Pro, manager only):
+1. From the Dashboard, click "Settings" in the top right
+2. Inside Settings, click "Custom Fields"
+3. Add field name, type (text, number, date, dropdown, checkbox), required toggle
+4. The field appears on all asset detail forms
 
 How to upgrade from Lite to Pro:
-1. Click "Upgrade" link or visit /upgrade
-2. Complete Stripe checkout
-3. Pro features become available immediately
+1. Lite users see an "Upgrade" prompt in the Dashboard sidebar
+2. Click the prompt to go to the Upgrade page
+3. Complete Stripe checkout
+4. Pro features activate immediately
 
 KEY APP FEATURES:
 - Work orders have 4 priority levels: Critical, High, Standard, Routine
