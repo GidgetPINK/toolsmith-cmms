@@ -17,6 +17,8 @@ export default function WorkOrderForm({ profile }) {
   const [assignedTo, setAssignedTo] = useState('')
   const [pmScheduleId, setPmScheduleId] = useState(null)
   const [pmPreFilled, setPmPreFilled] = useState(false)
+  const [showInviteTechModal, setShowInviteTechModal] = useState(false)
+  const [pendingSave, setPendingSave] = useState(false)
   const [assets, setAssets] = useState([])
   const [technicians, setTechnicians] = useState([])
   const [organization, setOrganization] = useState(null)
@@ -193,9 +195,23 @@ export default function WorkOrderForm({ profile }) {
 
   async function handleSubmit(e) {
     e.preventDefault()
+
+    // Check if we should show the invite-tech modal
+    // Trigger: new work order, manager role, no assignee selected, no active techs in org
+    const activeTechs = profiles.filter(p => p.is_active !== false)
+    if (
+      isNew &&
+      profile?.role === 'manager' &&
+      !assignedTo &&
+      activeTechs.length === 0 &&
+      !pendingSave
+    ) {
+      setShowInviteTechModal(true)
+      return
+    }
+
     setLoading(true)
     setError(null)
-
     const payload = {
       title,
       description,
@@ -207,20 +223,27 @@ export default function WorkOrderForm({ profile }) {
       pm_schedule_id: pmScheduleId || null,
       closed_at: status === 'closed' ? new Date().toISOString() : null
     }
-
     let result
     if (isNew) {
       result = await supabase.from('work_orders').insert(payload)
     } else {
       result = await supabase.from('work_orders').update(payload).eq('id', id)
     }
-
     if (result.error) {
       setError(result.error.message)
       setLoading(false)
     } else {
       navigate('/')
     }
+  }
+
+  function handleSaveAnyway() {
+    setPendingSave(true)
+    setShowInviteTechModal(false)
+    // Trigger the form submission again - pendingSave will let it through
+    setTimeout(() => {
+      document.querySelector('form')?.requestSubmit()
+    }, 0)
   }
 
   async function handleDelete() {
@@ -791,7 +814,114 @@ export default function WorkOrderForm({ profile }) {
           </div>
         </form>
       </div>
-
+      {showInviteTechModal && (
+        <div
+          onClick={() => setShowInviteTechModal(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.6)',
+            backdropFilter: 'blur(4px)',
+            WebkitBackdropFilter: 'blur(4px)',
+            zIndex: 200,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+            fontFamily: 'Inter, sans-serif'
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: 'linear-gradient(180deg, #16213e 0%, #1a1a2e 100%)',
+              border: '1px solid rgba(201,168,76,0.3)',
+              borderRadius: '16px',
+              padding: '2rem',
+              maxWidth: '480px',
+              width: '100%',
+              boxShadow: '0 16px 48px rgba(0,0,0,0.6)'
+            }}
+          >
+            <div style={{
+              fontSize: '2rem',
+              textAlign: 'center',
+              marginBottom: '0.75rem'
+            }}>
+              👥
+            </div>
+            <h2 style={{
+              color: '#f8f6f1',
+              fontSize: '1.3rem',
+              fontFamily: 'Georgia, serif',
+              fontWeight: 600,
+              margin: '0 0 0.75rem 0',
+              textAlign: 'center'
+            }}>
+              No team to assign this to yet
+            </h2>
+            <p style={{
+              color: '#9a9db5',
+              fontSize: '0.92rem',
+              lineHeight: 1.6,
+              margin: '0 0 1.5rem 0',
+              textAlign: 'center'
+            }}>
+              You haven't invited any technicians yet. Want to invite someone first so you can assign this work order, or save it unassigned for now?
+            </p>
+            <div style={{
+              display: 'flex',
+              gap: '0.75rem',
+              flexWrap: 'wrap'
+            }}>
+              <button
+                onClick={() => {
+                  setShowInviteTechModal(false)
+                  navigate('/team')
+                }}
+                style={{
+                  flex: 1,
+                  minWidth: '140px',
+                  background: 'linear-gradient(135deg, #c9a84c, #e8c97a)',
+                  color: '#1a1a2e',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '12px 18px',
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.06em',
+                  textTransform: 'uppercase',
+                  cursor: 'pointer',
+                  fontFamily: 'Inter, sans-serif',
+                  boxShadow: '0 2px 6px rgba(201,168,76,0.25)'
+                }}
+              >
+                Invite a tech first
+              </button>
+              <button
+                onClick={handleSaveAnyway}
+                style={{
+                  flex: 1,
+                  minWidth: '140px',
+                  background: 'transparent',
+                  color: '#c9a84c',
+                  border: '1px solid rgba(201,168,76,0.4)',
+                  borderRadius: '8px',
+                  padding: '12px 18px',
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.06em',
+                  textTransform: 'uppercase',
+                  cursor: 'pointer',
+                  fontFamily: 'Inter, sans-serif'
+                }}
+              >
+                Save unassigned
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {partsPickerOpen && (
         <PartsPicker
           organizationId={profile?.organization_id}
