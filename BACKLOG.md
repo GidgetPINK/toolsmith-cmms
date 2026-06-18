@@ -30,6 +30,116 @@ The 4-status model is industry standard for CMMS. Techs mark work Completed when
 
 These are real product gaps that should be addressed before broader rollout.
 
+### Lite team member cap enforcement
+**Problem:** Marketing site promises Lite plan is capped at 10 team members. No code enforcement exists. Lite users can currently invite unlimited members.
+**Required behavior:**
+- Backend: api/invite-team-member.js must check current member count vs cap before creating invitation
+- Frontend: Team.jsx should show cap status (e.g., "7 of 10 members") and disable invite button when at cap
+- Show clear upgrade-to-Pro CTA when Lite user hits cap
+- Cap applies to active members only (deactivated members don't count toward limit)
+**Implementation notes:**
+- Determine if cap is "10 members total" or "10 active members"
+- Pro tier should be unlimited (or very high cap like 1000)
+- Use organization.is_upgraded flag to differentiate
+- Frontend should query current count on Team page load
+- Backend must enforce server-side regardless of frontend
+**Effort:** ~1-2 hours
+**Pre-launch blocker:** Yes (for Lite launch)
+
+---
+
+### Work Order Chat
+**Problem:** Lite and Pro users have no way to communicate about a work order in-app. Notes and status updates exist but there's no conversational thread tied to each work order.
+**Required behavior:**
+- Chat thread on each work order
+- All assigned members can post and read
+- Real-time updates (or polling refresh)
+- Message history persists with the work order
+- Available in both Lite and Pro (reclassified from Pro-only on June 18, 2026)
+**Implementation notes:**
+- New work_order_messages table with RLS scoped to assigned members + managers
+- Real-time updates via Supabase realtime subscription
+- Component on WorkOrderForm.jsx for viewing/posting
+- Mobile-friendly UI for techs
+- Consider notification/badge when new messages
+**Effort:** 6-8 hours
+**Pre-launch blocker:** Yes (now considered a core feature for both tiers)
+
+---
+
+### Team invitation onboarding popup (first dashboard visit)
+**Problem:** New managers land on an empty dashboard with no guidance on how to invite their team. Settings → Team Management is two clicks away and not discoverable.
+**Required behavior:**
+- Popup or banner shown on first dashboard visit when manager has no team members invited
+- Friendly tone, not blocking
+- Brief explanation of how to invite (Settings → Team Management)
+- For Lite users, reminder that team is capped at 10 members
+- Dismissible, persists dismissed state in profile or org
+- Disappears permanently once team members exist
+**Implementation notes:**
+- Check on Dashboard.jsx mount: is this manager? do they have zero team members?
+- Show popup or banner if both true
+- Store dismissed state to avoid re-showing on every visit
+- Could use the same popup pattern for the "first unassigned work order" reminder below
+**Effort:** ~1-1.5 hours
+
+---
+
+### Team invitation popup (first unassigned work order)
+**Problem:** When a new manager creates their first work order without an assignee (because they have no team), there's no contextual reminder to invite their team first.
+**Required behavior:**
+- Popup appears when manager saves first work order with no assigned_to value
+- Only triggers if manager has zero team members invited
+- Gentle reminder, not blocking the save
+- Offers quick "Invite a tech now" action or "Save anyway"
+- Does not appear if team members exist (even unassigned would be a choice)
+**Implementation notes:**
+- Check on WorkOrderForm.jsx save: no assigned_to AND no team members in org AND manager role
+- Show modal before save completes
+- "Save anyway" closes modal and saves
+- "Invite now" navigates to Team page, work order stays as unsaved draft
+- This pairs naturally with the first-dashboard popup above
+**Effort:** ~1 hour
+
+---
+
+### Password complexity requirements visible at signup
+**Problem:** Registration form shows password and confirm password fields with no visible indication of complexity requirements. Users either create weak passwords OR enter password, submit, and get rejected.
+**Required behavior:**
+- Visible requirements list below password field
+- Live validation as user types (green checkmark when each requirement met)
+- Requirements: min 8 characters, at least one uppercase, at least one number (verify what Supabase requires)
+- Helper text or tooltip explaining each requirement
+**Implementation notes:**
+- Check Supabase Auth password policy settings
+- Add requirement list component to Register.jsx
+- Use real-time validation (onChange)
+- Same treatment on CompletePaymentSetup.jsx and ResetPassword.jsx
+**Effort:** ~1-2 hours
+
+---
+
+### Pro signup card content (marketing site)
+**Problem:** Pro plan card on toolsmith-site/index-full.html lists "Everything in Lite, Asset management, PM scheduling, Reporting and analytics, Parts tracking" but is missing key differentiators.
+**Missing from Pro card:**
+- Unlimited team members (vs Lite's 10)
+- Gidget AI assistant (major differentiator)
+- Downtime tracking (built but not listed)
+**Required behavior:**
+- Update Pro card to lead with strongest features
+- Recommended order: Everything in Lite, Unlimited team members, Gidget AI assistant, Asset management, PM scheduling, Parts tracking, Downtime tracking, Reporting
+**Effort:** ~15 minutes
+
+---
+
+### Subscription gate fix for Lite users
+**Status:** ✅ FIXED June 18, 2026
+**What was wrong:** App.jsx subscription gate checked only is_upgraded === false, which is the normal state for Lite users. This blocked all Lite users from accessing the app after signup with a "Subscription Required" page.
+**The fix:** Gate now also checks for active trial (trial_end > now) and active subscription (stripe_subscription_id exists). Only blocks when ALL three are false.
+**Documented here for reference. Can be removed from backlog.**
+
+---
+
 ### Tech permissions for assets
 
 **Problem:** Techs cannot see assets or create work orders against them. Currently only managers have asset access.
@@ -223,23 +333,43 @@ These improve the product but aren't blocking.
 
 These were noted earlier but parked until after initial launch.
 
-- Welcome email diagnosis (code exists, didn't deliver on first test)
 - Terms of Service generation (needs paid generator or alternative)
 - Sentry error monitoring
 - Photo bucket → private with signed URLs
 - Rate limiting on public endpoints
 - CAPTCHA on signup
 - Phase 2a Gidget AI onboarding entry points
-- First-run experience for empty dashboards
+- Orphaned signup data cleanup (failed signups can prevent email reuse — foundational signup robustness)
+- Database schema version control via Supabase CLI migrations
 - Optional: edit Termly published Privacy Policy to remove "Anthropic" from AI providers list
 
 ---
 
 ## Current build focus
 
-In active development:
-- **Downtime Tracking** — Core loop complete (log, end, dashboard widget, email alerts, asset detail tab). Work order integration remaining.
+**Strategic direction (as of June 18, 2026):** Lite-first launch. Pro stays available but not actively marketed. Focus is on polishing Lite to launch-ready quality, building Capacitor wrappers for iOS and Android app stores, and submitting to stores. Pro continues to be developed in parallel but is not the launch product.
 
-Remaining Pro features after Downtime Tracking:
-- Cost Reporting (depends on Parts and Downtime data)
-- Work Order Chat (the big differentiator, ~6-8 hours)
+### Pre-launch (Lite launch blockers)
+These must be complete before Lite can launch to app stores:
+- Lite team member cap enforcement (10 max)
+- Work Order Chat (reclassified to Lite, ~6-8 hours)
+- Team invitation onboarding popups (first dashboard + first unassigned WO)
+- Password complexity requirements at signup
+- Pro signup card content update (marketing site)
+- Capacitor wrapping for iOS and Android
+- App store assets (icons, screenshots, descriptions)
+- Apple Developer Program + Google Play Console setup
+- Privacy Policy and Terms of Service review
+
+### Post-launch Pro work
+Continue building these in parallel during Lite launch, then promote Pro once Lite is established:
+- Cost Reporting (depends on Parts and Downtime data — both complete)
+- Downtime work order integration (Downtime Tracking core loop complete)
+- Asset import wizard with Gidget
+- PM recommendation engine entry point
+- Gidget chat persistence with sessionStorage
+
+### Recently completed (June 17-18, 2026)
+- Tier-aware welcome emails (Lite vs Pro)
+- Subscription gate fix to allow Lite users
+- SYSTEM_CONTEXT.md master reference document
