@@ -190,12 +190,19 @@ function App() {
     profile.role === 'manager' &&
     organization.setup_complete === false
 
-  // Subscription gate: if setup is complete but subscription is no longer active
-  // This catches canceled subscriptions and failed trial-end charges
-  // Applies to both managers and techs (techs need their manager to fix it)
+  // Subscription gate: only block if setup is complete AND subscription is truly inactive
+  // Active states: Pro user (is_upgraded=true), active trial (trial_end in future),
+  // or any active subscription (stripe_subscription_id exists, meaning subscription wasn't canceled)
+  // This catches canceled subscriptions and failed trial-end charges for both Lite and Pro users
+  const trialEndDate = organization?.trial_end ? new Date(organization.trial_end) : null
+  const hasActiveTrial = trialEndDate && trialEndDate > new Date()
+  const hasActiveSubscription = !!organization?.stripe_subscription_id
+
   const needsSubscription = session && profile && organization &&
     organization.setup_complete === true &&
-    organization.is_upgraded === false
+    organization.is_upgraded === false &&
+    !hasActiveTrial &&
+    !hasActiveSubscription
 
   return (
     <BrowserRouter>
