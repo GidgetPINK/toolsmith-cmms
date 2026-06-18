@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import TrialBanner from '../components/TrialBanner'
+import TeamInviteBanner from '../components/TeamInviteBanner'
 import LowStockWidget from '../components/LowStockWidget'
 import DowntimeWidget from '../components/DowntimeWidget'
 import AssetDowntimeTab from '../components/AssetDowntimeTab'
@@ -565,7 +566,11 @@ export default function Dashboard({ profile }) {
             profile={profile}
             onManage={() => navigate('/upgrade')}
           />
-
+          <TeamInviteBanner
+            profile={profile}
+            profiles={profiles}
+            isPro={isPro}
+          />
           <div style={{ marginBottom: '1.75rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.35rem', flexWrap: 'wrap' }}>
               <p style={{ fontSize: '0.72rem', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#c9a84c', fontWeight: '500' }}>
