@@ -4,6 +4,8 @@ import { supabase } from '../lib/supabase'
 import MobileBottomNav from '../components/MobileBottomNav'
 import LowStockWidget from '../components/LowStockWidget'
 import DowntimeWidget from '../components/DowntimeWidget'
+import TrialBanner from '../components/TrialBanner'
+import TeamInviteBanner from '../components/TeamInviteBanner'
 
 const PRIORITY_COLOR = {
   critical: '#e06c75',
@@ -174,6 +176,16 @@ export default function MobileWorkOrders({ profile }) {
       </nav>
 
       <div style={{ padding: '1.25rem 1rem' }}>
+        <TrialBanner
+          organization={organization}
+          profile={profile}
+          onManage={() => navigate('/upgrade')}
+        />
+        <TeamInviteBanner
+          profile={profile}
+          profiles={profiles}
+          isPro={isPro}
+        />
         {/* GREETING */}
         <div style={{ marginBottom: '1.25rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.3rem' }}>
