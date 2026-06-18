@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import PasswordRequirements, { validatePassword } from '../components/PasswordRequirements'
 
 const inputStyle = {
   width: '100%',
@@ -54,8 +55,8 @@ export default function ChangePassword({ profile }) {
     e.preventDefault()
     setError(null)
 
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters.')
+    if (!validatePassword(password).valid) {
+      setError('Password must be at least 8 characters and include an uppercase letter and a number.')
       return
     }
 
@@ -168,6 +169,7 @@ export default function ChangePassword({ profile }) {
                   {showPassword ? 'Hide' : 'Show'}
                 </button>
               </div>
+              <PasswordRequirements password={password} />
             </div>
 
             <div style={{ marginBottom: '1.5rem' }}>
