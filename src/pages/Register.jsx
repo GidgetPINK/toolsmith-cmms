@@ -75,6 +75,7 @@ export default function Register() {
       priceId: import.meta.env.VITE_STRIPE_LITE_MONTHLY,
       features: [
         'Work order management',
+        'Work order chat',
         'Technician management',
         'Manager dashboard',
         'Up to 10 team members'
@@ -322,18 +323,22 @@ const stripeResponse = await fetch('/api/create-checkout-session', {
                   <div style={{
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '0.5rem'
+                    gap: '0.6rem',
+                    textAlign: 'left'
                   }}>
                     {p.features.map((f, i) => (
                       <p key={i} style={{
                         fontSize: '0.82rem',
                         color: '#9a9db5',
                         display: 'flex',
-                        gap: '0.5rem',
-                        alignItems: 'flex-start'
+                        gap: '0.6rem',
+                        alignItems: 'flex-start',
+                        lineHeight: '1.5',
+                        margin: 0,
+                        textAlign: 'left'
                       }}>
-                        <span style={{ color: '#c9a84c', flexShrink: 0 }}>✓</span>
-                        {f}
+                        <span style={{ color: '#c9a84c', flexShrink: 0, lineHeight: '1.5' }}>✓</span>
+                        <span style={{ flex: 1 }}>{f}</span>
                       </p>
                     ))}
                   </div>
