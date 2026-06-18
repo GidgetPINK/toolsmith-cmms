@@ -100,10 +100,12 @@ export default function Register() {
       priceId: import.meta.env.VITE_STRIPE_PRO_MONTHLY,
       features: [
         'Everything in Lite',
+        'Unlimited team members',
+        'Gidget AI assistant',
         'Asset management',
         'PM scheduling',
-        'Reporting and analytics',
-        'Parts tracking'
+        'Parts tracking',
+        'Downtime tracking'
       ]
     },
     {
