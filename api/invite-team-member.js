@@ -70,6 +70,40 @@ export default async function handler(req, res) {
       return res.status(403).json({ error: 'Only managers can invite team members' })
     }
 
+    // Check team member cap for Lite users
+    // Lite is capped at 10 active members. Pro is unlimited.
+    const { data: orgForCap } = await supabaseAdmin
+      .from('organizations')
+      .select('is_upgraded, stripe_subscription_id')
+      .eq('id', callerProfile.organization_id)
+      .single()
+
+    const isPro = orgForCap?.is_upgraded === true
+
+    if (!isPro) {
+      const { count: activeMemberCount, error: countError } = await supabaseAdmin
+        .from('profiles')
+        .select('id', { count: 'exact', head: true })
+        .eq('organization_id', callerProfile.organization_id)
+        .eq('is_active', true)
+
+      if (countError) {
+        console.error('Failed to count active members:', countError)
+        return res.status(500).json({ error: 'Could not verify team size' })
+      }
+
+      const LITE_MEMBER_CAP = 10
+
+      if (activeMemberCount >= LITE_MEMBER_CAP) {
+        return res.status(403).json({
+          error: 'Lite plan is limited to 10 team members. Upgrade to Pro for unlimited team members.',
+          code: 'TEAM_CAP_REACHED',
+          currentCount: activeMemberCount,
+          cap: LITE_MEMBER_CAP
+        })
+      }
+    }
+
     // Validate input
     const { email, name, role } = req.body || {}
 

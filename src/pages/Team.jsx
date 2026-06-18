@@ -2,22 +2,35 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
+const LITE_MEMBER_CAP = 10
+
 export default function Team({ profile }) {
   const [members, setMembers] = useState([])
   const [loading, setLoading] = useState(true)
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteName, setInviteName] = useState('')
   const [inviteRole, setInviteRole] = useState('technician')
+  const [isPro, setIsPro] = useState(false)
   
   
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const navigate = useNavigate()
-
   useEffect(() => {
     fetchMembers()
+    fetchOrgStatus()
   }, [])
+
+  async function fetchOrgStatus() {
+    if (!profile?.organization_id) return
+    const { data } = await supabase
+      .from('organizations')
+      .select('is_upgraded')
+      .eq('id', profile.organization_id)
+      .single()
+    setIsPro(data?.is_upgraded === true)
+  }
 
   async function fetchMembers() {
     setLoading(true)
@@ -57,14 +70,17 @@ export default function Team({ profile }) {
       })
 
       const data = await response.json()
-
       if (!response.ok) {
-        setError(data.error || 'Could not send invitation')
+        if (data.code === 'TEAM_CAP_REACHED') {
+          setError(data.error)
+        } else {
+          setError(data.error || 'Could not send invitation')
+        }
         setSubmitting(false)
         return
       }
-
       setSuccess(inviteName + ' has been invited. They will receive an email with instructions to set their password.')
+      fetchMembers()
       setInviteEmail('')
       setInviteName('')
       setInviteRole('technician')
@@ -228,7 +244,13 @@ export default function Team({ profile }) {
               color: '#9a9db5',
               letterSpacing: '0.06em'
             }}>
-              {members.length} {members.length === 1 ? 'person' : 'people'}
+              {(() => {
+                const activeCount = members.filter(m => m.is_active).length
+                if (isPro) {
+                  return `${members.length} ${members.length === 1 ? 'person' : 'people'}`
+                }
+                return `${activeCount} of ${LITE_MEMBER_CAP} ${activeCount === 1 ? 'person' : 'people'}`
+              })()}
             </span>
           </div>
 
