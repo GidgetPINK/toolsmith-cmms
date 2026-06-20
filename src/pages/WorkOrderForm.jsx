@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import PartsPicker from '../components/PartsPicker'
+import WorkOrderChat from '../components/WorkOrderChat'
 
 export default function WorkOrderForm({ profile }) {
   const { id } = useParams()
@@ -325,7 +326,15 @@ export default function WorkOrderForm({ profile }) {
         </button>
       </nav>
 
-      <div style={{ padding: '2.5rem 5%', maxWidth: '680px', margin: '0 auto' }}>
+      <style>{`
+        @media (max-width: 900px) {
+          .wo-layout { flex-direction: column !important; }
+          .wo-chat-column { max-width: 100% !important; width: 100% !important; }
+        }
+      `}</style>
+      <div style={{ padding: '2.5rem 5%', maxWidth: isNew ? '680px' : '1060px', margin: '0 auto' }}>
+        <div className="wo-layout" style={{ display: isNew ? 'block' : 'flex', gap: '2rem', alignItems: 'flex-start' }}>
+          <div style={{ flex: 1, minWidth: 0, maxWidth: '680px' }}>
 
         {/* PM PRE-FILL NOTICE (takes precedence over asset notice) */}
         {isNew && pmPreFilled && (
@@ -790,6 +799,24 @@ export default function WorkOrderForm({ profile }) {
             )}
           </div>
         </form>
+          </div>
+
+          {!isNew && (
+            <div className="wo-chat-column" style={{
+              width: '320px',
+              flexShrink: 0,
+              position: 'sticky',
+              top: '80px',
+              alignSelf: 'flex-start'
+            }}>
+              <WorkOrderChat
+                workOrderId={id}
+                profile={profile}
+                organizationId={profile?.organization_id}
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       {partsPickerOpen && (

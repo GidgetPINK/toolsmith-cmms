@@ -6,6 +6,7 @@ import TeamInviteBanner from '../components/TeamInviteBanner'
 import LowStockWidget from '../components/LowStockWidget'
 import DowntimeWidget from '../components/DowntimeWidget'
 import AssetDowntimeTab from '../components/AssetDowntimeTab'
+import useUnreadMessages from '../hooks/useUnreadMessages'
 
 const PRIORITY_COLOR = {
   critical: '#e06c75',
@@ -116,6 +117,7 @@ const flyoutLabelStyle = {
 }
 
 export default function Dashboard({ profile }) {
+  const unreadIds = useUnreadMessages(profile?.id)
   const [workOrders, setWorkOrders] = useState([])
   const [profiles, setProfiles] = useState([])
   const [assets, setAssets] = useState([])
@@ -717,9 +719,22 @@ export default function Dashboard({ profile }) {
                       {wo.status}
                     </span>
                   </div>
-                  <h3 style={{ fontFamily: 'Georgia, serif', fontSize: '1.05rem', fontWeight: '600', color: '#f8f6f1', marginBottom: '0.35rem' }}>
-                    {wo.title}
-                  </h3>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem', marginBottom: '0.35rem' }}>
+                    <h3 style={{ fontFamily: 'Georgia, serif', fontSize: '1.05rem', fontWeight: '600', color: '#f8f6f1', margin: 0 }}>
+                      {wo.title}
+                    </h3>
+                    {unreadIds.has(wo.id) && (
+                      <span title="Unread messages" style={{
+                        display: 'inline-block',
+                        width: '10px',
+                        height: '10px',
+                        borderRadius: '50%',
+                        background: '#e06c75',
+                        flexShrink: 0,
+                        marginTop: '6px'
+                      }} />
+                    )}
+                  </div>
                   {wo.description && (
                     <p style={{ color: '#9a9db5', fontSize: '0.85rem', lineHeight: '1.6', marginBottom: '0.65rem' }}>
                       {wo.description.length > 120 ? wo.description.slice(0, 120) + '...' : wo.description}

@@ -6,6 +6,7 @@ import LowStockWidget from '../components/LowStockWidget'
 import DowntimeWidget from '../components/DowntimeWidget'
 import TrialBanner from '../components/TrialBanner'
 import TeamInviteBanner from '../components/TeamInviteBanner'
+import useUnreadMessages from '../hooks/useUnreadMessages'
 
 const PRIORITY_COLOR = {
   critical: '#e06c75',
@@ -53,6 +54,7 @@ function getUpcomingCutoff() {
 }
 
 export default function MobileWorkOrders({ profile }) {
+  const unreadIds = useUnreadMessages(profile?.id)
   const navigate = useNavigate()
   const [workOrders, setWorkOrders] = useState([])
   const [profiles, setProfiles] = useState([])
@@ -483,15 +485,28 @@ export default function MobileWorkOrders({ profile }) {
                     {wo.status}
                   </span>
                 </div>
-                <h3 style={{
-                  fontFamily: 'Georgia, serif',
-                  fontSize: '1rem',
-                  fontWeight: '600',
-                  color: '#f8f6f1',
-                  marginBottom: '0.3rem'
-                }}>
-                  {wo.title}
-                </h3>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem', marginBottom: '0.3rem' }}>
+                  <h3 style={{
+                    fontFamily: 'Georgia, serif',
+                    fontSize: '1rem',
+                    fontWeight: '600',
+                    color: '#f8f6f1',
+                    margin: 0
+                  }}>
+                    {wo.title}
+                  </h3>
+                  {unreadIds.has(wo.id) && (
+                    <span title="Unread messages" style={{
+                      display: 'inline-block',
+                      width: '9px',
+                      height: '9px',
+                      borderRadius: '50%',
+                      background: '#e06c75',
+                      flexShrink: 0,
+                      marginTop: '5px'
+                    }} />
+                  )}
+                </div>
                 {wo.description && (
                   <p style={{ color: '#9a9db5', fontSize: '0.8rem', lineHeight: '1.5', marginBottom: '0.5rem' }}>
                     {wo.description.length > 80 ? wo.description.slice(0, 80) + '...' : wo.description}
