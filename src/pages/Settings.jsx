@@ -288,7 +288,7 @@ export default function Settings({ profile }) {
             <div style={sectionLabel}>Asset Configuration</div>
             <button
               style={settingRow}
-              onClick={() => navigate('/settings/custom-fields')}
+              onClick={() => navigate(isUpgraded ? '/settings/custom-fields' : '/upgrade')}
             >
               <div style={{ flex: 1 }}>
                 <h3 style={settingTitle}>
