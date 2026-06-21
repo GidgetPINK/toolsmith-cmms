@@ -199,6 +199,12 @@ export default function WorkOrderForm({ profile }) {
     setLoading(true)
     setError(null)
 
+    if (isNew && !assignedTo && profile?.role === 'manager' && technicians.length > 0 && !showUnassignedNudge) {
+      setShowUnassignedNudge(true)
+      setLoading(false)
+      return
+    }
+
     const payload = {
       title,
       description,
@@ -220,9 +226,6 @@ export default function WorkOrderForm({ profile }) {
 
     if (result.error) {
       setError(result.error.message)
-      setLoading(false)
-    } else if (isNew && !assignedTo && profile?.role === 'manager' && technicians.length > 0) {
-      setShowUnassignedNudge(true)
       setLoading(false)
     } else {
       navigate('/')
@@ -865,7 +868,7 @@ export default function WorkOrderForm({ profile }) {
               marginBottom: '0.75rem',
               fontWeight: '600'
             }}>
-              Work order saved!
+              No one is assigned
             </h3>
             <p style={{
               color: '#9a9db5',
@@ -874,11 +877,11 @@ export default function WorkOrderForm({ profile }) {
               marginBottom: '1.75rem',
               fontFamily: 'Inter, sans-serif'
             }}>
-              This work order has no one assigned to it yet. Assigning a team member lets them see it in their queue and start working on it.
+              This work order has no one assigned to it. Assigning a team member lets them see it in their queue and start working on it.
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               <button
-                onClick={() => navigate('/')}
+                onClick={() => { document.querySelector('form').requestSubmit(); }}
                 style={{
                   background: 'linear-gradient(135deg, #c9a84c, #e8c97a)',
                   color: '#1a1a2e',
@@ -892,7 +895,7 @@ export default function WorkOrderForm({ profile }) {
                   letterSpacing: '0.04em'
                 }}
               >
-                Got it, I'll assign someone later
+                Save without assigning
               </button>
               <button
                 onClick={() => setShowUnassignedNudge(false)}

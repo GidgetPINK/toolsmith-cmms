@@ -245,7 +245,7 @@ export default function Team({ profile }) {
               letterSpacing: '0.06em'
             }}>
               {(() => {
-                const activeCount = members.filter(m => m.is_active).length
+                const activeCount = members.filter(m => m.is_active && m.role !== 'manager').length
                 if (isPro) {
                   return `${members.length} ${members.length === 1 ? 'person' : 'people'}`
                 }
@@ -527,9 +527,8 @@ export default function Team({ profile }) {
           marginTop: '1rem',
           lineHeight: '1.6'
         }}>
-          New members will use the temporary password you set here to log in
-          for the first time. Let them know their credentials directly — they
-          can update their password after signing in.
+          New members will receive an email invitation with a link to set
+          their own password and log in for the first time.
         </p>
 
       </div>

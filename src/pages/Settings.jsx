@@ -5,11 +5,15 @@ import { supabase } from '../lib/supabase'
 export default function Settings({ profile }) {
   const navigate = useNavigate()
   const [isUpgraded, setIsUpgraded] = useState(false)
+  const [userEmail, setUserEmail] = useState('')
   const [loading, setLoading] = useState(true)
   const [portalLoading, setPortalLoading] = useState(false)
 
   useEffect(() => {
     if (!profile) return
+    supabase.auth.getUser().then(({ data }) => {
+      if (data?.user?.email) setUserEmail(data.user.email)
+    })
     fetchOrgStatus()
   }, [profile])
 
@@ -195,6 +199,28 @@ export default function Settings({ profile }) {
         </p>
 
         <div style={sectionLabel}>Account</div>
+        <div style={{
+          ...settingRow,
+          cursor: 'default',
+          flexDirection: 'column',
+          alignItems: 'flex-start',
+          gap: '0.5rem'
+        }}>
+          <div>
+            <h3 style={settingTitle}>{profile?.full_name || 'Unknown'}</h3>
+            <p style={settingDesc}>{userEmail}</p>
+          </div>
+          <p style={{
+            fontSize: '0.72rem',
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            color: '#c9a84c',
+            margin: 0,
+            fontWeight: '500'
+          }}>
+            {profile?.role === 'manager' ? 'Manager' : 'Technician'}
+          </p>
+        </div>
         <button
           style={settingRow}
           onClick={() => navigate('/change-password')}
@@ -240,7 +266,8 @@ export default function Settings({ profile }) {
             <div style={sectionLabel}>Inventory</div>
             <button
               style={settingRow}
-              onClick={() => navigate('/parts')}
+              onClick={() => isUpgraded ? navigate('/parts') : null}
+              disabled={!isUpgraded}
             >
               <div style={{ flex: 1 }}>
                 <h3 style={settingTitle}>
