@@ -38,7 +38,7 @@ export default async function handler(req, res) {
 }
 
 function buildWelcomeEmail(name, planName, trialEndDate) {
-  const appUrl = 'https://toolsmith-cmms.vercel.app'
+  const appUrl = 'https://toolsmith-cmms.app'
   const isPro = (planName || '').toLowerCase().includes('pro')
 
   const liteSteps = `

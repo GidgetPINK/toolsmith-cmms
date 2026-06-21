@@ -70,7 +70,7 @@ export default async function handler(req, res) {
 
   // Step 4: build the checkout session using TRUSTED values from the server,
   // NEVER values from the request body
-  const appUrl = process.env.VITE_APP_URL || 'https://toolsmith-cmms.vercel.app'
+  const appUrl = process.env.VITE_APP_URL || 'https://toolsmith-cmms.app'
 
   try {
     const sessionConfig = {

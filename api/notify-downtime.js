@@ -127,7 +127,7 @@ export default async function handler(req, res) {
     const assetName = event.assets?.name || 'Unknown asset'
     const assetLocation = event.assets?.location || ''
     const workOrderInfo = event.work_orders?.title || null
-    const appUrl = 'https://toolsmith-cmms.vercel.app'
+    const appUrl = 'https://toolsmith-cmms.app'
 
     // Send email to each manager
     const emailPromises = managerEmails.map(m =>

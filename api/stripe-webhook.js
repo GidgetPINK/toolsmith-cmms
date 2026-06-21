@@ -275,7 +275,7 @@ if (organizationId && session.subscription) {
 }
 
 function buildWelcomeEmailHtml(name, planName, trialEndDate) {
-  const appUrl = 'https://toolsmith-cmms.vercel.app'
+  const appUrl = 'https://toolsmith-cmms.app'
   const isPro = planName.toLowerCase().includes('pro')
 
   const liteSteps = `

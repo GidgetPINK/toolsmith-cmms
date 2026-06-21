@@ -4,7 +4,7 @@ A comprehensive reference document for The Toolsmith CMMS web application. This 
 
 **Last updated:** June 18, 2026
 **Repository:** toolsmith-cmms
-**Live URL:** https://toolsmith-cmms.vercel.app
+**Live URL:** https://toolsmith-cmms.app
 **Marketing site:** https://thetoolsmithapp.com (separate repo: toolsmith-site)
 
 ---
@@ -122,7 +122,7 @@ The Toolsmith is a facilities maintenance management software (CMMS) built speci
 
 **Hosting:**
 - Vercel (production)
-- Domain: thetoolsmithapp.com (marketing) and toolsmith-cmms.vercel.app (app)
+- Domain: thetoolsmithapp.com (marketing) and toolsmith-cmms.app (app)
 
 **Development:**
 - Node.js / npm

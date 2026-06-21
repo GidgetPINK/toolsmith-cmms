@@ -2,7 +2,7 @@ export default async function handler(req, res) {
   const allowedOrigins = [
   'https://thetoolsmithapp.com',
   'https://www.thetoolsmithapp.com',
-  'https://toolsmith-cmms.vercel.app'
+  'https://toolsmith-cmms.app'
 ]
 const origin = req.headers.origin
 if (allowedOrigins.includes(origin)) {
@@ -46,7 +46,7 @@ if (allowedOrigins.includes(origin)) {
     // ── 2. Fetch the PDF from the public URL ──
     let pdfBase64 = null
     try {
-      const pdfResponse = await fetch('https://toolsmith-cmms.vercel.app/Toolsmith_Build_Guide.pdf')
+      const pdfResponse = await fetch('https://toolsmith-cmms.app/Toolsmith_Build_Guide.pdf')
       if (pdfResponse.ok) {
         const arrayBuffer = await pdfResponse.arrayBuffer()
         pdfBase64 = Buffer.from(arrayBuffer).toString('base64')

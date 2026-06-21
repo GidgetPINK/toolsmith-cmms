@@ -9,7 +9,7 @@ const supabaseAdmin = createClient(
 const ALLOWED_ORIGINS = [
   'https://thetoolsmithapp.com',
   'https://www.thetoolsmithapp.com',
-  'https://toolsmith-cmms.vercel.app'
+  'https://toolsmith-cmms.app'
 ]
 
 function isValidEmail(email) {
@@ -198,7 +198,7 @@ export default async function handler(req, res) {
       type: 'recovery',
       email: cleanEmail,
       options: {
-        redirectTo: 'https://toolsmith-cmms.vercel.app/reset-password'
+        redirectTo: 'https://toolsmith-cmms.app/reset-password'
       }
     })
 
@@ -250,7 +250,7 @@ export default async function handler(req, res) {
 
 function buildInvitationEmail(teamMemberName, managerName, orgName, role, resetLink) {
   const roleLabel = role === 'manager' ? 'a manager' : 'a technician'
-  const appUrl = 'https://toolsmith-cmms.vercel.app'
+  const appUrl = 'https://toolsmith-cmms.app'
 
   return `
 <!DOCTYPE html>

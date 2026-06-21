@@ -12,7 +12,7 @@ const supabaseAdmin = createClient(
 const ALLOWED_ORIGINS = [
   'https://thetoolsmithapp.com',
   'https://www.thetoolsmithapp.com',
-  'https://toolsmith-cmms.vercel.app'
+  'https://toolsmith-cmms.app'
 ];
 
 export default async function handler(req, res) {
@@ -78,7 +78,7 @@ export default async function handler(req, res) {
 
     const returnUrl = origin && ALLOWED_ORIGINS.includes(origin)
       ? `${origin}/settings`
-      : 'https://toolsmith-cmms.vercel.app/settings';
+      : 'https://toolsmith-cmms.app/settings';
 
     const session = await stripe.billingPortal.sessions.create({
       customer: organization.stripe_customer_id,

@@ -93,7 +93,7 @@ Borders use the gold accent at low opacity. The opacity changes signal hierarchy
 
 ### Font families
 
-**CMMS application (toolsmith-cmms.vercel.app):**
+**CMMS application (toolsmith-cmms.app):**
 - Body: `Inter, sans-serif`
 - Headings and display: `Georgia, serif`
 - Monospace: System default mono (for part numbers, codes, file paths)

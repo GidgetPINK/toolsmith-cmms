@@ -23,7 +23,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Email is required' })
   }
 
-  const appUrl = process.env.VITE_APP_URL || 'https://toolsmith-cmms.vercel.app'
+  const appUrl = process.env.VITE_APP_URL || 'https://toolsmith-cmms.app'
 
   try {
     const session = await stripe.checkout.sessions.create({
