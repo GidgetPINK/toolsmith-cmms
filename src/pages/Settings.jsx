@@ -204,11 +204,12 @@ export default function Settings({ profile }) {
           cursor: 'default',
           flexDirection: 'column',
           alignItems: 'flex-start',
-          gap: '0.5rem'
+          gap: '0.5rem',
+          overflow: 'hidden'
         }}>
           <div>
             <h3 style={settingTitle}>{profile?.full_name || 'Unknown'}</h3>
-            <p style={settingDesc}>{userEmail}</p>
+            <p style={{ ...settingDesc, wordBreak: 'break-all' }}>{userEmail}</p>
           </div>
           <p style={{
             fontSize: '0.72rem',
@@ -266,8 +267,7 @@ export default function Settings({ profile }) {
             <div style={sectionLabel}>Inventory</div>
             <button
               style={settingRow}
-              onClick={() => isUpgraded ? navigate('/parts') : null}
-              disabled={!isUpgraded}
+              onClick={() => navigate(isUpgraded ? '/parts' : '/upgrade')}
             >
               <div style={{ flex: 1 }}>
                 <h3 style={settingTitle}>
