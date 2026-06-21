@@ -25,6 +25,8 @@ export default function WorkOrderForm({ profile }) {
   const [fetching, setFetching] = useState(!isNew)
   const [error, setError] = useState(null)
 
+  const [showUnassignedNudge, setShowUnassignedNudge] = useState(false)
+  const [pendingNavigate, setPendingNavigate] = useState(false)
   const [showAddAsset, setShowAddAsset] = useState(false)
   const [newAssetName, setNewAssetName] = useState('')
   const [newAssetLocation, setNewAssetLocation] = useState('')
@@ -218,6 +220,9 @@ export default function WorkOrderForm({ profile }) {
 
     if (result.error) {
       setError(result.error.message)
+      setLoading(false)
+    } else if (isNew && !assignedTo && profile?.role === 'manager' && technicians.length > 0) {
+      setShowUnassignedNudge(true)
       setLoading(false)
     } else {
       navigate('/')
@@ -818,6 +823,96 @@ export default function WorkOrderForm({ profile }) {
           )}
         </div>
       </div>
+
+      {showUnassignedNudge && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0,0,0,0.7)',
+          zIndex: 999,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '1rem'
+        }}>
+          <div style={{
+            background: '#1e2245',
+            border: '1px solid rgba(201,168,76,0.3)',
+            borderRadius: '14px',
+            padding: '2rem',
+            maxWidth: '420px',
+            width: '100%',
+            textAlign: 'center'
+          }}>
+            <div style={{
+              width: '56px',
+              height: '56px',
+              borderRadius: '50%',
+              background: 'rgba(201,168,76,0.1)',
+              border: '1px solid rgba(201,168,76,0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '1.5rem',
+              margin: '0 auto 1.25rem'
+            }}>
+              &#128221;
+            </div>
+            <h3 style={{
+              fontFamily: 'Georgia, serif',
+              fontSize: '1.25rem',
+              color: '#f8f6f1',
+              marginBottom: '0.75rem',
+              fontWeight: '600'
+            }}>
+              Work order saved!
+            </h3>
+            <p style={{
+              color: '#9a9db5',
+              fontSize: '0.9rem',
+              lineHeight: '1.65',
+              marginBottom: '1.75rem',
+              fontFamily: 'Inter, sans-serif'
+            }}>
+              This work order has no one assigned to it yet. Assigning a team member lets them see it in their queue and start working on it.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <button
+                onClick={() => navigate('/')}
+                style={{
+                  background: 'linear-gradient(135deg, #c9a84c, #e8c97a)',
+                  color: '#1a1a2e',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '0.75rem 1.5rem',
+                  fontSize: '0.85rem',
+                  fontWeight: '600',
+                  fontFamily: 'Inter, sans-serif',
+                  cursor: 'pointer',
+                  letterSpacing: '0.04em'
+                }}
+              >
+                Got it, I'll assign someone later
+              </button>
+              <button
+                onClick={() => setShowUnassignedNudge(false)}
+                style={{
+                  background: 'none',
+                  border: '1px solid rgba(201,168,76,0.3)',
+                  color: '#c9a84c',
+                  borderRadius: '8px',
+                  padding: '0.65rem 1.5rem',
+                  fontSize: '0.85rem',
+                  fontFamily: 'Inter, sans-serif',
+                  cursor: 'pointer'
+                }}
+              >
+                Go back and assign someone now
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {partsPickerOpen && (
         <PartsPicker
