@@ -192,9 +192,9 @@ export default function Settings({ profile }) {
       <div style={container}>
         <div style={headerRow}>
           <button style={backBtn} onClick={() => navigate('/')}>← Back</button>
-          <h1 style={heading}>Settings</h1>
         </div>
-        <p style={subhead}>
+        <h1 style={{...heading, textAlign: 'center', marginBottom: '0.5rem'}}>Settings</h1>
+        <p style={{...subhead, textAlign: 'center'}}>
           Manage your account, your team, and how your assets are tracked.
         </p>
 

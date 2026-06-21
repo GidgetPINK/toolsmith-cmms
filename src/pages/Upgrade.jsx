@@ -89,7 +89,7 @@ export default function Upgrade({ profile }) {
             letterSpacing: '0.04em'
           }}
         >
-          \u2190 Back
+          ← Back
         </button>
         <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
           <p style={{
