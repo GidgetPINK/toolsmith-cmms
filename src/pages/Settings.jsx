@@ -205,7 +205,9 @@ export default function Settings({ profile }) {
           flexDirection: 'column',
           alignItems: 'flex-start',
           gap: '0.5rem',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          boxSizing: 'border-box',
+          maxWidth: '100%'
         }}>
           <div>
             <h3 style={settingTitle}>{profile?.full_name || 'Unknown'}</h3>

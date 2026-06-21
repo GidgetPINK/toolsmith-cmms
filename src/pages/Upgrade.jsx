@@ -74,6 +74,23 @@ export default function Upgrade({ profile }) {
         width: '100%',
         maxWidth: '560px'
       }}>
+        <button
+          onClick={() => navigate(-1)}
+          style={{
+            background: 'none',
+            border: '1px solid rgba(201,168,76,0.25)',
+            color: '#c9a84c',
+            borderRadius: '8px',
+            padding: '0.5rem 1rem',
+            fontSize: '0.82rem',
+            fontFamily: 'Inter, sans-serif',
+            cursor: 'pointer',
+            marginBottom: '1.5rem',
+            letterSpacing: '0.04em'
+          }}
+        >
+          \u2190 Back
+        </button>
         <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
           <p style={{
             fontSize: '0.75rem',
