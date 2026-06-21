@@ -233,7 +233,7 @@ export default function ChangePassword({ profile }) {
 
             <button
               type="button"
-              onClick={() => navigate('/')}
+              onClick={async () => { await supabase.auth.signOut(); navigate('/'); }}
               style={{
                 width: '100%',
                 background: 'none',
