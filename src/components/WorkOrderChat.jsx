@@ -52,7 +52,10 @@ export default function WorkOrderChat({ workOrderId, profile, organizationId }) 
           filter: 'work_order_id=eq.' + workOrderId
         },
         (payload) => {
-          setMessages(prev => [...prev, payload.new])
+          setMessages(prev => {
+            if (prev.some(m => m.id === payload.new.id)) return prev
+            return [...prev, payload.new]
+          })
           markAsRead()
         }
       )
@@ -108,7 +111,7 @@ export default function WorkOrderChat({ workOrderId, profile, organizationId }) 
   async function handleSend() {
     if (!newMessage.trim() || sending) return
     setSending(true)
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('work_order_messages')
       .insert({
         work_order_id: workOrderId,
@@ -116,7 +119,10 @@ export default function WorkOrderChat({ workOrderId, profile, organizationId }) 
         sender_id: profile.id,
         message: newMessage.trim()
       })
-    if (!error) {
+      .select()
+      .single()
+    if (!error && data) {
+      setMessages(prev => [...prev, data])
       setNewMessage('')
     }
     setSending(false)
