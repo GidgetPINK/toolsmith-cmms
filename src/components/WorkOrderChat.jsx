@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 
 const MANAGER_COLOR = '#c9a84c'
 const TECH_COLOR = '#6cb6e0'
+const PHOTO_BUCKET = 'work-order-chat-photos'
 
 function getInitials(name) {
   if (!name) return '??'
@@ -32,8 +33,14 @@ export default function WorkOrderChat({ workOrderId, profile, organizationId }) 
   const [newMessage, setNewMessage] = useState('')
   const [sending, setSending] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [photoFile, setPhotoFile] = useState(null)
+  const [photoPreview, setPhotoPreview] = useState(null)
+  const [photoUrls, setPhotoUrls] = useState({})
+  const [lightboxUrl, setLightboxUrl] = useState(null)
+  const [uploadError, setUploadError] = useState('')
   const bottomRef = useRef(null)
   const chatBodyRef = useRef(null)
+  const fileInputRef = useRef(null)
 
   useEffect(() => {
     if (!workOrderId) return
@@ -70,7 +77,34 @@ export default function WorkOrderChat({ workOrderId, profile, organizationId }) 
     if (bottomRef.current) {
       bottomRef.current.scrollIntoView({ behavior: 'smooth' })
     }
+    // Load signed URLs for any new photos
+    loadPhotoUrls(messages)
   }, [messages])
+
+  // Keyboard support for lightbox close
+  useEffect(() => {
+    if (!lightboxUrl) return
+    function handleKey(e) {
+      if (e.key === 'Escape') setLightboxUrl(null)
+    }
+    document.addEventListener('keydown', handleKey)
+    return () => document.removeEventListener('keydown', handleKey)
+  }, [lightboxUrl])
+
+  async function loadPhotoUrls(msgList) {
+    const toLoad = msgList.filter(m => m.image_url && !photoUrls[m.id])
+    if (toLoad.length === 0) return
+    const newUrls = { ...photoUrls }
+    for (const msg of toLoad) {
+      const { data } = await supabase.storage
+        .from(PHOTO_BUCKET)
+        .createSignedUrl(msg.image_url, 3600)
+      if (data?.signedUrl) {
+        newUrls[msg.id] = data.signedUrl
+      }
+    }
+    setPhotoUrls(newUrls)
+  }
 
   async function fetchMessages() {
     setLoading(true)
@@ -108,22 +142,83 @@ export default function WorkOrderChat({ workOrderId, profile, organizationId }) 
       )
   }
 
+  function handlePhotoSelect(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadError('')
+    if (!file.type.startsWith('image/')) {
+      setUploadError('Please select an image file')
+      return
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setUploadError('Image must be under 10MB')
+      return
+    }
+    setPhotoFile(file)
+    const reader = new FileReader()
+    reader.onload = (ev) => setPhotoPreview(ev.target.result)
+    reader.readAsDataURL(file)
+  }
+
+  function clearPhoto() {
+    setPhotoFile(null)
+    setPhotoPreview(null)
+    setUploadError('')
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  async function uploadPhoto() {
+    if (!photoFile) return null
+    const ext = photoFile.name.split('.').pop() || 'jpg'
+    const filename = workOrderId + '/' + Date.now() + '-' + Math.random().toString(36).substring(2, 8) + '.' + ext
+    const { data, error } = await supabase.storage
+      .from(PHOTO_BUCKET)
+      .upload(filename, photoFile, {
+        cacheControl: '3600',
+        upsert: false
+      })
+    if (error) {
+      console.error('Upload error:', error)
+      setUploadError('Upload failed. Please try again.')
+      return null
+    }
+    return data.path
+  }
+
   async function handleSend() {
-    if (!newMessage.trim() || sending) return
+    const text = newMessage.trim()
+    if ((!text && !photoFile) || sending) return
     setSending(true)
+    setUploadError('')
+
+    let imagePath = null
+    if (photoFile) {
+      imagePath = await uploadPhoto()
+      if (!imagePath) {
+        setSending(false)
+        return
+      }
+    }
+
     const { data, error } = await supabase
       .from('work_order_messages')
       .insert({
         work_order_id: workOrderId,
         organization_id: organizationId,
         sender_id: profile.id,
-        message: newMessage.trim()
+        message: text,
+        image_url: imagePath
       })
       .select()
       .single()
+
     if (!error && data) {
       setMessages(prev => [...prev, data])
       setNewMessage('')
+      clearPhoto()
+    } else if (error) {
+      console.error('Send error:', error)
+      setUploadError('Failed to send. Please try again.')
     }
     setSending(false)
   }
@@ -134,6 +229,8 @@ export default function WorkOrderChat({ workOrderId, profile, organizationId }) 
       handleSend()
     }
   }
+
+  const canSend = (newMessage.trim() || photoFile) && !sending
 
   let lastDateLabel = ''
 
@@ -230,6 +327,7 @@ export default function WorkOrderChat({ workOrderId, profile, organizationId }) 
               showDateLabel = true
               lastDateLabel = dateLabel
             }
+            const photoUrl = photoUrls[msg.id]
 
             return (
               <div key={msg.id}>
@@ -297,17 +395,52 @@ export default function WorkOrderChat({ workOrderId, profile, organizationId }) 
                       borderRadius: '0 10px 10px 10px',
                       padding: '8px 10px'
                     }}>
-                      <p style={{
-                        fontSize: '0.82rem',
-                        color: '#f8f6f1',
-                        margin: 0,
-                        lineHeight: 1.5,
-                        fontFamily: 'Inter, sans-serif',
-                        whiteSpace: 'pre-wrap',
-                        wordBreak: 'break-word'
-                      }}>
-                        {msg.message}
-                      </p>
+                      {msg.image_url && (
+                        <div style={{ marginBottom: msg.message ? '8px' : '0' }}>
+                          {photoUrl ? (
+                            <img
+                              src={photoUrl}
+                              alt="Chat attachment"
+                              onClick={() => setLightboxUrl(photoUrl)}
+                              style={{
+                                maxWidth: '100%',
+                                maxHeight: '240px',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                display: 'block'
+                              }}
+                            />
+                          ) : (
+                            <div style={{
+                              width: '100%',
+                              height: '120px',
+                              background: 'rgba(255,255,255,0.04)',
+                              borderRadius: '6px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: '#6a6d85',
+                              fontSize: '0.75rem',
+                              fontFamily: 'Inter, sans-serif'
+                            }}>
+                              Loading photo...
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {msg.message && (
+                        <p style={{
+                          fontSize: '0.82rem',
+                          color: '#f8f6f1',
+                          margin: 0,
+                          lineHeight: 1.5,
+                          fontFamily: 'Inter, sans-serif',
+                          whiteSpace: 'pre-wrap',
+                          wordBreak: 'break-word'
+                        }}>
+                          {msg.message}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -318,19 +451,111 @@ export default function WorkOrderChat({ workOrderId, profile, organizationId }) 
         <div ref={bottomRef} />
       </div>
 
+      {photoPreview && (
+        <div style={{
+          padding: '10px 12px',
+          borderTop: '1px solid rgba(201,168,76,0.18)',
+          background: 'rgba(255,255,255,0.03)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px'
+        }}>
+          <img
+            src={photoPreview}
+            alt="Preview"
+            style={{
+              width: '50px',
+              height: '50px',
+              objectFit: 'cover',
+              borderRadius: '6px',
+              border: '1px solid rgba(201,168,76,0.3)'
+            }}
+          />
+          <span style={{
+            flex: 1,
+            fontSize: '0.78rem',
+            color: '#9a9db5',
+            fontFamily: 'Inter, sans-serif'
+          }}>
+            Photo ready to send
+          </span>
+          <button
+            onClick={clearPhoto}
+            style={{
+              background: 'none',
+              border: '1px solid rgba(201,168,76,0.3)',
+              color: '#9a9db5',
+              borderRadius: '6px',
+              padding: '4px 10px',
+              fontSize: '0.75rem',
+              cursor: 'pointer',
+              fontFamily: 'Inter, sans-serif'
+            }}
+          >
+            Remove
+          </button>
+        </div>
+      )}
+
+      {uploadError && (
+        <div style={{
+          padding: '8px 12px',
+          background: 'rgba(220,80,80,0.15)',
+          color: '#ff9999',
+          fontSize: '0.75rem',
+          textAlign: 'center',
+          fontFamily: 'Inter, sans-serif',
+          borderTop: '1px solid rgba(220,80,80,0.3)'
+        }}>
+          {uploadError}
+        </div>
+      )}
+
       <div style={{
         padding: '10px 12px',
         borderTop: '1px solid rgba(201,168,76,0.18)',
         display: 'flex',
         gap: '8px',
+        alignItems: 'center',
         flexShrink: 0
       }}>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          onChange={handlePhotoSelect}
+          style={{ display: 'none' }}
+        />
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          disabled={sending}
+          style={{
+            width: '34px',
+            height: '34px',
+            borderRadius: '8px',
+            background: 'rgba(255,255,255,0.05)',
+            border: '1px solid rgba(201,168,76,0.3)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: sending ? 'not-allowed' : 'pointer',
+            flexShrink: 0,
+            fontSize: '1.1rem',
+            color: '#c9a84c'
+          }}
+          aria-label="Attach photo"
+          title="Attach photo"
+        >
+          📷
+        </button>
         <input
           type="text"
           value={newMessage}
           onChange={e => setNewMessage(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Type a message..."
+          placeholder={photoFile ? 'Add a caption (optional)...' : 'Type a message...'}
+          disabled={sending}
           style={{
             flex: 1,
             background: 'rgba(255,255,255,0.05)',
@@ -345,27 +570,78 @@ export default function WorkOrderChat({ workOrderId, profile, organizationId }) 
         />
         <button
           onClick={handleSend}
-          disabled={!newMessage.trim() || sending}
+          disabled={!canSend}
           style={{
             width: '34px',
             height: '34px',
             borderRadius: '8px',
-            background: !newMessage.trim() || sending
+            background: !canSend
               ? 'rgba(201,168,76,0.3)'
               : 'linear-gradient(135deg, #c9a84c, #e8c97a)',
             border: 'none',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            cursor: !newMessage.trim() || sending ? 'not-allowed' : 'pointer',
+            cursor: !canSend ? 'not-allowed' : 'pointer',
             flexShrink: 0,
             fontSize: '1rem'
           }}
           aria-label="Send message"
         >
-          ➤
+          {sending ? '...' : '➤'}
         </button>
       </div>
+
+      {lightboxUrl && (
+        <div
+          onClick={() => setLightboxUrl(null)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.92)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px',
+            cursor: 'zoom-out'
+          }}
+        >
+          <img
+            src={lightboxUrl}
+            alt="Full size"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: '100%',
+              maxHeight: '100%',
+              borderRadius: '8px',
+              cursor: 'default'
+            }}
+          />
+          <button
+            onClick={() => setLightboxUrl(null)}
+            style={{
+              position: 'absolute',
+              top: '20px',
+              right: '20px',
+              width: '40px',
+              height: '40px',
+              borderRadius: '50%',
+              background: 'rgba(255,255,255,0.1)',
+              border: '1px solid rgba(255,255,255,0.2)',
+              color: '#fff',
+              fontSize: '1.2rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+            aria-label="Close"
+          >
+            ✕
+          </button>
+        </div>
+      )}
     </div>
   )
 }
