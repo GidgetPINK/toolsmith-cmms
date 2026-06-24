@@ -16,6 +16,7 @@ import Assets from './pages/Assets'
 import CustomFields from './pages/CustomFields'
 import Parts from './pages/Parts'
 import Settings from './pages/Settings'
+import Reports from './pages/Reports'
 import MobileWorkOrders from './pages/MobileWorkOrders'
 import MobileAssets from './pages/MobileAssets'
 import MobileAssetDetail from './pages/MobileAssetDetail'
@@ -466,6 +467,22 @@ function App() {
         <Route
           path="/template-success"
           element={<TemplateSuccess />}
+        />
+        <Route
+          path="/reports"
+          element={
+            !session ? (
+              <Navigate to="/login" replace />
+            ) : needsPaymentSetup ? (
+              <Navigate to="/complete-setup" replace />
+            ) : needsSubscription ? (
+              <Navigate to="/subscription-required" replace />
+            ) : profile?.role !== 'manager' ? (
+              <Navigate to="/" replace />
+            ) : (
+              <Reports profile={profile} />
+            )
+          }
         />
       </Routes>
       {session && profile && organization && (
