@@ -250,6 +250,7 @@ export default function WorkOrderForm({ profile }) {
 
   const inputStyle = {
     width: '100%',
+    boxSizing: 'border-box',
     background: 'rgba(255,255,255,0.05)',
     border: '1px solid rgba(201,168,76,0.18)',
     borderRadius: '8px',
@@ -820,7 +821,7 @@ export default function WorkOrderForm({ profile }) {
                     }}
                     placeholder="e.g. 204 or 204A"
                     maxLength={20}
-                    style={{ ...inputStyle, boxSizing: 'border-box' }}
+                    style={inputStyle}
                   />
                   <p style={{ fontSize: '0.72rem', color: '#6a6d85', margin: '0.3rem 0 0', fontFamily: 'Inter, sans-serif' }}>
                     Letters and numbers only, no spaces or symbols
@@ -833,7 +834,7 @@ export default function WorkOrderForm({ profile }) {
                   <select
                     value={reporter}
                     onChange={e => setReporter(e.target.value)}
-                    style={{ ...inputStyle, boxSizing: 'border-box' }}
+                    style={inputStyle}
                   >
                     <option value="">Select who reported this</option>
                     <option value="Resident">Resident</option>
