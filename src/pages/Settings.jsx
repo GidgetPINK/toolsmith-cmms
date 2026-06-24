@@ -237,6 +237,18 @@ export default function Settings({ profile }) {
 
         {isManager && (
           <>
+            <div style={sectionLabel}>Reports</div>
+            <button
+              style={settingRow}
+              onClick={() => navigate('/reports')}
+            >
+              <div style={{ flex: 1 }}>
+                <h3 style={settingTitle}>Work Order Reports</h3>
+                <p style={settingDesc}>Export work order history for state surveyors and compliance audits</p>
+              </div>
+              <span style={chevron}>›</span>
+            </button>
+
             <div style={sectionLabel}>Team</div>
             <button
               style={settingRow}
