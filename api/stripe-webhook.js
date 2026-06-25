@@ -279,7 +279,7 @@ function buildWelcomeEmailHtml(name, planName, trialEndDate) {
   const isPro = planName.toLowerCase().includes('pro')
 
   const liteSteps = `
-          <li><strong>Invite your team.</strong> From Settings &rarr; Team Management, add your technicians. They will receive an email to set their own password.</li>
+          <li><strong>Invite your team.</strong> From Admin &rarr; Team Management, add your technicians. They will receive an email to set their own password.</li>
           <li><strong>Create your first work order.</strong> Click "+ New Work Order" from the dashboard to start tracking maintenance tasks.</li>
           <li><strong>Try it on mobile.</strong> Your techs can view and update assigned work orders right from their phones.</li>
           <li><strong>Manage work order status.</strong> Move work orders through Open &rarr; In Progress &rarr; Closed as your team completes them.</li>
@@ -288,7 +288,7 @@ function buildWelcomeEmailHtml(name, planName, trialEndDate) {
   const proSteps = `
           <li><strong>Meet Gidget.</strong> Tap the gold sparkle button on your dashboard. She is your AI assistant who can help you set up assets, recommend PM schedules, and answer product questions.</li>
           <li><strong>Add your first asset.</strong> Use the "+ Add Asset" button in the dashboard sidebar to register equipment you maintain.</li>
-          <li><strong>Invite your team.</strong> From Settings &rarr; Team Management, add your technicians.</li>
+          <li><strong>Invite your team.</strong> From Admin &rarr; Team Management, add your technicians.</li>
           <li><strong>Set up PM schedules.</strong> Open any asset and click the PM Schedule tab to add recurring maintenance tasks.</li>
           <li><strong>Track parts and downtime.</strong> Add parts to your inventory and log downtime events to build a complete maintenance history.</li>
   `
@@ -323,7 +323,7 @@ function buildWelcomeEmailHtml(name, planName, trialEndDate) {
         Your account is active and your 14-day free trial has started. You will not be charged until your trial ends on <strong>${trialEndDate}</strong>.
       </p>
       <p style="color:#444;font-size:15px;line-height:1.7;margin:0 0 24px;">
-        ${tierIntro} You can change plans, update your payment method, or cancel any time from the Settings page in your dashboard.
+        ${tierIntro} You can change plans, update your payment method, or cancel any time from the Admin page in your dashboard.
       </p>
       <div style="text-align:center;margin:0 0 32px;">
         <a href="${appUrl}" style="display:inline-block;background:#C9A84C;color:#1A1A2E;text-decoration:none;padding:14px 32px;border-radius:8px;font-size:14px;font-weight:bold;letter-spacing:0.06em;text-transform:uppercase;">Open Dashboard</a>
