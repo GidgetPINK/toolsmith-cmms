@@ -248,13 +248,13 @@ export default function WorkOrderForm({ profile }) {
           const { data: { session } } = await supabase.auth.getSession()
           if (session?.access_token) {
             // Fire and forget - don't block navigation on email send
-            fetch('/api/send-assignment-notification', {
+            fetch('/api/send-notification', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
                 'Authorization': 'Bearer ' + session.access_token
               },
-              body: JSON.stringify({ work_order_id: savedWoId })
+              body: JSON.stringify({ type: 'assignment', work_order_id: savedWoId })
             }).catch(err => console.warn('Assignment notification failed:', err))
           }
         } catch (err) {
