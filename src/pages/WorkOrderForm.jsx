@@ -254,7 +254,7 @@ export default function WorkOrderForm({ profile }) {
                 'Content-Type': 'application/json',
                 'Authorization': 'Bearer ' + session.access_token
               },
-              body: JSON.stringify({ type: 'assignment', work_order_id: savedWoId })
+              body: JSON.stringify({ type: 'assignment', work_order_id: savedWoId, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone })
             }).catch(err => console.warn('Assignment notification failed:', err))
           }
         } catch (err) {

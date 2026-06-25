@@ -128,12 +128,13 @@ async function handleAssignment(req, res, callerId) {
 
   const workOrderUrl = 'https://toolsmith-cmms.app/work-order/' + wo.id
 
+  // Use the assigner's browser timezone if provided, fall back to UTC
+  const timezone = req.body?.timezone || 'UTC'
   const dueText = wo.due_date
-    ? new Date(wo.due_date).toLocaleString('en-US', {
+    ? new Date(wo.due_date).toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit'
+        timeZone: timezone
       })
     : null
 
