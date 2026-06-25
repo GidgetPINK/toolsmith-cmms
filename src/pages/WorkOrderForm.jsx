@@ -16,6 +16,7 @@ export default function WorkOrderForm({ profile }) {
   const [status, setStatus] = useState('open')
   const [assetId, setAssetId] = useState('')
   const [assignedTo, setAssignedTo] = useState('')
+  const [originalAssignedTo, setOriginalAssignedTo] = useState('')
   const [apartmentNumber, setApartmentNumber] = useState('')
   const [reporter, setReporter] = useState('')
   const [residentDetailsOpen, setResidentDetailsOpen] = useState(false)
@@ -90,6 +91,7 @@ export default function WorkOrderForm({ profile }) {
       setStatus(data.status)
       setAssetId(data.asset_id || '')
       setAssignedTo(data.assigned_to || '')
+      setOriginalAssignedTo(data.assigned_to || '')
       setPmScheduleId(data.pm_schedule_id || null)
       setApartmentNumber(data.apartment_number || '')
       setReporter(data.reporter || '')
@@ -229,15 +231,36 @@ export default function WorkOrderForm({ profile }) {
 
     let result
     if (isNew) {
-      result = await supabase.from('work_orders').insert(payload)
+      result = await supabase.from('work_orders').insert(payload).select().single()
     } else {
-      result = await supabase.from('work_orders').update(payload).eq('id', id)
+      result = await supabase.from('work_orders').update(payload).eq('id', id).select().single()
     }
 
     if (result.error) {
       setError(result.error.message)
       setLoading(false)
     } else {
+      // Fire assignment notification if assignee changed (or was newly set on insert)
+      const savedWoId = result.data?.id || id
+      const assigneeChanged = (assignedTo || null) !== (originalAssignedTo || null)
+      if (savedWoId && assignedTo && assigneeChanged) {
+        try {
+          const { data: { session } } = await supabase.auth.getSession()
+          if (session?.access_token) {
+            // Fire and forget - don't block navigation on email send
+            fetch('/api/send-assignment-notification', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + session.access_token
+              },
+              body: JSON.stringify({ work_order_id: savedWoId })
+            }).catch(err => console.warn('Assignment notification failed:', err))
+          }
+        } catch (err) {
+          console.warn('Could not send assignment notification:', err)
+        }
+      }
       navigate('/')
     }
   }
