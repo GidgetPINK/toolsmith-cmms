@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import useUnreadMessages from '../hooks/useUnreadMessages'
+import WorkOrderCard from '../components/WorkOrderCard'
 
 const PRIORITY_COLOR = {
   critical: '#e06c75',
@@ -54,7 +55,7 @@ const mobileNavBtnStyle = {
 }
 
 export default function Queue({ profile }) {
-  const unreadIds = useUnreadMessages(profile?.id)
+  const { unreadIds, hasMessagesIds } = useUnreadMessages(profile?.id)
   const [workOrders, setWorkOrders] = useState([])
   const [assets, setAssets] = useState([])
   const [loading, setLoading] = useState(true)
@@ -361,28 +362,18 @@ export default function Queue({ profile }) {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
             {filtered.map(wo => (
-              <div
+              <WorkOrderCard
                 key={wo.id}
+                wo={wo}
+                hasMessages={hasMessagesIds.has(wo.id)}
+                hasUnread={unreadIds.has(wo.id)}
+                assetName={getAssetName(wo.asset_id)}
+                techName={getTechName(wo.assigned_to)}
                 onClick={() => navigate(`/work-order/${wo.id}`)}
-                style={{
-                  background: '#1e2245',
-                  border: `1px solid ${wo.priority === 'critical' && wo.status !== 'closed'
-                    ? 'rgba(224,108,117,0.4)'
-                    : 'rgba(201,168,76,0.18)'}`,
-                  borderRadius: '12px',
-                  padding: '1.25rem 1.5rem',
-                  cursor: 'pointer',
-                  transition: 'transform 0.2s, box-shadow 0.2s'
-                }}
-                onMouseEnter={e => {
-                  e.currentTarget.style.transform = 'translateY(-2px)'
-                  e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.3)'
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.transform = 'translateY(0)'
-                  e.currentTarget.style.boxShadow = 'none'
-                }}
-              >
+              />
+            ))}
+            {false && (
+              <div>
                 <div style={{
                   display: 'flex',
                   gap: '0.65rem',
@@ -479,7 +470,7 @@ export default function Queue({ profile }) {
                   )}
                 </div>
               </div>
-            ))}
+            )}
           </div>
         )}
       </div>

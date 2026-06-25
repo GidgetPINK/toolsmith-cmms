@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 
 export default function useUnreadMessages(profileId) {
   const [unreadIds, setUnreadIds] = useState(new Set())
+  const [hasMessagesIds, setHasMessagesIds] = useState(new Set())
 
   useEffect(() => {
     if (!profileId) return
@@ -56,7 +57,9 @@ export default function useUnreadMessages(profileId) {
     })
 
     const result = new Set()
+    const hasMessages = new Set()
     Object.keys(latestByWo).forEach(woId => {
+      hasMessages.add(woId)
       const lastMsg = latestByWo[woId]
       const lastRead = readByWo[woId]
       if (!lastRead || lastMsg > lastRead) {
@@ -65,7 +68,8 @@ export default function useUnreadMessages(profileId) {
     })
 
     setUnreadIds(result)
+    setHasMessagesIds(hasMessages)
   }
 
-  return unreadIds
+  return { unreadIds, hasMessagesIds }
 }

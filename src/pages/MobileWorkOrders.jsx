@@ -7,6 +7,7 @@ import DowntimeWidget from '../components/DowntimeWidget'
 import TrialBanner from '../components/TrialBanner'
 import TeamInviteBanner from '../components/TeamInviteBanner'
 import useUnreadMessages from '../hooks/useUnreadMessages'
+import WorkOrderCard from '../components/WorkOrderCard'
 
 const PRIORITY_COLOR = {
   critical: '#e06c75',
@@ -54,7 +55,7 @@ function getUpcomingCutoff() {
 }
 
 export default function MobileWorkOrders({ profile }) {
-  const unreadIds = useUnreadMessages(profile?.id)
+  const { unreadIds, hasMessagesIds } = useUnreadMessages(profile?.id)
   const navigate = useNavigate()
   const [workOrders, setWorkOrders] = useState([])
   const [profiles, setProfiles] = useState([])
@@ -447,17 +448,19 @@ export default function MobileWorkOrders({ profile }) {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
             {filtered.map(wo => (
-              <div
+              <WorkOrderCard
                 key={wo.id}
+                wo={wo}
+                hasMessages={hasMessagesIds.has(wo.id)}
+                hasUnread={unreadIds.has(wo.id)}
+                assetName={getAssetName(wo.asset_id)}
+                techName={getTechName(wo.assigned_to)}
                 onClick={() => navigate(`/work-order/${wo.id}`)}
-                style={{
-                  background: '#1e2245',
-                  border: '1px solid rgba(201,168,76,0.18)',
-                  borderRadius: '12px',
-                  padding: '1rem 1.1rem',
-                  cursor: 'pointer'
-                }}
-              >
+                compact
+              />
+            ))}
+            {false && (
+              <div>
                 <div style={{ display: 'flex', gap: '0.45rem', alignItems: 'center', marginBottom: '0.4rem', flexWrap: 'wrap' }}>
                   <span style={{
                     padding: '0.18rem 0.55rem',
@@ -521,7 +524,7 @@ export default function MobileWorkOrders({ profile }) {
                   </span>
                 </div>
               </div>
-            ))}
+            )}
           </div>
         )}
         </div>

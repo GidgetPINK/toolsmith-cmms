@@ -7,6 +7,7 @@ import LowStockWidget from '../components/LowStockWidget'
 import DowntimeWidget from '../components/DowntimeWidget'
 import AssetDowntimeTab from '../components/AssetDowntimeTab'
 import useUnreadMessages from '../hooks/useUnreadMessages'
+import WorkOrderCard from '../components/WorkOrderCard'
 
 const PRIORITY_COLOR = {
   critical: '#e06c75',
@@ -117,7 +118,7 @@ const flyoutLabelStyle = {
 }
 
 export default function Dashboard({ profile }) {
-  const unreadIds = useUnreadMessages(profile?.id)
+  const { unreadIds, hasMessagesIds } = useUnreadMessages(profile?.id)
   const [workOrders, setWorkOrders] = useState([])
   const [profiles, setProfiles] = useState([])
   const [assets, setAssets] = useState([])
@@ -690,68 +691,15 @@ export default function Dashboard({ profile }) {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
               {displayedOrders.map(wo => (
-                <div
+                <WorkOrderCard
                   key={wo.id}
+                  wo={wo}
+                  hasMessages={hasMessagesIds.has(wo.id)}
+                  hasUnread={unreadIds.has(wo.id)}
+                  assetName={getAssetName(wo.asset_id)}
+                  techName={getTechName(wo.assigned_to)}
                   onClick={() => navigate(`/work-order/${wo.id}`)}
-                  style={{
-                    background: '#1e2245', border: '1px solid rgba(201,168,76,0.18)',
-                    borderRadius: '12px', padding: '1.25rem 1.5rem',
-                    cursor: 'pointer', transition: 'transform 0.2s, box-shadow 0.2s'
-                  }}
-                >
-                  <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
-                    <span style={{
-                      padding: '0.2rem 0.65rem', borderRadius: '20px',
-                      fontSize: '0.7rem', fontWeight: '700', letterSpacing: '0.1em', textTransform: 'uppercase',
-                      color: PRIORITY_COLOR[wo.priority] || '#9a9db5',
-                      background: PRIORITY_BG[wo.priority] || 'rgba(154,157,181,0.12)',
-                      border: `1px solid ${PRIORITY_COLOR[wo.priority] || '#9a9db5'}`
-                    }}>
-                      {wo.priority}
-                    </span>
-                    <span style={{
-                      padding: '0.2rem 0.65rem', borderRadius: '20px',
-                      fontSize: '0.7rem', letterSpacing: '0.08em', textTransform: 'capitalize',
-                      color: STATUS_COLOR[wo.status] || '#9a9db5',
-                      border: `1px solid ${STATUS_COLOR[wo.status] || '#9a9db5'}`,
-                      background: 'transparent'
-                    }}>
-                      {wo.status}
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem', marginBottom: '0.35rem' }}>
-                    <h3 style={{ fontFamily: 'Georgia, serif', fontSize: '1.05rem', fontWeight: '600', color: '#f8f6f1', margin: 0 }}>
-                      {wo.title}
-                    </h3>
-                    {unreadIds.has(wo.id) && (
-                      <span title="Unread messages" style={{
-                        display: 'inline-block',
-                        width: '10px',
-                        height: '10px',
-                        borderRadius: '50%',
-                        background: '#e06c75',
-                        flexShrink: 0,
-                        marginTop: '6px'
-                      }} />
-                    )}
-                  </div>
-                  {wo.description && (
-                    <p style={{ color: '#9a9db5', fontSize: '0.85rem', lineHeight: '1.6', marginBottom: '0.65rem' }}>
-                      {wo.description.length > 120 ? wo.description.slice(0, 120) + '...' : wo.description}
-                    </p>
-                  )}
-                  <div style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: '0.8rem', color: '#9a9db5' }}>
-                      <span style={{ color: '#c9a84c' }}>Asset:</span> {getAssetName(wo.asset_id)}
-                    </span>
-                    <span style={{ fontSize: '0.8rem', color: '#9a9db5' }}>
-                      <span style={{ color: '#c9a84c' }}>Assigned:</span> {getTechName(wo.assigned_to)}
-                    </span>
-                    <span style={{ fontSize: '0.8rem', color: '#9a9db5' }}>
-                      <span style={{ color: '#c9a84c' }}>Created:</span> {new Date(wo.created_at).toLocaleDateString()}
-                    </span>
-                  </div>
-                </div>
+                />
               ))}
             </div>
           )}
