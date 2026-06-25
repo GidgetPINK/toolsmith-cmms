@@ -29,16 +29,16 @@ const ACTIONS = {
     keywords: ['new work order', 'create a work order', 'create work order', 'work order form', 'submit a work order', 'new task']
   },
   settings: {
-    label: 'Open Settings',
+    label: 'Open Admin',
     icon: '→',
-    route: '/settings',
+    route: '/admin',
     primary: false,
     keywords: ['billing portal', 'manage billing', 'change password', 'organization settings', 'account settings', 'manage subscription', 'click settings', 'go to settings']
   },
   customFields: {
     label: 'Custom Fields',
     icon: '→',
-    route: '/settings/custom-fields',
+    route: '/admin/custom-fields',
     primary: false,
     keywords: ['custom fields', 'custom field', 'add field', 'asset field']
   }
@@ -50,7 +50,7 @@ const PAGE_DEFAULTS = {
   'Work Order Detail': [],
   'Assets': [],
   'Parts and Inventory': [],
-  'Settings': [],
+  'Admin': [],
   'Team Management': []
 }
 

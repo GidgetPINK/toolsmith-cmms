@@ -7,12 +7,12 @@ export default function MobileBottomNav() {
   const tabs = [
     { path: '/m/work-orders', label: 'Orders', icon: '📋' },
     { path: '/m/assets', label: 'Assets', icon: '🔧' },
-    { path: '/settings', label: 'Settings', icon: '⚙️' }
+    { path: '/admin', label: 'Admin', icon: '⚙️' }
   ]
 
   function isActive(tabPath) {
-    if (tabPath === '/settings') {
-      return location.pathname.startsWith('/settings')
+    if (tabPath === '/admin') {
+      return location.pathname.startsWith('/admin')
     }
     return location.pathname.startsWith(tabPath)
   }

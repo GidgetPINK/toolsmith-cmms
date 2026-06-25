@@ -15,7 +15,7 @@ import Upgrade from './pages/Upgrade'
 import Assets from './pages/Assets'
 import CustomFields from './pages/CustomFields'
 import Parts from './pages/Parts'
-import Settings from './pages/Settings'
+import Admin from './pages/Admin'
 import Reports from './pages/Reports'
 import MobileWorkOrders from './pages/MobileWorkOrders'
 import MobileAssets from './pages/MobileAssets'
@@ -361,7 +361,7 @@ function App() {
           }
         />
         <Route
-          path="/settings"
+          path="/admin"
           element={
             !session ? (
               <Navigate to="/login" replace />
@@ -370,7 +370,7 @@ function App() {
             ) : needsSubscription ? (
               <Navigate to="/subscription-required" replace />
             ) : (
-              <Settings profile={profile} />
+              <Admin profile={profile} />
             )
           }
         />
@@ -391,7 +391,7 @@ function App() {
           }
         />
         <Route
-          path="/settings/custom-fields"
+          path="/admin/custom-fields"
           element={
             !session ? (
               <Navigate to="/login" replace />

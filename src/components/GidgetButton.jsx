@@ -9,7 +9,7 @@ function getPageName(pathname) {
   if (pathname.startsWith('/work-order/')) return 'Work Order Detail'
   if (pathname === '/parts') return 'Parts and Inventory'
   if (pathname === '/team') return 'Team Management'
-  if (pathname === '/settings') return 'Settings'
+  if (pathname === '/admin') return 'Admin'
   if (pathname === '/upgrade') return 'Upgrade'
   if (pathname.startsWith('/m/assets/')) return 'Asset Detail'
   if (pathname.startsWith('/m/')) return 'Mobile Dashboard'

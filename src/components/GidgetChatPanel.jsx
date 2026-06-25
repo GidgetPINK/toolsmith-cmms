@@ -4,7 +4,7 @@ import ReactMarkdown from 'react-markdown'
 import { supabase } from '../lib/supabase'
 import { getActionsForResponse } from './gidgetActions'
 
-const APP_ROUTES = ['/team', '/settings', '/assets', '/parts', '/upgrade', '/custom-fields', '/work-order']
+const APP_ROUTES = ['/team', '/admin', '/assets', '/parts', '/upgrade', '/custom-fields', '/work-order']
 
 function convertRoutesToLinks(text) {
   let result = text
@@ -567,7 +567,7 @@ function getRouteLabel(route) {
   const labels = {
     '/upgrade': 'Upgrade now',
     '/team': 'Go to team',
-    '/settings': 'Open settings',
+    '/admin': 'Open admin',
     '/assets': 'View assets',
     '/parts': 'View parts',
     '/custom-fields': 'Custom fields',

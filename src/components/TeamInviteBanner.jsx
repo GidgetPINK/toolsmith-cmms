@@ -49,7 +49,7 @@ export default function TeamInviteBanner({ profile, profiles, isPro }) {
           margin: 0,
           lineHeight: 1.5
         }}>
-          Invite your technicians from Settings → Team Management so you can assign work orders.
+          Invite your technicians from Admin → Team Management so you can assign work orders.
           {!isPro && ' Lite plans include up to 10 team members.'}
         </p>
       </div>

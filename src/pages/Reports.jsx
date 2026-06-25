@@ -283,7 +283,7 @@ export default function Reports({ profile }) {
     <div style={page}>
       <div style={container}>
         <div style={headerRow}>
-          <button style={backBtn} onClick={() => navigate('/settings')}>← Back</button>
+          <button style={backBtn} onClick={() => navigate('/admin')}>← Back</button>
         </div>
 
         <p style={eyebrow}>Work Order Reports</p>

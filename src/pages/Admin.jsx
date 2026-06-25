@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
-export default function Settings({ profile }) {
+export default function Admin({ profile }) {
   const navigate = useNavigate()
   const [isUpgraded, setIsUpgraded] = useState(false)
   const [userEmail, setUserEmail] = useState('')
@@ -193,7 +193,7 @@ export default function Settings({ profile }) {
         <div style={headerRow}>
           <button style={backBtn} onClick={() => navigate('/')}>← Back</button>
         </div>
-        <h1 style={{...heading, textAlign: 'center', marginBottom: '0.5rem'}}>Settings</h1>
+        <h1 style={{...heading, textAlign: 'center', marginBottom: '0.5rem'}}>Admin</h1>
         <p style={{...subhead, textAlign: 'center'}}>
           Manage your account, your team, and how your assets are tracked.
         </p>
@@ -300,7 +300,7 @@ export default function Settings({ profile }) {
             <div style={sectionLabel}>Asset Configuration</div>
             <button
               style={settingRow}
-              onClick={() => navigate(isUpgraded ? '/settings/custom-fields' : '/upgrade')}
+              onClick={() => navigate(isUpgraded ? '/admin/custom-fields' : '/upgrade')}
             >
               <div style={{ flex: 1 }}>
                 <h3 style={settingTitle}>
