@@ -368,6 +368,7 @@ Continue building these in parallel during Lite launch, then promote Pro once Li
 - Asset import wizard with Gidget
 - PM recommendation engine entry point
 - Gidget chat persistence with sessionStorage
+- Gidget natural-language reports (Pro upgrade path for Work Order Reports). Manager types a request like "show me all resident-reported HVAC issues last quarter" or "give me a surveyor report for fire safety equipment" and Gidget sets the report filters and runs the download. Same filter logic, CSV/PDF generation, and download mechanics as the existing Reports page. Adds an "Ask Gidget" card above the filters on /reports. Lite users see it as a locked Pro feature, becoming a natural upsell point inside the existing workflow.
 
 ### Recently completed (June 17-18, 2026)
 - Tier-aware welcome emails (Lite vs Pro)
