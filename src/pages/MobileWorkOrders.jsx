@@ -459,72 +459,7 @@ export default function MobileWorkOrders({ profile }) {
                 compact
               />
             ))}
-            {false && (
-              <div>
-                <div style={{ display: 'flex', gap: '0.45rem', alignItems: 'center', marginBottom: '0.4rem', flexWrap: 'wrap' }}>
-                  <span style={{
-                    padding: '0.18rem 0.55rem',
-                    borderRadius: '20px',
-                    fontSize: '0.62rem',
-                    fontWeight: '700',
-                    letterSpacing: '0.1em',
-                    textTransform: 'uppercase',
-                    color: PRIORITY_COLOR[wo.priority] || '#9a9db5',
-                    background: PRIORITY_BG[wo.priority] || 'rgba(154,157,181,0.12)',
-                    border: `1px solid ${PRIORITY_COLOR[wo.priority] || '#9a9db5'}`
-                  }}>
-                    {wo.priority}
-                  </span>
-                  <span style={{
-                    padding: '0.18rem 0.55rem',
-                    borderRadius: '20px',
-                    fontSize: '0.62rem',
-                    letterSpacing: '0.08em',
-                    textTransform: 'capitalize',
-                    color: STATUS_COLOR[wo.status] || '#9a9db5',
-                    border: `1px solid ${STATUS_COLOR[wo.status] || '#9a9db5'}`,
-                    background: 'transparent'
-                  }}>
-                    {wo.status}
-                  </span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem', marginBottom: '0.3rem' }}>
-                  <h3 style={{
-                    fontFamily: 'Georgia, serif',
-                    fontSize: '1rem',
-                    fontWeight: '600',
-                    color: '#f8f6f1',
-                    margin: 0
-                  }}>
-                    {wo.title}
-                  </h3>
-                  {unreadIds.has(wo.id) && (
-                    <span title="Unread messages" style={{
-                      display: 'inline-block',
-                      width: '9px',
-                      height: '9px',
-                      borderRadius: '50%',
-                      background: '#e06c75',
-                      flexShrink: 0,
-                      marginTop: '5px'
-                    }} />
-                  )}
-                </div>
-                {wo.description && (
-                  <p style={{ color: '#9a9db5', fontSize: '0.8rem', lineHeight: '1.5', marginBottom: '0.5rem' }}>
-                    {wo.description.length > 80 ? wo.description.slice(0, 80) + '...' : wo.description}
-                  </p>
-                )}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                  <span style={{ fontSize: '0.72rem', color: '#9a9db5' }}>
-                    <span style={{ color: '#c9a84c' }}>Asset:</span> {getAssetName(wo.asset_id)}
-                  </span>
-                  <span style={{ fontSize: '0.72rem', color: '#9a9db5' }}>
-                    <span style={{ color: '#c9a84c' }}>Assigned:</span> {getTechName(wo.assigned_to)}
-                  </span>
-                </div>
-              </div>
-            )}
+
           </div>
         )}
         </div>
