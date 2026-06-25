@@ -369,6 +369,7 @@ Continue building these in parallel during Lite launch, then promote Pro once Li
 - PM recommendation engine entry point
 - Gidget chat persistence with sessionStorage
 - Gidget natural-language reports (Pro upgrade path for Work Order Reports). Manager types a request like "show me all resident-reported HVAC issues last quarter" or "give me a surveyor report for fire safety equipment" and Gidget sets the report filters and runs the download. Same filter logic, CSV/PDF generation, and download mechanics as the existing Reports page. Adds an "Ask Gidget" card above the filters on /reports. Lite users see it as a locked Pro feature, becoming a natural upsell point inside the existing workflow.
+- Configurable SLAs with due date automation. Pro upgrade path for the hard-coded Lite SLAs (Critical 4hr, High 24hr, Standard 72hr, Routine 7d). Pro adds an Admin → SLA Settings page where managers configure their own hours per priority. Could also include business-hour math (skip nights/weekends), SLA compliance reporting (% of work orders closed within SLA), and breach notifications when work orders approach or exceed SLA. Foundation already exists: due_date column, calculate_work_order_due_date trigger, card-level visual states (normal/approaching/overdue). Pro just needs the customization UI and the function logic to read from per-org settings instead of hard-coded values.
 
 ### Recently completed (June 17-18, 2026)
 - Tier-aware welcome emails (Lite vs Pro)
