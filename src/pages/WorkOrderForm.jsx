@@ -450,10 +450,10 @@ export default function WorkOrderForm({ profile }) {
               onChange={e => setPriority(e.target.value)}
               style={{ ...inputStyle, cursor: 'pointer' }}
             >
-              <option value="critical">Critical</option>
-              <option value="high">High</option>
-              <option value="standard">Standard</option>
-              <option value="routine">Routine</option>
+              <option value="critical">Critical (4 hours)</option>
+              <option value="high">High (24 hours)</option>
+              <option value="standard">Standard (72 hours)</option>
+              <option value="routine">Routine (7 days)</option>
             </select>
           </div>
 
