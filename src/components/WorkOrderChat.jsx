@@ -216,6 +216,27 @@ export default function WorkOrderChat({ workOrderId, profile, organizationId }) 
       setMessages(prev => [...prev, data])
       setNewMessage('')
       clearPhoto()
+
+      // Fire chat notification email — don't block the user on the result
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session?.access_token) {
+          fetch('/api/send-notification', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + session.access_token
+            },
+            body: JSON.stringify({
+              type: 'chat',
+              message_id: data.id,
+              timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+            })
+          }).catch(err => console.warn('Chat notification failed:', err))
+        }
+      } catch (err) {
+        console.warn('Could not send chat notification:', err)
+      }
     } else if (error) {
       console.error('Send error:', error)
       setUploadError('Failed to send. Please try again.')
