@@ -363,6 +363,9 @@ These must be complete before Lite can launch to app stores:
 
 ### Post-launch Pro work
 Continue building these in parallel during Lite launch, then promote Pro once Lite is established:
+- Org-level timezone configuration. Currently the assignment notification email uses the assigner's browser timezone, which works for most cases but breaks down if the assigner is in a different timezone than the assignee. Proper fix: add a `timezone` column to organizations, auto-detect from the manager's browser at signup, allow override in Admin. Then email-sending code reads the org timezone instead of the request body. Cleaner architecture and works for all customers regardless of timezone.
+- Push notifications for mobile app users (post-Capacitor). When the iOS and Android apps launch via Capacitor wrapping, add native push notifications for: work order assignment, new chat messages, approaching SLA breach. Push complements email rather than replacing it. Required: push notification permission flow inside the app, device token storage in profiles table, integration with FCM (Firebase Cloud Messaging) or OneSignal, backend changes to send push alongside email. Email stays for web/desktop users.
+- Bundle size optimization. Main JS bundle is currently 1.3 MB which triggers Vite's 500 kB warning. Vite suggests dynamic import() to code-split the application or build.rollDownOptions.output.codeSplitting. Worth doing once we have real user traffic data to identify which routes are visited most. Faster page loads on mobile, especially over cellular.
 - Cost Reporting (depends on Parts and Downtime data — both complete)
 - Downtime work order integration (Downtime Tracking core loop complete)
 - Asset import wizard with Gidget
