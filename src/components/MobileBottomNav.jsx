@@ -5,7 +5,7 @@ export default function MobileBottomNav() {
   const location = useLocation()
 
   const tabs = [
-    { path: '/m/work-orders', label: 'Orders', icon: '📋' },
+    { path: '/m/work-orders', label: 'Home', icon: '🏠' },
     { path: '/m/assets', label: 'Assets', icon: '🔧' },
     { path: '/admin', label: 'Admin', icon: '⚙️' }
   ]

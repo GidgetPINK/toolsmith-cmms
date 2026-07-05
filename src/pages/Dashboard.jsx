@@ -4,7 +4,6 @@ import { supabase } from '../lib/supabase'
 import TrialBanner from '../components/TrialBanner'
 import TeamInviteBanner from '../components/TeamInviteBanner'
 import LowStockWidget from '../components/LowStockWidget'
-import DowntimeWidget from '../components/DowntimeWidget'
 import AssetDowntimeTab from '../components/AssetDowntimeTab'
 import useUnreadMessages from '../hooks/useUnreadMessages'
 import WorkOrderCard from '../components/WorkOrderCard'
@@ -629,10 +628,6 @@ export default function Dashboard({ profile }) {
               isPro={isPro}
             />
           )}
-          <DowntimeWidget
-            organizationId={profile.organization_id}
-            isPro={isPro}
-          />
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
             <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
