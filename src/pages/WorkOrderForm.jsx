@@ -20,6 +20,8 @@ export default function WorkOrderForm({ profile }) {
   const [apartmentNumber, setApartmentNumber] = useState('')
   const [reporter, setReporter] = useState('')
   const [residentDetailsOpen, setResidentDetailsOpen] = useState(false)
+  const [complianceCategory, setComplianceCategory] = useState('')
+  const [complianceDetailsOpen, setComplianceDetailsOpen] = useState(false)
   const [pmScheduleId, setPmScheduleId] = useState(null)
   const [pmPreFilled, setPmPreFilled] = useState(false)
   const [assets, setAssets] = useState([])
@@ -97,6 +99,10 @@ export default function WorkOrderForm({ profile }) {
       setReporter(data.reporter || '')
       if (data.apartment_number || data.reporter) {
         setResidentDetailsOpen(true)
+      }
+      setComplianceCategory(data.compliance_category || '')
+      if (data.compliance_category) {
+        setComplianceDetailsOpen(true)
       }
     }
     setFetching(false)
@@ -226,6 +232,7 @@ export default function WorkOrderForm({ profile }) {
       pm_schedule_id: pmScheduleId || null,
       apartment_number: apartmentNumber || null,
       reporter: reporter || null,
+      compliance_category: complianceCategory || null,
       closed_at: status === 'closed' ? new Date().toISOString() : null
     }
 
@@ -867,6 +874,78 @@ export default function WorkOrderForm({ profile }) {
                   </select>
                   <p style={{ fontSize: '0.72rem', color: '#6a6d85', margin: '0.3rem 0 0', fontFamily: 'Inter, sans-serif' }}>
                     Who flagged this issue
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* COMPLIANCE DETAILS SECTION (Pro feature) */}
+          <div style={{
+            background: 'rgba(22,33,62,0.5)',
+            border: '1px solid rgba(201,168,76,0.18)',
+            borderRadius: '10px',
+            marginBottom: '1.5rem',
+            overflow: 'hidden'
+          }}>
+            <button
+              type="button"
+              onClick={() => {
+                if (!organization?.is_upgraded) {
+                  navigate('/upgrade')
+                } else {
+                  setComplianceDetailsOpen(!complianceDetailsOpen)
+                }
+              }}
+              style={{
+                width: '100%',
+                padding: '0.85rem 1rem',
+                background: 'rgba(201,168,76,0.04)',
+                border: 'none',
+                borderBottom: complianceDetailsOpen && organization?.is_upgraded ? '1px solid rgba(201,168,76,0.18)' : 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                cursor: 'pointer',
+                fontFamily: 'Inter, sans-serif'
+              }}
+              aria-expanded={complianceDetailsOpen && organization?.is_upgraded}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <span style={{ color: '#c9a84c', fontSize: '0.95rem' }}>{organization?.is_upgraded ? '⚑' : '🔒'}</span>
+                <span style={{ fontSize: '0.88rem', fontWeight: 500, color: '#f8f6f1' }}>
+                  Compliance Details
+                </span>
+                {!organization?.is_upgraded ? (
+                  <span style={{ fontSize: '0.7rem', color: '#c9a84c', background: 'rgba(201,168,76,0.15)', padding: '2px 8px', borderRadius: '4px', fontWeight: 500 }}>Pro Feature</span>
+                ) : (
+                  <span style={{ fontSize: '0.7rem', color: '#9a9db5', background: 'rgba(154,157,181,0.1)', padding: '2px 8px', borderRadius: '4px' }}>Optional</span>
+                )}
+              </div>
+              {organization?.is_upgraded && (
+                <span style={{ color: '#c9a84c', fontSize: '0.9rem', transform: complianceDetailsOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>⌄</span>
+              )}
+            </button>
+            {complianceDetailsOpen && organization?.is_upgraded && (
+              <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.72rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9a9db5', marginBottom: '0.4rem', fontWeight: 500, fontFamily: 'Inter, sans-serif' }}>
+                    Regulation Category
+                  </label>
+                  <select
+                    value={complianceCategory}
+                    onChange={e => setComplianceCategory(e.target.value)}
+                    style={inputStyle}
+                  >
+                    <option value="">Not compliance related</option>
+                    <option value="Fire Safety">Fire Safety (fire drills, alarms, extinguishers, sprinklers)</option>
+                    <option value="Emergency Systems">Emergency Systems (generators, emergency lighting, exits)</option>
+                    <option value="Water Safety">Water Safety (hot water temperature, plumbing)</option>
+                    <option value="Structural">Structural (building integrity, general repair)</option>
+                    <option value="Sanitation">Sanitation (kitchen, laundry, pest control)</option>
+                  </select>
+                  <p style={{ fontSize: '0.72rem', color: '#6a6d85', margin: '0.3rem 0 0', fontFamily: 'Inter, sans-serif' }}>
+                    Tag this work order for regulatory reporting and survey preparation
                   </p>
                 </div>
               </div>

@@ -64,6 +64,7 @@ export default function Reports({ profile }) {
   const [filterAsset, setFilterAsset] = useState('')
   const [filterApartment, setFilterApartment] = useState('')
   const [filterReporter, setFilterReporter] = useState('')
+  const [filterCompliance, setFilterCompliance] = useState('')
 
   const [technicians, setTechnicians] = useState([])
   const [assets, setAssets] = useState([])
@@ -86,7 +87,7 @@ export default function Reports({ profile }) {
     if (profile?.role === 'manager') {
       runQuery()
     }
-  }, [dateFrom, dateTo, filterStatus, filterPriority, filterTech, filterAsset, filterApartment, filterReporter])
+  }, [dateFrom, dateTo, filterStatus, filterPriority, filterTech, filterAsset, filterApartment, filterReporter, filterCompliance])
 
   async function fetchFilterOptions() {
     const [techRes, assetRes, orgRes] = await Promise.all([
@@ -106,7 +107,7 @@ export default function Reports({ profile }) {
     let q = supabase
       .from('work_orders')
       .select(`
-        id, title, description, priority, status,
+        id, title, description, priority, status, compliance_category,
         apartment_number, reporter,
         created_at, closed_at,
         assets:asset_id ( name ),
@@ -122,6 +123,15 @@ export default function Reports({ profile }) {
     if (filterAsset) q = q.eq('asset_id', filterAsset)
     if (filterApartment) q = q.ilike('apartment_number', filterApartment.trim())
     if (filterReporter) q = q.eq('reporter', filterReporter)
+    if (filterCompliance) {
+      if (filterCompliance === '__any__') {
+        q = q.not('compliance_category', 'is', null)
+      } else if (filterCompliance === '__none__') {
+        q = q.is('compliance_category', null)
+      } else {
+        q = q.eq('compliance_category', filterCompliance)
+      }
+    }
 
     const { data, error: qErr } = await q
     if (qErr) {
@@ -145,6 +155,7 @@ export default function Reports({ profile }) {
       'Assigned To': wo.assigned_profile?.full_name || '',
       Asset: wo.assets?.name || '',
       Apartment: wo.apartment_number || '',
+      Compliance: wo.compliance_category || '',
       Reporter: wo.reporter || ''
     }))
   }
@@ -225,18 +236,24 @@ export default function Reports({ profile }) {
       }
       if (filterApartment) filters.push('Apartment: ' + filterApartment)
       if (filterReporter) filters.push('Reporter: ' + filterReporter)
+      if (filterCompliance) {
+        if (filterCompliance === '__any__') filters.push('Compliance: any')
+        else if (filterCompliance === '__none__') filters.push('Compliance: none')
+        else filters.push('Compliance: ' + filterCompliance)
+      }
       if (filters.length) {
         doc.text('Filters: ' + filters.join('  |  '), 40, 130)
       }
 
       autoTable(doc, {
         startY: filters.length ? 145 : 130,
-        head: [['Created', 'Title', 'Status', 'Priority', 'Apt', 'Reporter', 'Assigned To', 'Asset', 'Closed', 'Days']],
+        head: [['Created', 'Title', 'Status', 'Priority', 'Compliance', 'Apt', 'Reporter', 'Assigned To', 'Asset', 'Closed', 'Days']],
         body: rows.map(r => [
           r.Created,
           r.Title,
           r.Status,
           r.Priority,
+          r.Compliance,
           r.Apartment,
           r.Reporter,
           r['Assigned To'],
@@ -356,6 +373,22 @@ export default function Reports({ profile }) {
               <select value={filterReporter} onChange={e => setFilterReporter(e.target.value)} style={input}>
                 <option value="">All reporters</option>
                 {REPORTERS.map(r => <option key={r} value={r}>{r}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={fieldLabel}>
+                <span style={{ color: '#c9a84c', marginRight: '4px' }}>⚑</span>
+                Compliance
+              </label>
+              <select value={filterCompliance} onChange={e => setFilterCompliance(e.target.value)} style={input}>
+                <option value="">All work orders</option>
+                <option value="__any__">Compliance only (any category)</option>
+                <option value="Fire Safety">Fire Safety</option>
+                <option value="Emergency Systems">Emergency Systems</option>
+                <option value="Water Safety">Water Safety</option>
+                <option value="Structural">Structural</option>
+                <option value="Sanitation">Sanitation</option>
+                <option value="__none__">Non-compliance only</option>
               </select>
             </div>
           </div>

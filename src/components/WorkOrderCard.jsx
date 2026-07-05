@@ -183,6 +183,23 @@ export default function WorkOrderCard({
           }}>
             {wo.status}
           </span>
+          {wo.compliance_category && (
+            <span style={{
+              padding: pillPadding,
+              borderRadius: '20px',
+              fontSize: pillFontSize,
+              letterSpacing: '0.06em',
+              color: '#9a9db5',
+              border: '1px solid rgba(154,157,181,0.4)',
+              background: 'transparent',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}>
+              <span style={{ color: '#c9a84c' }}>⚑</span>
+              {wo.compliance_category}
+            </span>
+          )}
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexShrink: 0, paddingTop: '2px' }}>
