@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import Sidebar from '../components/Sidebar'
 import TrialBanner from '../components/TrialBanner'
 import TeamInviteBanner from '../components/TeamInviteBanner'
 import LowStockWidget from '../components/LowStockWidget'
@@ -244,9 +245,7 @@ export default function Dashboard({ profile }) {
     ? workOrders
     : workOrders.filter(wo => wo.priority === filter)
 
-  const displayedOrders = selectedAsset
-    ? filtered.filter(wo => wo.asset_id === selectedAsset)
-    : filtered
+  const displayedOrders = filtered
 
   const counts = {
     critical: workOrders.filter(wo => wo.priority === 'critical').length,
@@ -286,41 +285,10 @@ export default function Dashboard({ profile }) {
           }}>
             The Toolsmith CMMS
           </span>
-          <div className="desktop-nav" style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-            <button onClick={() => navigate('/admin')} style={navBtnStyle}>Admin</button>
-            <button onClick={handleSignOut} style={navBtnStyle}>Sign Out</button>
-          </div>
-          <button
-            onClick={() => setMobileNavOpen(!mobileNavOpen)}
-            className="mobile-hamburger"
-            style={{
-              display: 'none',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              flexDirection: 'column',
-              gap: '4px',
-              padding: '4px'
-            }}
-          >
-            {[0, 1, 2].map(i => (
-              <span key={i} style={{
-                display: 'block', width: '20px', height: '2px',
-                background: '#9a9db5', borderRadius: '1px'
-              }} />
-            ))}
-          </button>
+
         </div>
 
-        {mobileNavOpen && (
-          <div className="mobile-nav-dropdown" style={{
-            display: 'none', flexDirection: 'column', gap: '6px',
-            padding: '0.75rem 5%', borderTop: '1px solid rgba(201,168,76,0.12)'
-          }}>
-            <button onClick={() => { navigate('/admin'); setMobileNavOpen(false) }} style={mobileNavBtnStyle}>Admin</button>
-            <button onClick={handleSignOut} style={mobileNavBtnStyle}>Sign Out</button>
-          </div>
-        )}
+
       </nav>
 
       <style>{`
@@ -342,221 +310,7 @@ export default function Dashboard({ profile }) {
 
       <div style={{ display: 'flex' }} className="app-body">
 
-        {/* SIDEBAR */}
-        <div
-          className="sidebar"
-          style={{
-            width: '260px',
-            flexShrink: 0,
-            background: '#16213e',
-            borderRight: '1px solid rgba(201,168,76,0.15)',
-            padding: '1.5rem 1rem',
-            minHeight: 'calc(100vh - 64px)',
-            boxSizing: 'border-box'
-          }}
-        >
-          <p style={{
-            fontSize: '0.7rem', letterSpacing: '0.18em',
-            textTransform: 'uppercase', color: '#c9a84c',
-            marginBottom: '1rem', fontWeight: '500'
-          }}>
-            Assets
-          </p>
-
-          {!isPro ? (
-            <div style={{
-              background: 'rgba(201,168,76,0.05)',
-              border: '1px solid rgba(201,168,76,0.2)',
-              borderRadius: '10px', padding: '1.25rem 1rem', textAlign: 'center'
-            }}>
-              <div style={{
-                width: '44px', height: '44px', borderRadius: '50%',
-                background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.2)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                margin: '0 auto 0.75rem', fontSize: '1.2rem'
-              }}>🔒</div>
-              <p style={{ fontSize: '0.88rem', fontWeight: '500', color: '#f8f6f1', marginBottom: '0.75rem', lineHeight: '1.4' }}>
-                Unlock Asset Management
-              </p>
-              <button
-                onClick={() => navigate('/upgrade')}
-                style={{
-                  width: '100%', background: 'linear-gradient(135deg, #c9a84c, #e8c97a)',
-                  color: '#1a1a2e', border: 'none', borderRadius: '6px',
-                  padding: '0.6rem', fontSize: '0.78rem', fontWeight: '700',
-                  letterSpacing: '0.06em', textTransform: 'uppercase',
-                  cursor: 'pointer', fontFamily: 'Inter, sans-serif'
-                }}
-              >
-                Upgrade to Pro — $49/mo
-              </button>
-            </div>
-          ) : (
-            <div>
-              <button
-                onClick={openAddAsset}
-                style={{
-                  width: '100%', background: 'linear-gradient(135deg, #c9a84c, #e8c97a)',
-                  color: '#1a1a2e', border: 'none', borderRadius: '8px',
-                  padding: '0.7rem', fontSize: '0.82rem', fontWeight: '700',
-                  letterSpacing: '0.06em', textTransform: 'uppercase',
-                  cursor: 'pointer', fontFamily: 'Inter, sans-serif', marginBottom: '1rem'
-                }}
-              >
-                + Add Asset
-              </button>
-
-              <div style={{ position: 'relative', marginBottom: '1.5rem' }}>
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  onFocus={() => setSearchFocused(true)}
-                  onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
-                  placeholder="Search assets..."
-                  style={{
-                    width: '100%', background: 'rgba(255,255,255,0.05)',
-                    border: '1px solid rgba(201,168,76,0.18)', borderRadius: '8px',
-                    padding: '0.55rem 0.85rem', color: '#f8f6f1',
-                    fontSize: '0.82rem', outline: 'none',
-                    fontFamily: 'Inter, sans-serif', boxSizing: 'border-box'
-                  }}
-                />
-                {searchFocused && searchQuery.trim() && (
-                  <div style={{
-                    position: 'absolute', top: '100%', left: 0, right: 0,
-                    background: '#1e2245', border: '1px solid rgba(201,168,76,0.25)',
-                    borderRadius: '8px', marginTop: '0.3rem', maxHeight: '280px',
-                    overflowY: 'auto', zIndex: 20, boxShadow: '0 8px 24px rgba(0,0,0,0.4)'
-                  }}>
-                    {searchResults.length === 0 ? (
-                      <p style={{ padding: '0.75rem 0.85rem', fontSize: '0.8rem', color: '#9a9db5' }}>
-                        No matches for "{searchQuery}"
-                      </p>
-                    ) : (
-                      searchResults.map(asset => (
-                        <div
-                          key={asset.id}
-                          onClick={() => openEditAsset(asset)}
-                          style={{ padding: '0.65rem 0.85rem', cursor: 'pointer', borderBottom: '1px solid rgba(201,168,76,0.08)' }}
-                          onMouseEnter={e => e.currentTarget.style.background = 'rgba(201,168,76,0.08)'}
-                          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                        >
-                          <p style={{ fontSize: '0.85rem', color: '#f8f6f1', fontWeight: '500', marginBottom: '0.15rem' }}>
-                            {asset.name}
-                          </p>
-                          <p style={{ fontSize: '0.72rem', color: '#9a9db5' }}>
-                            {asset.location || 'No location'}{asset.category ? ` · ${asset.category}` : ''}
-                          </p>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <p style={{
-                fontSize: '0.68rem', letterSpacing: '0.16em',
-                textTransform: 'uppercase', color: '#c9a84c',
-                marginBottom: '0.65rem', fontWeight: '500'
-              }}>
-                Maintenance Coming Up · 7 Days
-              </p>
-
-              {upcomingPms.length === 0 ? (
-                <div style={{
-                  background: 'rgba(201,168,76,0.04)',
-                  border: '1px dashed rgba(201,168,76,0.2)',
-                  borderRadius: '8px', padding: '1rem', textAlign: 'center'
-                }}>
-                  <p style={{ fontSize: '0.78rem', color: '#9a9db5', lineHeight: '1.55' }}>
-                    No PMs due in the next 7 days. You're all caught up.
-                  </p>
-                </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  {upcomingPms.map(pm => {
-                    const relText = getRelativeDueText(pm.next_due_at)
-                    const isOverdue = relText.startsWith('Overdue') || relText === 'Due today'
-                    return (
-                      <div
-                        key={pm.id}
-                        onClick={() => openPmInAsset(pm)}
-                        style={{
-                          background: '#1e2245',
-                          border: `1px solid ${isOverdue ? 'rgba(224,108,117,0.35)' : 'rgba(201,168,76,0.18)'}`,
-                          borderRadius: '8px',
-                          padding: '0.65rem 0.75rem',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        <p style={{
-                          fontFamily: 'Georgia, serif',
-                          fontSize: '0.85rem',
-                          fontWeight: '600',
-                          color: '#f8f6f1',
-                          margin: '0 0 0.2rem 0',
-                          lineHeight: 1.3
-                        }}>
-                          {pm.title}
-                        </p>
-                        <p style={{
-                          fontSize: '0.7rem',
-                          color: '#9a9db5',
-                          margin: '0 0 0.3rem 0',
-                          lineHeight: 1.3
-                        }}>
-                          {pm.assets?.name || 'Unknown asset'}
-                        </p>
-                        <p style={{
-                          fontSize: '0.68rem',
-                          margin: '0 0 0.5rem 0',
-                          color: isOverdue ? '#e06c75' : '#9a9db5',
-                          lineHeight: 1.3
-                        }}>
-                          {relText || formatDueDate(pm.next_due_at)}
-                          <span style={{
-                            display: 'inline-block',
-                            marginLeft: '0.4rem',
-                            padding: '0.05rem 0.4rem',
-                            borderRadius: '8px',
-                            fontSize: '0.6rem',
-                            fontWeight: '700',
-                            letterSpacing: '0.08em',
-                            textTransform: 'uppercase',
-                            color: PRIORITY_COLOR[pm.priority],
-                            border: `1px solid ${PRIORITY_COLOR[pm.priority]}`
-                          }}>
-                            {pm.priority}
-                          </span>
-                        </p>
-                        <button
-                          onClick={(e) => generateWorkOrderFromPm(pm, e)}
-                          style={{
-                            width: '100%',
-                            background: 'none',
-                            border: '1px solid rgba(201,168,76,0.35)',
-                            color: '#c9a84c',
-                            borderRadius: '6px',
-                            padding: '0.35rem 0.5rem',
-                            fontSize: '0.66rem',
-                            fontWeight: '500',
-                            letterSpacing: '0.06em',
-                            textTransform: 'uppercase',
-                            cursor: 'pointer',
-                            fontFamily: 'Inter, sans-serif'
-                          }}
-                        >
-                          + Generate WO
-                        </button>
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+        <Sidebar profile={profile} />
 
         {/* MAIN CONTENT */}
         <div
@@ -647,18 +401,7 @@ export default function Dashboard({ profile }) {
                   {f === 'all' ? 'All' : f}
                 </button>
               ))}
-              {selectedAsset && (
-                <button
-                  onClick={() => setSelectedAsset(null)}
-                  style={{
-                    padding: '0.35rem 0.9rem', borderRadius: '20px',
-                    border: '1px solid rgba(108,182,224,0.4)', background: 'rgba(108,182,224,0.08)',
-                    color: '#6cb6e0', fontSize: '0.8rem', cursor: 'pointer', fontFamily: 'Inter, sans-serif'
-                  }}
-                >
-                  {getAssetName(selectedAsset)} ✕
-                </button>
-              )}
+
             </div>
             <button
               onClick={() => navigate('/work-order/new')}

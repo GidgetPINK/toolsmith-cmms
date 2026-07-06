@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import Sidebar from '../components/Sidebar'
 
 export default function Admin({ profile }) {
   const navigate = useNavigate()
@@ -188,11 +189,10 @@ export default function Admin({ profile }) {
   }
 
   return (
-    <div style={page}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: '#1A1A2E' }}>
+      <Sidebar profile={profile} />
+      <div style={{ ...page, flex: 1, minWidth: 0, minHeight: 'auto' }}>
       <div style={container}>
-        <div style={headerRow}>
-          <button style={backBtn} onClick={() => navigate('/')}>← Back</button>
-        </div>
         <h1 style={{...heading, textAlign: 'center', marginBottom: '0.5rem'}}>Admin</h1>
         <p style={{...subhead, textAlign: 'center'}}>
           Manage your account, your team, and how your assets are tracked.
@@ -317,6 +317,7 @@ export default function Admin({ profile }) {
             </button>
           </>
         )}
+      </div>
       </div>
     </div>
   )

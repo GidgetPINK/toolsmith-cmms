@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import Sidebar from '../components/Sidebar'
 import DowntimeWidget from '../components/DowntimeWidget'
 import WorkOrderCard from '../components/WorkOrderCard'
 import useUnreadMessages from '../hooks/useUnreadMessages'
@@ -154,52 +155,17 @@ export default function Assets({ profile }) {
 
   return (
     <div style={{
+      display: 'flex',
       minHeight: '100vh',
       background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
       fontFamily: 'Inter, sans-serif',
       color: '#f8f6f1'
     }}>
 
-      {/* NAV */}
-      <nav style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '1.25rem 5%',
-        background: 'rgba(26,26,46,0.95)',
-        borderBottom: '1px solid rgba(201,168,76,0.18)',
-        position: 'sticky',
-        top: 0,
-        zIndex: 50
-      }}>
-        <span style={{
-          fontFamily: 'Georgia, serif',
-          color: '#c9a84c',
-          fontSize: '1.3rem',
-          fontWeight: '600'
-        }}>
-          The Toolsmith CMMS
-        </span>
-        <button
-          onClick={() => navigate('/')}
-          style={{
-            background: 'none',
-            border: '1px solid rgba(201,168,76,0.18)',
-            color: '#9a9db5',
-            padding: '0.4rem 1rem',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            fontSize: '0.82rem',
-            letterSpacing: '0.06em',
-            textTransform: 'uppercase',
-            fontFamily: 'Inter, sans-serif'
-          }}
-        >
-          Back
-        </button>
-      </nav>
+      <Sidebar profile={profile} />
 
-      <div style={{ padding: '2.5rem 5%' }}>
+      <div style={{ flex: 1, minWidth: 0, overflow: 'auto' }}>
+        <div style={{ padding: '2.5rem 5%' }}>
 
         {/* HEADER */}
         <div style={{ marginBottom: '2rem' }}>
@@ -580,122 +546,124 @@ export default function Assets({ profile }) {
               </div>
             )}
 
-            {/* TWO COLUMN LAYOUT */}
+            {/* STACKED LAYOUT */}
+            <div style={{ marginBottom: '1.25rem' }}>
+              <DowntimeWidget
+                organizationId={profile.organization_id}
+                isPro={true}
+              />
+            </div>
+
+            {/* AT A GLANCE STRIP */}
             <div style={{
               display: 'grid',
-              gridTemplateColumns: '280px 1fr',
-              gap: '1.5rem',
-              alignItems: 'start'
-            }}
-            className="assets-two-col"
-            >
-
-              {/* LEFT RAIL */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <DowntimeWidget
-                  organizationId={profile.organization_id}
-                  isPro={true}
-                />
-
-                {/* AT A GLANCE */}
-                <div style={{
-                  background: 'rgba(22,33,62,0.5)',
-                  border: '1px solid rgba(201,168,76,0.18)',
-                  borderRadius: '10px',
-                  padding: '1rem'
-                }}>
-                  <p style={{
-                    fontSize: '0.7rem',
-                    letterSpacing: '0.12em',
-                    textTransform: 'uppercase',
-                    color: '#9a9db5',
-                    margin: '0 0 0.75rem',
-                    fontWeight: 500
-                  }}>
-                    At a glance
-                  </p>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: '0.85rem' }}>
-                    <span style={{ color: '#9a9db5' }}>Assets</span>
-                    <span style={{ color: '#f8f6f1', fontWeight: 500 }}>{assets.length}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: '0.85rem' }}>
-                    <span style={{ color: '#9a9db5' }}>Open work orders</span>
-                    <span style={{ color: '#f8f6f1', fontWeight: 500 }}>{openWoCount}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: '0.85rem' }}>
-                    <span style={{ color: '#9a9db5' }}>PMs due this week</span>
-                    <span style={{ color: pmScheduleCount > 0 ? '#e8c97a' : '#f8f6f1', fontWeight: 500 }}>{pmScheduleCount}</span>
-                  </div>
-                </div>
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: '0.75rem',
+              marginBottom: '1.5rem'
+            }}>
+              <div style={{
+                background: 'rgba(22,33,62,0.5)',
+                border: '1px solid rgba(201,168,76,0.18)',
+                borderRadius: '10px',
+                padding: '1rem 1.25rem',
+                textAlign: 'center'
+              }}>
+                <p style={{ fontSize: '1.5rem', fontWeight: 700, color: '#f8f6f1', margin: '0 0 0.25rem' }}>
+                  {assets.length}
+                </p>
+                <p style={{ fontSize: '0.7rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9a9db5', margin: 0 }}>
+                  Assets
+                </p>
               </div>
-
-              {/* RIGHT: WORK ORDER FEED */}
-              <div>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: '0.75rem'
-                }}>
-                  <p style={{
-                    fontSize: '0.85rem',
-                    color: '#c9a84c',
-                    margin: 0,
-                    fontWeight: 500,
-                    letterSpacing: '0.02em'
-                  }}>
-                    Recent work on your equipment
-                  </p>
-                  <span style={{ fontSize: '0.78rem', color: '#9a9db5' }}>
-                    {workOrders.length === 0
-                      ? 'No asset work orders yet'
-                      : `Showing ${workOrders.length}`}
-                  </span>
-                </div>
-
-                {workOrders.length === 0 ? (
-                  <div style={{
-                    background: '#1e2245',
-                    border: '1px solid rgba(201,168,76,0.18)',
-                    borderRadius: '12px',
-                    padding: '2rem',
-                    textAlign: 'center'
-                  }}>
-                    <p style={{ color: '#9a9db5', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
-                      No work orders on assets yet.
-                    </p>
-                    <p style={{ color: '#6a6d85', fontSize: '0.82rem', margin: 0 }}>
-                      When a work order is created and linked to an asset, it will show up here.
-                    </p>
-                  </div>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                    {workOrders.map(wo => (
-                      <WorkOrderCard
-                        key={wo.id}
-                        wo={wo}
-                        hasMessages={hasMessagesIds.has(wo.id)}
-                        hasUnread={unreadIds.has(wo.id)}
-                        assetName={getAssetName(wo.asset_id)}
-                        techName={getTechName(wo.assigned_to)}
-                        onClick={() => navigate(`/work-order/${wo.id}`)}
-                      />
-                    ))}
-                  </div>
-                )}
+              <div style={{
+                background: 'rgba(22,33,62,0.5)',
+                border: '1px solid rgba(201,168,76,0.18)',
+                borderRadius: '10px',
+                padding: '1rem 1.25rem',
+                textAlign: 'center'
+              }}>
+                <p style={{ fontSize: '1.5rem', fontWeight: 700, color: '#c9a84c', margin: '0 0 0.25rem' }}>
+                  {openWoCount}
+                </p>
+                <p style={{ fontSize: '0.7rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9a9db5', margin: 0 }}>
+                  Open Work Orders
+                </p>
+              </div>
+              <div style={{
+                background: 'rgba(22,33,62,0.5)',
+                border: '1px solid rgba(201,168,76,0.18)',
+                borderRadius: '10px',
+                padding: '1rem 1.25rem',
+                textAlign: 'center'
+              }}>
+                <p style={{ fontSize: '1.5rem', fontWeight: 700, color: pmScheduleCount > 0 ? '#e8c97a' : '#f8f6f1', margin: '0 0 0.25rem' }}>
+                  {pmScheduleCount}
+                </p>
+                <p style={{ fontSize: '0.7rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9a9db5', margin: 0 }}>
+                  PMs Due This Week
+                </p>
               </div>
             </div>
 
-            {/* Responsive: stack columns on narrow screens */}
-            <style>{`
-              @media (max-width: 900px) {
-                .assets-two-col {
-                  grid-template-columns: 1fr !important;
-                }
-              }
-            `}</style>
+            {/* WORK ORDER FEED */}
+            <div>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: '0.75rem'
+              }}>
+                <p style={{
+                  fontSize: '0.9rem',
+                  color: '#c9a84c',
+                  margin: 0,
+                  fontWeight: 500,
+                  letterSpacing: '0.02em'
+                }}>
+                  Recent work on your equipment
+                </p>
+                <span style={{ fontSize: '0.78rem', color: '#9a9db5' }}>
+                  {workOrders.length === 0
+                    ? 'No asset work orders yet'
+                    : `Showing ${workOrders.length}`}
+                </span>
+              </div>
+
+              {workOrders.length === 0 ? (
+                <div style={{
+                  background: '#1e2245',
+                  border: '1px solid rgba(201,168,76,0.18)',
+                  borderRadius: '12px',
+                  padding: '2rem',
+                  textAlign: 'center'
+                }}>
+                  <p style={{ color: '#9a9db5', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
+                    No work orders on assets yet.
+                  </p>
+                  <p style={{ color: '#6a6d85', fontSize: '0.82rem', margin: 0 }}>
+                    When a work order is created and linked to an asset, it will show up here.
+                  </p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {workOrders.map(wo => (
+                    <WorkOrderCard
+                      key={wo.id}
+                      wo={wo}
+                      hasMessages={hasMessagesIds.has(wo.id)}
+                      hasUnread={unreadIds.has(wo.id)}
+                      assetName={getAssetName(wo.asset_id)}
+                      techName={getTechName(wo.assigned_to)}
+                      onClick={() => navigate(`/work-order/${wo.id}`)}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+
           </div>
         )}
+        </div>
       </div>
     </div>
   )

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import Sidebar from '../components/Sidebar'
 import PartsPicker from '../components/PartsPicker'
 import WorkOrderChat from '../components/WorkOrderChat'
 
@@ -318,62 +319,26 @@ export default function WorkOrderForm({ profile }) {
   }
 
   if (fetching) return (
-    <div style={{
-      minHeight: '100vh',
-      background: '#1a1a2e',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center'
-    }}>
-      <p style={{ color: '#9a9db5', fontFamily: 'Inter, sans-serif' }}>Loading...</p>
+    <div style={{ display: 'flex', minHeight: '100vh', background: '#1a1a2e' }}>
+      <Sidebar profile={profile} />
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ color: '#9a9db5', fontFamily: 'Inter, sans-serif' }}>Loading...</p>
+      </div>
     </div>
   )
 
   return (
     <div style={{
+      display: 'flex',
       minHeight: '100vh',
       background: '#1a1a2e',
       fontFamily: 'Inter, sans-serif',
       color: '#f8f6f1'
     }}>
 
-      <nav style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '1.25rem 5%',
-        background: 'rgba(26,26,46,0.95)',
-        borderBottom: '1px solid rgba(201,168,76,0.18)',
-        position: 'sticky',
-        top: 0,
-        zIndex: 50
-      }}>
-        <span style={{
-          fontFamily: 'Georgia, serif',
-          color: '#c9a84c',
-          fontSize: '1.3rem',
-          fontWeight: '600'
-        }}>
-          The Toolsmith CMMS
-        </span>
-        <button
-          onClick={() => navigate('/')}
-          style={{
-            background: 'none',
-            border: '1px solid rgba(201,168,76,0.18)',
-            color: '#9a9db5',
-            padding: '0.4rem 1rem',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            fontSize: '0.82rem',
-            letterSpacing: '0.06em',
-            textTransform: 'uppercase',
-            fontFamily: 'Inter, sans-serif'
-          }}
-        >
-          Back
-        </button>
-      </nav>
+      <Sidebar profile={profile} />
+
+      <div style={{ flex: 1, minWidth: 0, overflow: 'auto' }}>
 
       <style>{`
         @media (max-width: 900px) {
@@ -1113,6 +1078,7 @@ export default function WorkOrderForm({ profile }) {
           onAdded={handlePartAdded}
         />
       )}
+      </div>
     </div>
   )
 }

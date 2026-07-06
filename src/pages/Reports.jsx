@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import Sidebar from '../components/Sidebar'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 
@@ -297,12 +298,10 @@ export default function Reports({ profile }) {
   const previewRow = { background: 'rgba(255,255,255,0.03)', borderRadius: '6px', padding: '0.65rem 0.8rem', marginBottom: '0.4rem' }
 
   return (
-    <div style={page}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: '#1A1A2E' }}>
+      <Sidebar profile={profile} />
+      <div style={{ ...page, flex: 1, minWidth: 0, minHeight: 'auto' }}>
       <div style={container}>
-        <div style={headerRow}>
-          <button style={backBtn} onClick={() => navigate('/admin')}>← Back</button>
-        </div>
-
         <p style={eyebrow}>Work Order Reports</p>
         <h1 style={heading}>Export work history</h1>
         <p style={subhead}>Filter your work orders and export to CSV or PDF for state surveyors, compliance audits, or internal review.</p>
@@ -458,6 +457,7 @@ export default function Reports({ profile }) {
             {exporting ? 'Working...' : 'Download PDF'}
           </button>
         </div>
+      </div>
       </div>
     </div>
   )
