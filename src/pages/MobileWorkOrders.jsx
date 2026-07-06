@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import MobileBottomNav from '../components/MobileBottomNav'
 import LowStockWidget from '../components/LowStockWidget'
-import DowntimeWidget from '../components/DowntimeWidget'
 import TrialBanner from '../components/TrialBanner'
 import TeamInviteBanner from '../components/TeamInviteBanner'
 import useUnreadMessages from '../hooks/useUnreadMessages'
@@ -268,10 +267,6 @@ export default function MobileWorkOrders({ profile }) {
             isPro={isPro}
           />
         )}
-        <DowntimeWidget
-          organizationId={profile.organization_id}
-          isPro={isPro}
-        />
 
         {/* COMING UP SECTION (Pro only) */}
         {isPro && (

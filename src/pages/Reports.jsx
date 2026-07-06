@@ -361,6 +361,7 @@ export default function Reports({ profile }) {
             </div>
           </div>
         </div>
+        <MobileBottomNav />
       </div>
     )
   }
