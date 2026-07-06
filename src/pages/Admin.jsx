@@ -240,18 +240,6 @@ export default function Admin({ profile }) {
 
         {isManager && (
           <>
-            <div style={sectionLabel}>Reports</div>
-            <button
-              style={settingRow}
-              onClick={() => navigate('/reports')}
-            >
-              <div style={{ flex: 1 }}>
-                <h3 style={settingTitle}>Work Order Reports</h3>
-                <p style={settingDesc}>Export work order history for state surveyors and compliance audits</p>
-              </div>
-              <span style={chevron}>›</span>
-            </button>
-
             <div style={sectionLabel}>Team</div>
             <button
               style={settingRow}
@@ -276,25 +264,6 @@ export default function Admin({ profile }) {
                   {portalLoading
                     ? 'Opening Stripe portal...'
                     : 'Update payment method, view invoices, change plans, or cancel'}
-                </p>
-              </div>
-              <span style={chevron}>›</span>
-            </button>
-
-            <div style={sectionLabel}>Inventory</div>
-            <button
-              style={settingRow}
-              onClick={() => navigate(isUpgraded ? '/parts' : '/upgrade')}
-            >
-              <div style={{ flex: 1 }}>
-                <h3 style={settingTitle}>
-                  Parts and Inventory
-                  {!isUpgraded && <span style={proBadge}>Pro</span>}
-                </h3>
-                <p style={settingDesc}>
-                  {isUpgraded
-                    ? 'Manage parts, track usage, monitor stock levels'
-                    : 'Manage parts inventory. Available on the Pro plan.'}
                 </p>
               </div>
               <span style={chevron}>›</span>

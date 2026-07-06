@@ -462,6 +462,7 @@ export default function WorkOrderForm({ profile }) {
               >
                 <option value="open">Open</option>
                 <option value="in progress">In Progress</option>
+                <option value="completed">Completed</option>
                 <option value="closed">Closed</option>
               </select>
             </div>

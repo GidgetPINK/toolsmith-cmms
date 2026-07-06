@@ -22,6 +22,7 @@ export const PRIORITY_ORDER = { critical: 0, high: 1, standard: 2, routine: 3 }
 export const STATUS_COLOR = {
   open: '#c9a84c',
   'in progress': '#6cb6e0',
+  completed: '#7bc47f',
   closed: '#6a6d85'
 }
 

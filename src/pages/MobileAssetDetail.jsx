@@ -19,6 +19,7 @@ const PRIORITY_COLOR = {
 const STATUS_COLOR = {
   open: '#c9a84c',
   'in progress': '#6cb6e0',
+  completed: '#7bc47f',
   closed: '#6a6d85'
 }
 

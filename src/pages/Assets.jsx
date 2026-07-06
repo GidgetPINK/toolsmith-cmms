@@ -192,113 +192,61 @@ export default function Assets({ profile }) {
           <p style={{ color: '#9a9db5' }}>Loading...</p>
         ) : !organization?.is_upgraded ? (
 
-          /* LITE UPGRADE PROMPT (unchanged) */
-          <div style={{ maxWidth: '640px', margin: '0 auto' }}>
+          /* LITE UPGRADE PROMPT */
+          <div style={{ maxWidth: '640px', margin: '3rem auto' }}>
             <div style={{
               background: '#1e2245',
               border: '1px solid rgba(201,168,76,0.18)',
               borderRadius: '12px',
-              overflow: 'hidden',
-              marginBottom: '1.5rem'
+              padding: '2.5rem 2rem',
+              textAlign: 'center'
             }}>
               <div style={{
-                padding: '1.5rem',
-                borderBottom: '1px solid rgba(201,168,76,0.18)',
-                position: 'relative'
+                width: '52px', height: '52px', borderRadius: '50%',
+                background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.2)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                margin: '0 auto 1.25rem', fontSize: '1.5rem'
+              }}>🔒</div>
+              <h2 style={{
+                fontFamily: 'Georgia, serif',
+                fontSize: '1.5rem',
+                color: '#c9a84c',
+                marginBottom: '0.75rem',
+                fontWeight: 600
               }}>
-                <p style={{
-                  fontSize: '0.72rem',
-                  letterSpacing: '0.15em',
+                Asset tracking is a Pro feature
+              </h2>
+              <p style={{
+                color: '#f8f6f1',
+                fontSize: '0.95rem',
+                lineHeight: 1.7,
+                marginBottom: '1.75rem',
+                maxWidth: '440px',
+                marginLeft: 'auto',
+                marginRight: 'auto'
+              }}>
+                Track equipment, schedule preventive maintenance, log downtime, and tie work orders to assets. Available on the Pro plan.
+              </p>
+              <button
+                onClick={() => navigate('/upgrade')}
+                style={{
+                  background: 'linear-gradient(135deg, #c9a84c, #e8c97a)',
+                  border: 'none',
+                  color: '#1a1a2e',
+                  padding: '0.85rem 2rem',
+                  borderRadius: '8px',
+                  fontSize: '0.9rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.06em',
                   textTransform: 'uppercase',
-                  color: '#c9a84c',
-                  marginBottom: '1rem',
-                  fontWeight: '500'
-                }}>
-                  Preview
-                </p>
-                <div style={{ filter: 'blur(4px)', pointerEvents: 'none', userSelect: 'none' }}>
-                  {[
-                    { name: 'Air Compressor Unit 1', location: 'Building A', category: 'Mechanical' },
-                    { name: 'HVAC Rooftop Unit 2', location: 'Building B', category: 'HVAC' },
-                    { name: 'Conveyor Belt Line 3', location: 'Warehouse', category: 'Electrical' }
-                  ].map((a, i) => (
-                    <div key={i} style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      padding: '0.8rem 0',
-                      borderBottom: i < 2 ? '1px solid rgba(201,168,76,0.08)' : 'none'
-                    }}>
-                      <div>
-                        <p style={{ fontWeight: '500', color: '#f8f6f1', marginBottom: '0.15rem' }}>{a.name}</p>
-                        <p style={{ fontSize: '0.85rem', color: '#9a9db5' }}>{a.location}</p>
-                      </div>
-                      <span style={{
-                        fontSize: '0.75rem',
-                        color: '#c9a84c',
-                        border: '1px solid rgba(201,168,76,0.3)',
-                        padding: '0.2rem 0.65rem',
-                        borderRadius: '20px',
-                        alignSelf: 'center'
-                      }}>
-                        {a.category}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div style={{
-                padding: '2rem 1.5rem',
-                textAlign: 'center',
-                background: 'rgba(201,168,76,0.03)'
-              }}>
-                <h3 style={{
-                  fontFamily: 'Georgia, serif',
-                  fontSize: '1.35rem',
-                  color: '#c9a84c',
-                  marginBottom: '0.75rem',
-                  fontWeight: '600'
-                }}>
-                  Track your equipment
-                </h3>
-                <p style={{
-                  color: '#f8f6f1',
-                  fontSize: '0.95rem',
-                  lineHeight: '1.7',
-                  marginBottom: '1.5rem',
-                  maxWidth: '440px',
-                  margin: '0 auto 1.5rem'
-                }}>
-                  Asset tracking, preventive maintenance schedules, parts inventory, and downtime logging are Pro features. Upgrade to unlock the full toolkit.
-                </p>
-                <button
-                  onClick={() => navigate('/upgrade')}
-                  style={{
-                    background: 'linear-gradient(135deg, #c9a84c, #e8c97a)',
-                    border: 'none',
-                    color: '#1a1a2e',
-                    padding: '0.8rem 2rem',
-                    borderRadius: '8px',
-                    fontSize: '0.9rem',
-                    fontWeight: '700',
-                    letterSpacing: '0.06em',
-                    textTransform: 'uppercase',
-                    cursor: 'pointer',
-                    fontFamily: 'Inter, sans-serif'
-                  }}
-                >
-                  Upgrade to Pro — $49/month
-                </button>
-                <p style={{
-                  color: '#9a9db5',
-                  fontSize: '0.78rem',
-                  marginTop: '0.75rem'
-                }}>
-                  Cancel any time. No contracts.
-                </p>
-              </div>
+                  cursor: 'pointer',
+                  fontFamily: 'Inter, sans-serif'
+                }}
+              >
+                Upgrade to Pro
+              </button>
             </div>
           </div>
-
         ) : (
 
           /* PRO USER LAYOUT — Variant A */

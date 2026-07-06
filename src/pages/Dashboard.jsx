@@ -27,6 +27,7 @@ const PRIORITY_BG = {
 const STATUS_COLOR = {
   open: '#c9a84c',
   'in progress': '#6cb6e0',
+  completed: '#7bc47f',
   closed: '#6a6d85'
 }
 
@@ -152,7 +153,6 @@ export default function Dashboard({ profile }) {
       supabase
         .from('work_orders')
         .select('*')
-        .neq('status', 'closed')
         .order('created_at', { ascending: false }),
       supabase.from('profiles').select('*'),
       supabase.from('assets').select('*').order('name'),
@@ -231,29 +231,26 @@ export default function Dashboard({ profile }) {
   const firstName = profile?.full_name?.split(' ')[0] || 'there'
   const isPro = organization?.is_upgraded === true
 
-  const searchResults = useMemo(() => {
-    if (!searchQuery.trim()) return []
-    const q = searchQuery.toLowerCase()
-    return assets.filter(a =>
-      (a.name && a.name.toLowerCase().includes(q)) ||
-      (a.location && a.location.toLowerCase().includes(q)) ||
-      (a.category && a.category.toLowerCase().includes(q)) ||
-      (a.function && a.function.toLowerCase().includes(q))
-    ).slice(0, 8)
-  }, [searchQuery, assets])
+  const activeWorkOrders = workOrders.filter(wo => wo.status !== 'closed')
 
-  const filtered = filter === 'all'
-    ? workOrders
-    : workOrders.filter(wo => wo.priority === filter)
+  const filtered = searchQuery.trim()
+    ? workOrders.filter(wo => {
+        const q = searchQuery.toLowerCase()
+        return (wo.title || '').toLowerCase().includes(q) ||
+               (wo.description || '').toLowerCase().includes(q)
+      })
+    : (filter === 'all'
+        ? activeWorkOrders
+        : activeWorkOrders.filter(wo => wo.priority === filter))
 
   const displayedOrders = filtered
 
   const counts = {
-    critical: workOrders.filter(wo => wo.priority === 'critical').length,
-    high: workOrders.filter(wo => wo.priority === 'high').length,
-    standard: workOrders.filter(wo => wo.priority === 'standard').length,
-    routine: workOrders.filter(wo => wo.priority === 'routine').length,
-    total: workOrders.length
+    critical: activeWorkOrders.filter(wo => wo.priority === 'critical').length,
+    high: activeWorkOrders.filter(wo => wo.priority === 'high').length,
+    standard: activeWorkOrders.filter(wo => wo.priority === 'standard').length,
+    routine: activeWorkOrders.filter(wo => wo.priority === 'routine').length,
+    total: activeWorkOrders.length
   }
 
   return (
@@ -384,6 +381,30 @@ export default function Dashboard({ profile }) {
             />
           )}
 
+          <div style={{ marginBottom: '1rem' }}>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="Search all work orders by title or description..."
+              style={{
+                width: '100%',
+                padding: '0.65rem 1rem',
+                background: 'rgba(255,255,255,0.03)',
+                border: '1px solid rgba(201,168,76,0.2)',
+                borderRadius: '8px',
+                color: '#f8f6f1',
+                fontSize: '0.9rem',
+                fontFamily: 'Inter, sans-serif',
+                boxSizing: 'border-box'
+              }}
+            />
+            {searchQuery.trim() && (
+              <p style={{ fontSize: '0.72rem', color: '#9a9db5', margin: '0.4rem 0 0' }}>
+                Searching all work orders including completed and closed. Clear the search to return to the active feed.
+              </p>
+            )}
+          </div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
             <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
               {['all', 'critical', 'high', 'standard', 'routine'].map(f => (

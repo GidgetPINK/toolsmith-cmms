@@ -23,6 +23,7 @@ const PRIORITY_ORDER = { critical: 0, high: 1, standard: 2, routine: 3 }
 const STATUS_COLOR = {
   open: '#c9a84c',
   'in progress': '#6cb6e0',
+  completed: '#7bc47f',
   closed: '#6a6d85'
 }
 
@@ -90,6 +91,11 @@ export default function Queue({ profile }) {
   function getAssetName(id) {
     const asset = assets.find(a => a.id === id)
     return asset ? asset.name : 'No asset'
+  }
+
+  function getTechName(id) {
+    if (id === profile?.id) return profile?.full_name || 'You'
+    return 'Unassigned'
   }
 
   const firstName = profile?.full_name?.split(' ')[0] || 'there'

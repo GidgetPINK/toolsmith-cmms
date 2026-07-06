@@ -71,7 +71,10 @@ export default function Sidebar({ profile, organization }) {
         }}
       >
         <span style={{ width: '18px', textAlign: 'center', fontSize: '17px' }}>{item.icon}</span>
-        <span>{item.label}</span>
+        <span style={{ flex: 1 }}>{item.label}</span>
+        {locked && (
+          <span style={{ fontSize: '9px', color: '#c9a84c', background: 'rgba(201,168,76,0.15)', padding: '2px 6px', borderRadius: '4px', fontWeight: 600, letterSpacing: '0.04em' }}>PRO</span>
+        )}
       </a>
     )
   }
