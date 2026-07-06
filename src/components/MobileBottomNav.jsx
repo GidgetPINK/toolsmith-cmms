@@ -18,7 +18,9 @@ export default function MobileBottomNav() {
   }
 
   return (
-    <nav style={{
+    <>
+    <style>{`@media (min-width: 901px) { .mobile-bottom-nav { display: none !important; } }`}</style>
+    <nav className="mobile-bottom-nav" style={{
       position: 'fixed',
       bottom: 0,
       left: 0,
@@ -63,5 +65,6 @@ export default function MobileBottomNav() {
         )
       })}
     </nav>
+    </>
   )
 }

@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import Sidebar from '../components/Sidebar'
+import MobileBottomNav from '../components/MobileBottomNav'
 import PartFlyout from '../components/PartFlyout'
 import BulkImportModal from '../components/BulkImportModal'
 
 export default function Parts({ profile }) {
   const navigate = useNavigate()
   const [parts, setParts] = useState([])
+  const [organization, setOrganization] = useState(null)
   const [loading, setLoading] = useState(true)
   const [flyoutOpen, setFlyoutOpen] = useState(false)
   const [flyoutMode, setFlyoutMode] = useState('create')
@@ -46,7 +48,17 @@ export default function Parts({ profile }) {
   useEffect(() => {
     if (!profile?.organization_id) return
     fetchParts()
+    fetchOrganization()
   }, [profile, showDeactivated])
+
+  async function fetchOrganization() {
+    const { data } = await supabase
+      .from('organizations')
+      .select('is_upgraded')
+      .eq('id', profile.organization_id)
+      .single()
+    setOrganization(data || null)
+  }
 
   async function fetchParts() {
     setLoading(true)
@@ -211,9 +223,74 @@ export default function Parts({ profile }) {
     )
   }
 
+  if (organization && !organization.is_upgraded) {
+    return (
+      <div style={{ display: 'flex', minHeight: '100vh', background: '#1A1A2E' }}>
+        <Sidebar profile={profile} organization={organization} />
+        <div style={{ flex: 1, minWidth: 0, minHeight: 'auto', padding: '2rem 1rem' }}>
+          <div style={{ maxWidth: '640px', margin: '3rem auto' }}>
+            <div style={{
+              background: '#1e2245',
+              border: '1px solid rgba(201,168,76,0.18)',
+              borderRadius: '12px',
+              padding: '2.5rem 2rem',
+              textAlign: 'center',
+              fontFamily: 'Inter, sans-serif'
+            }}>
+              <div style={{
+                width: '52px', height: '52px', borderRadius: '50%',
+                background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.2)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                margin: '0 auto 1.25rem', fontSize: '1.5rem'
+              }}>🔒</div>
+              <h2 style={{
+                fontFamily: 'Georgia, serif',
+                fontSize: '1.5rem',
+                color: '#c9a84c',
+                marginBottom: '0.75rem',
+                fontWeight: 600
+              }}>
+                Parts and inventory is a Pro feature
+              </h2>
+              <p style={{
+                color: '#f8f6f1',
+                fontSize: '0.95rem',
+                lineHeight: 1.7,
+                marginBottom: '1.75rem',
+                maxWidth: '440px',
+                marginLeft: 'auto',
+                marginRight: 'auto'
+              }}>
+                Track parts, monitor stock levels, manage usage across work orders. Available on the Pro plan.
+              </p>
+              <button
+                onClick={() => navigate('/upgrade')}
+                style={{
+                  background: 'linear-gradient(135deg, #c9a84c, #e8c97a)',
+                  border: 'none',
+                  color: '#1a1a2e',
+                  padding: '0.85rem 2rem',
+                  borderRadius: '8px',
+                  fontSize: '0.9rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.06em',
+                  textTransform: 'uppercase',
+                  cursor: 'pointer',
+                  fontFamily: 'Inter, sans-serif'
+                }}
+              >
+                Upgrade to Pro
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#1A1A2E' }}>
-      <Sidebar profile={profile} />
+      <Sidebar profile={profile} organization={organization} />
       <div style={{ ...page, flex: 1, minWidth: 0, minHeight: 'auto' }} className="parts-page">
       <style>{`
         @media (max-width: 768px) {

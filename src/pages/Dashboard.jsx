@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import Sidebar from '../components/Sidebar'
+import MobileBottomNav from '../components/MobileBottomNav'
 import TrialBanner from '../components/TrialBanner'
 import TeamInviteBanner from '../components/TeamInviteBanner'
 import LowStockWidget from '../components/LowStockWidget'
@@ -310,7 +311,7 @@ export default function Dashboard({ profile }) {
 
       <div style={{ display: 'flex' }} className="app-body">
 
-        <Sidebar profile={profile} />
+        <Sidebar profile={profile} organization={organization} />
 
         {/* MAIN CONTENT */}
         <div

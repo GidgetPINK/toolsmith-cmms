@@ -162,7 +162,7 @@ export default function Assets({ profile }) {
       color: '#f8f6f1'
     }}>
 
-      <Sidebar profile={profile} />
+      <Sidebar profile={profile} organization={organization} />
 
       <div style={{ flex: 1, minWidth: 0, overflow: 'auto' }}>
         <div style={{ padding: '2.5rem 5%' }}>
@@ -193,7 +193,7 @@ export default function Assets({ profile }) {
         ) : !organization?.is_upgraded ? (
 
           /* LITE UPGRADE PROMPT (unchanged) */
-          <div style={{ maxWidth: '640px' }}>
+          <div style={{ maxWidth: '640px', margin: '0 auto' }}>
             <div style={{
               background: '#1e2245',
               border: '1px solid rgba(201,168,76,0.18)',

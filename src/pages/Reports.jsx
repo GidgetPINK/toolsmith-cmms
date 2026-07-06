@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import Sidebar from '../components/Sidebar'
+import MobileBottomNav from '../components/MobileBottomNav'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 
@@ -70,6 +71,7 @@ export default function Reports({ profile }) {
   const [technicians, setTechnicians] = useState([])
   const [assets, setAssets] = useState([])
   const [orgName, setOrgName] = useState('')
+  const [organization, setOrganization] = useState(null)
 
   const [results, setResults] = useState([])
   const [loading, setLoading] = useState(false)
@@ -94,11 +96,12 @@ export default function Reports({ profile }) {
     const [techRes, assetRes, orgRes] = await Promise.all([
       supabase.from('profiles').select('id, full_name').eq('organization_id', profile.organization_id),
       supabase.from('assets').select('id, name').order('name'),
-      supabase.from('organizations').select('name').eq('id', profile.organization_id).single()
+      supabase.from('organizations').select('name, is_upgraded').eq('id', profile.organization_id).single()
     ])
     setTechnicians(techRes.data || [])
     setAssets(assetRes.data || [])
     setOrgName(orgRes.data?.name || 'Your Organization')
+    setOrganization(orgRes.data || null)
   }
 
   async function runQuery() {
@@ -297,9 +300,74 @@ export default function Reports({ profile }) {
   const pdfBtn = { flex: 1, background: 'transparent', color: '#c9a84c', border: '1px solid #c9a84c', borderRadius: '8px', padding: '0.85rem', fontSize: '0.82rem', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }
   const previewRow = { background: 'rgba(255,255,255,0.03)', borderRadius: '6px', padding: '0.65rem 0.8rem', marginBottom: '0.4rem' }
 
+  if (organization && !organization.is_upgraded) {
+    return (
+      <div style={{ display: 'flex', minHeight: '100vh', background: '#1A1A2E' }}>
+        <Sidebar profile={profile} organization={organization} />
+        <div style={{ flex: 1, minWidth: 0, minHeight: 'auto', padding: '2rem 1rem' }}>
+          <div style={{ maxWidth: '640px', margin: '3rem auto' }}>
+            <div style={{
+              background: '#1e2245',
+              border: '1px solid rgba(201,168,76,0.18)',
+              borderRadius: '12px',
+              padding: '2.5rem 2rem',
+              textAlign: 'center',
+              fontFamily: 'Inter, sans-serif'
+            }}>
+              <div style={{
+                width: '52px', height: '52px', borderRadius: '50%',
+                background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.2)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                margin: '0 auto 1.25rem', fontSize: '1.5rem'
+              }}>🔒</div>
+              <h2 style={{
+                fontFamily: 'Georgia, serif',
+                fontSize: '1.5rem',
+                color: '#c9a84c',
+                marginBottom: '0.75rem',
+                fontWeight: 600
+              }}>
+                Reports are a Pro feature
+              </h2>
+              <p style={{
+                color: '#f8f6f1',
+                fontSize: '0.95rem',
+                lineHeight: 1.7,
+                marginBottom: '1.75rem',
+                maxWidth: '440px',
+                marginLeft: 'auto',
+                marginRight: 'auto'
+              }}>
+                Filter, export, and share work order history for state surveyors, compliance audits, and internal review. Available on the Pro plan.
+              </p>
+              <button
+                onClick={() => navigate('/upgrade')}
+                style={{
+                  background: 'linear-gradient(135deg, #c9a84c, #e8c97a)',
+                  border: 'none',
+                  color: '#1a1a2e',
+                  padding: '0.85rem 2rem',
+                  borderRadius: '8px',
+                  fontSize: '0.9rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.06em',
+                  textTransform: 'uppercase',
+                  cursor: 'pointer',
+                  fontFamily: 'Inter, sans-serif'
+                }}
+              >
+                Upgrade to Pro
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#1A1A2E' }}>
-      <Sidebar profile={profile} />
+      <Sidebar profile={profile} organization={organization} />
       <div style={{ ...page, flex: 1, minWidth: 0, minHeight: 'auto' }}>
       <div style={container}>
         <p style={eyebrow}>Work Order Reports</p>
@@ -459,6 +527,7 @@ export default function Reports({ profile }) {
         </div>
       </div>
       </div>
+      <MobileBottomNav />
     </div>
   )
 }

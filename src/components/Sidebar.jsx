@@ -1,7 +1,7 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
-export default function Sidebar({ profile }) {
+export default function Sidebar({ profile, organization }) {
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -10,16 +10,18 @@ export default function Sidebar({ profile }) {
     navigate('/login')
   }
 
+  const isPro = organization?.is_upgraded === true
+
   const isActive = (path) => {
     if (path === '/') return location.pathname === '/'
     return location.pathname === path || location.pathname.startsWith(path + '/')
   }
 
   const navItems = [
-    { path: '/', label: 'Home', icon: '⌂' },
-    { path: '/assets', label: 'Assets', icon: '⚙' },
-    { path: '/parts', label: 'Parts', icon: '▦' },
-    { path: '/reports', label: 'Reports', icon: '⊞' },
+    { path: '/', label: 'Home', icon: '⌂', proOnly: false },
+    { path: '/assets', label: 'Assets', icon: '⚙', proOnly: true },
+    { path: '/parts', label: 'Parts', icon: '▦', proOnly: true },
+    { path: '/reports', label: 'Reports', icon: '⊞', proOnly: true },
   ]
 
   const bottomItems = [

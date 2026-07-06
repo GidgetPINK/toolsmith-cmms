@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import Sidebar from '../components/Sidebar'
+import MobileBottomNav from '../components/MobileBottomNav'
 
 export default function Admin({ profile }) {
   const navigate = useNavigate()
   const [isUpgraded, setIsUpgraded] = useState(false)
+  const [organization, setOrganization] = useState(null)
   const [userEmail, setUserEmail] = useState('')
   const [loading, setLoading] = useState(true)
   const [portalLoading, setPortalLoading] = useState(false)
@@ -25,10 +27,11 @@ export default function Admin({ profile }) {
     }
     const { data } = await supabase
       .from('organizations')
-      .select('is_upgraded')
+      .select('*')
       .eq('id', profile.organization_id)
       .single()
     setIsUpgraded(!!data?.is_upgraded)
+    setOrganization(data || null)
     setLoading(false)
   }
 
@@ -190,7 +193,7 @@ export default function Admin({ profile }) {
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#1A1A2E' }}>
-      <Sidebar profile={profile} />
+      <Sidebar profile={profile} organization={organization} />
       <div style={{ ...page, flex: 1, minWidth: 0, minHeight: 'auto' }}>
       <div style={container}>
         <h1 style={{...heading, textAlign: 'center', marginBottom: '0.5rem'}}>Admin</h1>
@@ -319,6 +322,7 @@ export default function Admin({ profile }) {
         )}
       </div>
       </div>
+      <MobileBottomNav />
     </div>
   )
 }
