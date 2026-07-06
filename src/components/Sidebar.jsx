@@ -42,12 +42,12 @@ export default function Sidebar({ profile }) {
           display: 'flex',
           alignItems: 'center',
           gap: '10px',
-          padding: '9px 12px',
+          padding: '11px 14px',
           borderRadius: '8px',
           background: active ? 'rgba(201,168,76,0.12)' : 'transparent',
           borderLeft: active ? '3px solid #c9a84c' : '3px solid transparent',
           color: active ? '#c9a84c' : '#9a9db5',
-          fontSize: '13px',
+          fontSize: '15px',
           fontWeight: active ? 500 : 400,
           textDecoration: 'none',
           marginBottom: '4px',
@@ -68,7 +68,7 @@ export default function Sidebar({ profile }) {
           }
         }}
       >
-        <span style={{ width: '16px', textAlign: 'center', fontSize: '15px' }}>{item.icon}</span>
+        <span style={{ width: '18px', textAlign: 'center', fontSize: '17px' }}>{item.icon}</span>
         <span>{item.label}</span>
       </a>
     )
@@ -90,34 +90,8 @@ export default function Sidebar({ profile }) {
         fontFamily: 'Inter, sans-serif'
       }}
     >
-      {/* Brand */}
-      <div style={{
-        padding: '20px 20px 24px',
-        borderBottom: '1px solid rgba(201,168,76,0.1)'
-      }}>
-        <p style={{
-          fontFamily: 'Georgia, serif',
-          color: '#c9a84c',
-          fontSize: '16px',
-          fontWeight: 600,
-          margin: 0,
-          lineHeight: 1.2
-        }}>
-          The Toolsmith
-        </p>
-        <p style={{
-          color: '#6a6d85',
-          fontSize: '10px',
-          margin: '3px 0 0',
-          letterSpacing: '0.08em',
-          textTransform: 'uppercase'
-        }}>
-          CMMS
-        </p>
-      </div>
-
       {/* Main nav */}
-      <div style={{ padding: '12px 8px', flex: 1 }}>
+      <div style={{ padding: '24px 8px 12px', flex: 1 }}>
         {navItems.map(item => <NavLink key={item.path} item={item} />)}
 
         <div style={{

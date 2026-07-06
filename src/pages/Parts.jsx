@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import Sidebar from '../components/Sidebar'
 import PartFlyout from '../components/PartFlyout'
 import BulkImportModal from '../components/BulkImportModal'
 
@@ -211,7 +212,9 @@ export default function Parts({ profile }) {
   }
 
   return (
-    <div style={page} className="parts-page">
+    <div style={{ display: 'flex', minHeight: '100vh', background: '#1A1A2E' }}>
+      <Sidebar profile={profile} />
+      <div style={{ ...page, flex: 1, minWidth: 0, minHeight: 'auto' }} className="parts-page">
       <style>{`
         @media (max-width: 768px) {
           .parts-page { padding: 1rem 1rem !important; }
@@ -229,7 +232,6 @@ export default function Parts({ profile }) {
       `}</style>
       <div style={container}>
         <div style={headerRow}>
-          <button style={backBtn} onClick={() => navigate('/')}>← Back</button>
           <h1 style={heading} className="parts-heading">Parts and inventory</h1>
         </div>
         <p style={subhead}>
@@ -522,6 +524,7 @@ export default function Parts({ profile }) {
           onImported={handleBulkImported}
         />
       )}
+      </div>
     </div>
   )
 }
