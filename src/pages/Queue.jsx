@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import useUnreadMessages from '../hooks/useUnreadMessages'
 import WorkOrderCard from '../components/WorkOrderCard'
+import Sidebar from '../components/Sidebar'
+import MobileBottomNav from '../components/MobileBottomNav'
 
 const PRIORITY_COLOR = {
   critical: '#e06c75',
@@ -121,11 +123,14 @@ export default function Queue({ profile }) {
 
   return (
     <div style={{
+      display: 'flex',
       minHeight: '100vh',
       background: '#1a1a2e',
       fontFamily: 'Inter, sans-serif',
       color: '#f8f6f1'
     }}>
+      <Sidebar profile={profile} />
+      <div style={{ flex: 1, minWidth: 0, overflow: 'auto' }}>
 
       {/* NAV */}
       <nav style={{
@@ -382,6 +387,8 @@ export default function Queue({ profile }) {
           </div>
         )}
       </div>
+      </div>
+      <MobileBottomNav />
     </div>
   )
 }

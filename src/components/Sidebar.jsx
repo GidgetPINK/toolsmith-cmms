@@ -37,9 +37,10 @@ export default function Sidebar({ profile, organization }) {
 
   const NavLink = ({ item }) => {
     const active = isActive(item.path)
+    const locked = item.proOnly && !isPro
     return (
       <a
-        onClick={() => navigate(item.path)}
+        onClick={() => navigate(locked ? '/upgrade' : item.path)}
         style={{
           display: 'flex',
           alignItems: 'center',
