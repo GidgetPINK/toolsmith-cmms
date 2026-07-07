@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { checkRateLimit, getRequestIdentifier } from './_rate-limit.js'
 
 const supabase = createClient(
   process.env.VITE_SUPABASE_URL,
@@ -8,6 +9,12 @@ const supabase = createClient(
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
+  }
+
+  // Rate limit: 5 signups per hour per IP
+  const rateLimit = checkRateLimit(getRequestIdentifier(req), 'create-account', 5, 60 * 60_000)
+  if (!rateLimit.allowed) {
+    return res.status(429).json({ error: 'Too many signup attempts. Please try again later.' })
   }
 
   const { email, password, fullName, orgName } = req.body

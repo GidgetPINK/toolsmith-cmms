@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { checkRateLimit, getRequestIdentifier } from './_rate-limit.js'
 
 const supabaseAdmin = createClient(
   process.env.VITE_SUPABASE_URL,
@@ -265,6 +266,15 @@ export default async function handler(req, res) {
     }
 
     const userId = userData.user.id
+
+    // Rate limit: 20 messages per minute per user
+    const limit = checkRateLimit(userId, 'gidget-chat', 20, 60_000)
+    if (!limit.allowed) {
+      return res.status(429).json({
+        error: 'You are sending messages too fast. Please wait a moment.',
+        retryAfter: Math.ceil(limit.resetIn / 1000)
+      })
+    }
 
     // Verify user is in a Pro org
     const { data: profile } = await supabaseAdmin
