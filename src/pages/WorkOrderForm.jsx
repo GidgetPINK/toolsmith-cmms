@@ -345,12 +345,13 @@ export default function WorkOrderForm({ profile }) {
       <style>{`
         @media (max-width: 900px) {
           .wo-layout { flex-direction: column !important; }
+          .wo-form-column { max-width: 100% !important; width: 100% !important; }
           .wo-chat-column { max-width: 100% !important; width: 100% !important; }
         }
       `}</style>
       <div style={{ padding: '2.5rem 5%', maxWidth: isNew ? '680px' : '1060px', margin: '0 auto' }}>
         <div className="wo-layout" style={{ display: isNew ? 'block' : 'flex', gap: '2rem', alignItems: 'flex-start' }}>
-          <div style={{ flex: 1, minWidth: 0, maxWidth: '680px' }}>
+          <div className="wo-form-column" style={{ flex: 1, minWidth: 0, maxWidth: '680px' }}>
 
         {/* PM PRE-FILL NOTICE (takes precedence over asset notice) */}
         {isNew && pmPreFilled && (
