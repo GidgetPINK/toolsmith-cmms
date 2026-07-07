@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import Sidebar from '../components/Sidebar'
+import MobileBottomNav from '../components/MobileBottomNav'
 import PartsPicker from '../components/PartsPicker'
 import WorkOrderChat from '../components/WorkOrderChat'
 
@@ -324,6 +325,7 @@ export default function WorkOrderForm({ profile }) {
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <p style={{ color: '#9a9db5', fontFamily: 'Inter, sans-serif' }}>Loading...</p>
       </div>
+      <MobileBottomNav />
     </div>
   )
 
@@ -1080,6 +1082,7 @@ export default function WorkOrderForm({ profile }) {
         />
       )}
       </div>
+      <MobileBottomNav />
     </div>
   )
 }
