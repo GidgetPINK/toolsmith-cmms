@@ -388,7 +388,7 @@ export default function Queue({ profile }) {
         )}
       </div>
       </div>
-      <MobileBottomNav />
+      <MobileBottomNav profile={profile} />
     </div>
   )
 }

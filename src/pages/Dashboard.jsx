@@ -1145,7 +1145,7 @@ function AssetFlyout({ mode, asset, tab, setTab, workOrders, organizationId, cus
           )}
         </div>
       </div>
-      <MobileBottomNav />
+      <MobileBottomNav profile={profile} />
     </div>
   )
 }

@@ -291,7 +291,7 @@ export default function Admin({ profile }) {
         )}
       </div>
       </div>
-      <MobileBottomNav />
+      <MobileBottomNav profile={profile} />
     </div>
   )
 }

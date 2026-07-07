@@ -2,17 +2,23 @@ import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
-export default function MobileBottomNav() {
+export default function MobileBottomNav({ profile }) {
   const navigate = useNavigate()
   const location = useLocation()
   const [moreOpen, setMoreOpen] = useState(false)
 
-  const tabs = [
-    { path: '/m/work-orders', label: 'Home', icon: '🏠' },
-    { path: '/m/assets', label: 'Assets', icon: '🔧' },
-    { path: '/parts', label: 'Parts', icon: '📦' },
-    { path: '/reports', label: 'Reports', icon: '📊' }
-  ]
+  const isManager = profile?.role === 'manager'
+  const tabs = isManager
+    ? [
+        { path: '/m/work-orders', label: 'Home', icon: '⌂' },
+        { path: '/m/assets', label: 'Assets', icon: '⚙' },
+        { path: '/parts', label: 'Parts', icon: '▦' },
+        { path: '/reports', label: 'Reports', icon: '⊞' }
+      ]
+    : [
+        { path: '/m/work-orders', label: 'Home', icon: '⌂' },
+        { path: '/m/assets', label: 'Assets', icon: '⚙' }
+      ]
 
   function isActive(tabPath) {
     return location.pathname.startsWith(tabPath)
@@ -33,7 +39,10 @@ export default function MobileBottomNav() {
 
   return (
     <>
-      <style>{`@media (min-width: 901px) { .mobile-bottom-nav, .mobile-more-menu, .mobile-more-backdrop { display: none !important; } }`}</style>
+      <style>{`
+        @media (min-width: 901px) { .mobile-bottom-nav, .mobile-more-menu, .mobile-more-backdrop { display: none !important; } }
+        @media (max-width: 900px) { body { padding-bottom: calc(66px + env(safe-area-inset-bottom)) !important; } }
+      `}</style>
 
       {moreOpen && (
         <>
@@ -82,7 +91,7 @@ export default function MobileBottomNav() {
                 textAlign: 'left'
               }}
             >
-              <span style={{ fontSize: '1.15rem' }}>⚙️</span>
+              <span style={{ fontSize: '1.05rem', color: '#c9a84c' }}>⚑</span>
               <span>Admin</span>
             </button>
             <div style={{ height: '1px', background: 'rgba(201,168,76,0.15)', margin: '0.35rem 0.5rem' }}></div>
@@ -104,7 +113,7 @@ export default function MobileBottomNav() {
                 textAlign: 'left'
               }}
             >
-              <span style={{ fontSize: '1.1rem' }}>↪</span>
+              <span style={{ fontSize: '1rem', color: '#9a9db5' }}>⇥</span>
               <span>Sign out</span>
             </button>
           </div>
@@ -150,7 +159,7 @@ export default function MobileBottomNav() {
                 fontWeight: active ? 600 : 500
               }}
             >
-              <span style={{ fontSize: '1.3rem', lineHeight: 1 }}>{tab.icon}</span>
+              <span style={{ fontSize: '1.5rem', lineHeight: 1, color: 'inherit' }}>{tab.icon}</span>
               <span>{tab.label}</span>
             </button>
           )
@@ -178,7 +187,7 @@ export default function MobileBottomNav() {
             fontWeight: moreActive ? 600 : 500
           }}
         >
-          <span style={{ fontSize: '1.3rem', lineHeight: 1 }}>⋯</span>
+          <span style={{ fontSize: '1.5rem', lineHeight: 1, color: 'inherit' }}>⋯</span>
           <span>More</span>
         </button>
       </nav>

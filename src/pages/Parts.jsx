@@ -284,7 +284,7 @@ export default function Parts({ profile }) {
             </div>
           </div>
         </div>
-        <MobileBottomNav />
+        <MobileBottomNav profile={profile} />
       </div>
     )
   }
@@ -603,7 +603,7 @@ export default function Parts({ profile }) {
         />
       )}
       </div>
-      <MobileBottomNav />
+      <MobileBottomNav profile={profile} />
     </div>
   )
 }

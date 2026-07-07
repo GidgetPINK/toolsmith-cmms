@@ -325,7 +325,7 @@ export default function WorkOrderForm({ profile }) {
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <p style={{ color: '#9a9db5', fontFamily: 'Inter, sans-serif' }}>Loading...</p>
       </div>
-      <MobileBottomNav />
+      <MobileBottomNav profile={profile} />
     </div>
   )
 
@@ -1082,7 +1082,7 @@ export default function WorkOrderForm({ profile }) {
         />
       )}
       </div>
-      <MobileBottomNav />
+      <MobileBottomNav profile={profile} />
     </div>
   )
 }

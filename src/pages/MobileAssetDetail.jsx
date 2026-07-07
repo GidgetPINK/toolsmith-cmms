@@ -805,7 +805,7 @@ export default function MobileAssetDetail({ profile }) {
           </>
         )}
       </div>
-      <MobileBottomNav />
+      <MobileBottomNav profile={profile} />
     </div>
   )
 }

@@ -155,7 +155,7 @@ export default function MobileAssets({ profile }) {
             </button>
           </div>
         </div>
-        <MobileBottomNav />
+        <MobileBottomNav profile={profile} />
       </div>
     )
   }
@@ -462,7 +462,7 @@ export default function MobileAssets({ profile }) {
         )}
       </div>
 
-      <MobileBottomNav />
+      <MobileBottomNav profile={profile} />
     </div>
   )
 }

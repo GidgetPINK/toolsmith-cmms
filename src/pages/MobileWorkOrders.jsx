@@ -460,7 +460,7 @@ export default function MobileWorkOrders({ profile }) {
         )}
         </div>
       </div>
-      <MobileBottomNav />
+      <MobileBottomNav profile={profile} />
     </div>
   )
 }

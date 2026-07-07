@@ -361,7 +361,7 @@ export default function Reports({ profile }) {
             </div>
           </div>
         </div>
-        <MobileBottomNav />
+        <MobileBottomNav profile={profile} />
       </div>
     )
   }
@@ -528,7 +528,7 @@ export default function Reports({ profile }) {
         </div>
       </div>
       </div>
-      <MobileBottomNav />
+      <MobileBottomNav profile={profile} />
     </div>
   )
 }
