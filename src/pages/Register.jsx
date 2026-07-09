@@ -177,7 +177,8 @@ const stripeResponse = await fetch('/api/create-checkout-session', {
     'Authorization': `Bearer ${autoSignInData.session.access_token}`
   },
   body: JSON.stringify({
-    priceId: selectedPlan.priceId
+    priceId: selectedPlan.priceId,
+    promoCode: promoCode || undefined
   })
 })
 
@@ -216,6 +217,26 @@ const stripeResponse = await fetch('/api/create-checkout-session', {
           <p style={{ color: '#9a9db5', fontSize: '0.95rem' }}>
             Start your 14-day free trial. No credit card required.
           </p>
+          {promoCode && (
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              marginTop: '1rem',
+              background: 'rgba(152,195,121,0.1)',
+              border: '1px solid rgba(152,195,121,0.3)',
+              color: '#98c379',
+              padding: '0.4rem 1rem',
+              borderRadius: '20px',
+              fontSize: '0.78rem',
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
+              fontWeight: 500
+            }}>
+              <span>✓</span>
+              <span>Beta code {promoCode} applied at checkout</span>
+            </div>
+          )}
         </div>
 
         {/* STEP INDICATOR */}

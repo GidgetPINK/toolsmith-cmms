@@ -51,7 +51,7 @@ export default async function handler(req, res) {
   }
 
   // Step 3: validate the requested price against the known list
-  const { priceId } = req.body
+  const { priceId, promoCode } = req.body
 
   if (!priceId) {
     return res.status(400).json({ error: 'Price ID is required' })
@@ -95,6 +95,7 @@ export default async function handler(req, res) {
         user_id: profile.id
       },
       payment_method_collection: 'always',
+      allow_promotion_codes: true,
       success_url: appUrl + '/success?session_id={CHECKOUT_SESSION_ID}',
       cancel_url: appUrl + '/upgrade'
     }
