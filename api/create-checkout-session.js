@@ -76,13 +76,20 @@ export default async function handler(req, res) {
       const promotions = await stripe.promotionCodes.list({
         code: promoCode,
         active: true,
-        limit: 1
+        limit: 1,
+        expand: ['data.coupon']
       })
       console.log('[beta-lookup] promoCode received:', promoCode)
       console.log('[beta-lookup] promotions found:', promotions.data.length)
       if (promotions.data.length > 0) {
-        resolvedCouponId = promotions.data[0].coupon.id
-        console.log('[beta-lookup] resolved coupon id:', resolvedCouponId)
+        const match = promotions.data[0]
+        const couponId = typeof match.coupon === 'string' ? match.coupon : match.coupon?.id
+        if (couponId) {
+          resolvedCouponId = couponId
+          console.log('[beta-lookup] resolved coupon id:', resolvedCouponId)
+        } else {
+          console.error('[beta-lookup] promotion found but coupon id missing, shape was:', JSON.stringify(match.coupon))
+        }
       }
     } catch (e) {
       console.error('[beta-lookup] Stripe lookup threw:', e.message)
