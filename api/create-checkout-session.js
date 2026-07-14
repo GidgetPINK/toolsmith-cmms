@@ -68,7 +68,27 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Invalid price' })
   }
 
-  // Step 4: build the checkout session using TRUSTED values from the server,
+  // Step 4: if a promo code was supplied, resolve it server-side to a real
+  // Stripe coupon. Never trust the client to tell us a coupon is valid.
+  let resolvedCouponId = null
+  if (promoCode) {
+    try {
+      const promotions = await stripe.promotionCodes.list({
+        code: promoCode,
+        active: true,
+        limit: 1
+      })
+      if (promotions.data.length > 0) {
+        resolvedCouponId = promotions.data[0].coupon.id
+      }
+    } catch (e) {
+      resolvedCouponId = null
+    }
+  }
+
+  const isBetaSignup = !!resolvedCouponId
+
+  // Step 5: build the checkout session using TRUSTED values from the server,
   // NEVER values from the request body
   const appUrl = process.env.VITE_APP_URL || 'https://toolsmith-cmms.app'
 
@@ -84,20 +104,31 @@ export default async function handler(req, res) {
         }
       ],
       subscription_data: {
-        trial_period_days: 14,
         metadata: {
           organization_id: profile.organization_id,
-          user_id: profile.id
+          user_id: profile.id,
+          is_beta: isBetaSignup ? 'true' : 'false'
         }
       },
       metadata: {
         organization_id: profile.organization_id,
-        user_id: profile.id
+        user_id: profile.id,
+        is_beta: isBetaSignup ? 'true' : 'false'
       },
-      payment_method_collection: 'always',
-      allow_promotion_codes: true,
       success_url: appUrl + '/success?session_id={CHECKOUT_SESSION_ID}',
       cancel_url: appUrl + '/upgrade'
+    }
+
+    if (isBetaSignup) {
+      // Beta testers: no trial, coupon applied automatically, no card required
+      // since the coupon brings the invoice to $0.
+      sessionConfig.discounts = [{ coupon: resolvedCouponId }]
+      sessionConfig.payment_method_collection = 'if_required'
+    } else {
+      // Normal paying signups: standard 14-day trial, card required upfront
+      sessionConfig.subscription_data.trial_period_days = 14
+      sessionConfig.payment_method_collection = 'always'
+      sessionConfig.allow_promotion_codes = true
     }
 
     const session = await stripe.checkout.sessions.create(sessionConfig)
