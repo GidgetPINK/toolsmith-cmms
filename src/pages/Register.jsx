@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import PasswordRequirements, { validatePassword } from '../components/PasswordRequirements'
 
@@ -55,6 +56,9 @@ const showBtnStyle = {
 }
 
 export default function Register() {
+  const [searchParams] = useSearchParams()
+  const promoCode = searchParams.get('code') || ''
+
   const [step, setStep] = useState(1)
   const [fullName, setFullName] = useState('')
   const [orgName, setOrgName] = useState('')
