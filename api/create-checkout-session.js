@@ -78,12 +78,18 @@ export default async function handler(req, res) {
         active: true,
         limit: 1
       })
+      console.log('[beta-lookup] promoCode received:', promoCode)
+      console.log('[beta-lookup] promotions found:', promotions.data.length)
       if (promotions.data.length > 0) {
         resolvedCouponId = promotions.data[0].coupon.id
+        console.log('[beta-lookup] resolved coupon id:', resolvedCouponId)
       }
     } catch (e) {
+      console.error('[beta-lookup] Stripe lookup threw:', e.message)
       resolvedCouponId = null
     }
+  } else {
+    console.log('[beta-lookup] no promoCode in request body')
   }
 
   const isBetaSignup = !!resolvedCouponId
