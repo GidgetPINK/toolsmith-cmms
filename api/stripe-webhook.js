@@ -113,6 +113,7 @@ if (organizationId && session.subscription) {
   const trialEndISO = subscriptionForTrial.trial_end
     ? new Date(subscriptionForTrial.trial_end * 1000).toISOString()
     : null
+  const isBeta = session.metadata?.is_beta === 'true'
 
   await supabase
     .from('organizations')
@@ -122,6 +123,7 @@ if (organizationId && session.subscription) {
       stripe_customer_id: session.customer,
       stripe_subscription_id: session.subscription,
       trial_end: trialEndISO,
+      is_beta: isBeta,
       upgraded_at: new Date().toISOString()
     })
     .eq('id', organizationId)
@@ -144,7 +146,7 @@ if (organizationId && session.subscription) {
     }
 
     if (managerEmail && managerProfile?.full_name) {
-      // Calculate trial end date from subscription
+      // Calculate trial end date from subscription (not used for beta signups)
       const subscription = await stripe.subscriptions.retrieve(session.subscription)
       const trialEndTimestamp = subscription.trial_end
       const trialEndDate = trialEndTimestamp
@@ -163,6 +165,10 @@ if (organizationId && session.subscription) {
       else if (paidPriceId === process.env.STRIPE_PRICE_LITE_YEARLY) planName = 'Lite Annual'
       else if (paidPriceId === process.env.STRIPE_PRICE_LITE_MONTHLY) planName = 'Lite Monthly'
 
+      const emailSubject = isBeta
+        ? 'Welcome to the Toolsmith Lite beta'
+        : 'Welcome to The Toolsmith CMMS — your trial is active'
+
       const emailResponse = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
@@ -172,8 +178,8 @@ if (organizationId && session.subscription) {
         body: JSON.stringify({
           from: 'Gidget at The Toolsmith <orders@thetoolsmithapp.com>',
           to: [managerEmail],
-          subject: 'Welcome to The Toolsmith CMMS — your trial is active',
-          html: buildWelcomeEmailHtml(managerProfile.full_name, planName, trialEndDate)
+          subject: emailSubject,
+          html: buildWelcomeEmailHtml(managerProfile.full_name, planName, trialEndDate, isBeta)
         })
       })
 
@@ -274,7 +280,7 @@ if (organizationId && session.subscription) {
   }
 }
 
-function buildWelcomeEmailHtml(name, planName, trialEndDate) {
+function buildWelcomeEmailHtml(name, planName, trialEndDate, isBeta) {
   const appUrl = 'https://toolsmith-cmms.app'
   const isPro = planName.toLowerCase().includes('pro')
 
@@ -320,7 +326,9 @@ function buildWelcomeEmailHtml(name, planName, trialEndDate) {
     <div style="padding:40px;">
       <h2 style="color:#1A1A2E;font-size:20px;margin:0 0 16px;">Welcome, ${name}.</h2>
       <p style="color:#444;font-size:15px;line-height:1.7;margin:0 0 16px;">
-        Your account is active and your 14-day free trial has started. You will not be charged until your trial ends on <strong>${trialEndDate}</strong>.
+        ${isBeta
+          ? 'Your account is active and you are officially in the beta. No card is required, and you will not be charged during the beta or your six free months after it wraps up.'
+          : `Your account is active and your 14-day free trial has started. You will not be charged until your trial ends on <strong>${trialEndDate}</strong>.`}
       </p>
       <p style="color:#444;font-size:15px;line-height:1.7;margin:0 0 24px;">
         ${tierIntro} You can change plans, update your payment method, or cancel any time from the Admin page in your dashboard.
