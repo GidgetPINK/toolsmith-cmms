@@ -220,7 +220,9 @@ const stripeResponse = await fetch('/api/create-checkout-session', {
             The Toolsmith CMMS
           </h1>
           <p style={{ color: '#9a9db5', fontSize: '0.95rem' }}>
-            Start your 14-day free trial. No credit card required.
+            {promoCode
+              ? 'You\'re joining the Lite beta. Free for 60 days, no card required.'
+              : 'Start your 14-day free trial. No credit card required.'}
           </p>
           {promoCode && (
             <div style={{
@@ -379,7 +381,9 @@ const stripeResponse = await fetch('/api/create-checkout-session', {
                 fontSize: '0.82rem',
                 marginBottom: '1.5rem'
               }}>
-                14-day free trial on all plans. Cancel any time.
+                {promoCode
+                  ? 'Beta: free for 60 days, no card required. Cancel any time.'
+                  : '14-day free trial on all plans. Cancel any time.'}
               </p>
               <button
                 onClick={() => setStep(2)}
@@ -551,7 +555,7 @@ const stripeResponse = await fetch('/api/create-checkout-session', {
                   marginBottom: '1rem'
                 }}
               >
-                {loading ? 'Creating your account...' : 'Start Free Trial'}
+                {loading ? 'Creating your account...' : (promoCode ? 'Join the Beta' : 'Start Free Trial')}
               </button>
 
               <button
@@ -582,8 +586,9 @@ const stripeResponse = await fetch('/api/create-checkout-session', {
               marginTop: '1.25rem',
               lineHeight: '1.6'
             }}>
-              By starting your trial you agree to our terms of service.
-              Your card will not be charged until your 14-day trial ends.
+              {promoCode
+                ? "By joining the beta you agree to our terms of service. No card is required, and you won't be charged during the beta or your 6 free months after."
+                : 'By starting your trial you agree to our terms of service. Your card will not be charged until your 14-day trial ends.'}
             </p>
           </div>
         )}
