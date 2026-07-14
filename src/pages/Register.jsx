@@ -128,6 +128,7 @@ export default function Register() {
     }
   ]
 
+  const visiblePlans = promoCode ? plans.filter(p => p.id === 'lite_monthly') : plans
   const selectedPlan = plans.find(p => p.id === plan)
 
   async function handleRegister(e) {
@@ -303,7 +304,7 @@ const stripeResponse = await fetch('/api/create-checkout-session', {
               gap: '1rem',
               marginBottom: '2rem'
             }}>
-              {plans.map(p => (
+              {visiblePlans.map(p => (
                 <div
                   key={p.id}
                   onClick={() => setPlan(p.id)}
