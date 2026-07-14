@@ -2,16 +2,18 @@ import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 
 export default function CompletePaymentSetup({ profile }) {
+  const promoCode = sessionStorage.getItem('toolsmith_promo_code') || ''
   const [plan, setPlan] = useState('lite_monthly')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
-  const plans = [
+  const allPlans = [
     { id: 'lite_monthly', name: 'Lite', price: '$19/mo', priceId: import.meta.env.VITE_STRIPE_LITE_MONTHLY },
     { id: 'lite_yearly', name: 'Lite Annual', price: '$190/yr', priceId: import.meta.env.VITE_STRIPE_LITE_YEARLY },
     { id: 'pro_monthly', name: 'Pro', price: '$49/mo', priceId: import.meta.env.VITE_STRIPE_PRO_MONTHLY },
     { id: 'pro_yearly', name: 'Pro Annual', price: '$490/yr', priceId: import.meta.env.VITE_STRIPE_PRO_YEARLY }
   ]
+  const plans = promoCode ? allPlans.filter(p => p.id === 'lite_monthly') : allPlans
 
   async function handleStartCheckout() {
     setLoading(true)
@@ -32,12 +34,13 @@ export default function CompletePaymentSetup({ profile }) {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`
         },
-        body: JSON.stringify({ priceId: selectedPlan.priceId })
+        body: JSON.stringify({ priceId: selectedPlan.priceId, promoCode: promoCode || undefined })
       })
 
       const data = await response.json()
       if (data.error) throw new Error(data.error)
 
+      sessionStorage.removeItem('toolsmith_promo_code')
       window.location.href = data.url
     } catch (err) {
       setError(err.message)
@@ -70,7 +73,7 @@ export default function CompletePaymentSetup({ profile }) {
           textAlign: 'center',
           fontWeight: '600'
         }}>
-          Complete Your Payment Setup
+          {promoCode ? 'Join the Lite Beta' : 'Complete Your Payment Setup'}
         </h1>
         <p style={{
           color: '#9a9db5',
@@ -79,8 +82,9 @@ export default function CompletePaymentSetup({ profile }) {
           textAlign: 'center',
           lineHeight: '1.6'
         }}>
-          A payment method on file is required to start your 14-day free trial.
-          You will not be charged until your trial ends.
+          {promoCode
+            ? "You're joining the Lite beta. Free for 60 days, no card required."
+            : 'A payment method on file is required to start your 14-day free trial. You will not be charged until your trial ends.'}
         </p>
 
         <div style={{
@@ -156,7 +160,7 @@ export default function CompletePaymentSetup({ profile }) {
             fontFamily: 'Inter, sans-serif'
           }}
         >
-          {loading ? 'Redirecting...' : 'Continue to Payment Setup'}
+          {loading ? 'Redirecting...' : (promoCode ? 'Join the Beta' : 'Continue to Payment Setup')}
         </button>
 
         <button

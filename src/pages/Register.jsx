@@ -59,6 +59,12 @@ export default function Register() {
   const [searchParams] = useSearchParams()
   const promoCode = searchParams.get('code') || ''
 
+  // Stash the beta code so it survives the redirect to /complete-setup,
+  // which happens after account creation and drops the URL query string.
+  if (promoCode) {
+    sessionStorage.setItem('toolsmith_promo_code', promoCode)
+  }
+
   const [step, setStep] = useState(1)
   const [fullName, setFullName] = useState('')
   const [orgName, setOrgName] = useState('')
