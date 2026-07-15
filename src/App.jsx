@@ -189,7 +189,8 @@ function App() {
   // Managers only since they're the ones who handle billing
   const needsPaymentSetup = session && profile && organization &&
     profile.role === 'manager' &&
-    organization.setup_complete === false
+    organization.setup_complete === false &&
+    organization.is_beta !== true
 
   // Subscription gate: only block if setup is complete AND subscription is truly inactive
   // Active states: Pro user (is_upgraded=true), active trial (trial_end in future),
@@ -203,7 +204,8 @@ function App() {
     organization.setup_complete === true &&
     organization.is_upgraded === false &&
     !hasActiveTrial &&
-    !hasActiveSubscription
+    !hasActiveSubscription &&
+    organization.is_beta !== true
 
   return (
     <BrowserRouter>
