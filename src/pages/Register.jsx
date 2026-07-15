@@ -55,7 +55,10 @@ const showBtnStyle = {
 }
 
 export default function Register() {
-  const [step, setStep] = useState(1)
+  const params = new URLSearchParams(window.location.search)
+  const betaCode = params.get('code') || ''
+  const isBeta = betaCode.length > 0
+  const [step, setStep] = useState(isBeta ? 2 : 1)
   const [fullName, setFullName] = useState('')
   const [orgName, setOrgName] = useState('')
   const [email, setEmail] = useState('')
@@ -143,6 +146,27 @@ export default function Register() {
     setLoading(true)
 
     try {
+      if (isBeta) {
+        // Beta signup: no Stripe, no card. Create a beta account and go straight in.
+        const betaResponse = await fetch('/api/create-beta-account', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password, fullName, orgName, betaCode })
+        })
+
+        const betaData = await betaResponse.json()
+        if (betaData.error) throw new Error(betaData.error)
+
+        const { error: betaSignInError } = await supabase.auth.signInWithPassword({
+          email,
+          password
+        })
+        if (betaSignInError) throw betaSignInError
+
+        window.location.href = '/'
+        return
+      }
+
       const accountResponse = await fetch('/api/create-account', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -214,12 +238,14 @@ const stripeResponse = await fetch('/api/create-checkout-session', {
             The Toolsmith CMMS
           </h1>
           <p style={{ color: '#9a9db5', fontSize: '0.95rem' }}>
-            Start your 14-day free trial. No credit card required.
+            {isBeta
+              ? "You're joining the Lite beta. Free for 30 days, no card required."
+              : 'Start your 14-day free trial. No credit card required.'}
           </p>
         </div>
 
-        {/* STEP INDICATOR */}
-        <div style={{
+        {/* STEP INDICATOR (hidden for beta, which is a single step) */}
+        {!isBeta && <div style={{
           display: 'flex',
           justifyContent: 'center',
           gap: '1rem',
@@ -267,10 +293,10 @@ const stripeResponse = await fetch('/api/create-checkout-session', {
               )}
             </div>
           ))}
-        </div>
+        </div>}
 
-        {/* STEP 1 — PLAN SELECTION */}
-        {step === 1 && (
+        {/* STEP 1 — PLAN SELECTION (never shown for beta) */}
+        {step === 1 && !isBeta && (
           <div>
             <div style={{
               display: 'grid',
@@ -380,7 +406,7 @@ const stripeResponse = await fetch('/api/create-checkout-session', {
         {/* STEP 2 — ACCOUNT CREATION */}
         {step === 2 && (
           <div style={{ maxWidth: '520px', margin: '0 auto' }}>
-            <div style={{
+            {!isBeta && <div style={{
               background: '#1e2245',
               border: '1px solid rgba(201,168,76,0.18)',
               borderRadius: '12px',
@@ -404,7 +430,7 @@ const stripeResponse = await fetch('/api/create-checkout-session', {
               }}>
                 {selectedPlan.name} — {selectedPlan.price} {selectedPlan.period}
               </p>
-            </div>
+            </div>}
 
             <form onSubmit={handleRegister}>
               <div style={{ marginBottom: '1.25rem' }}>
