@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import PasswordRequirements, { validatePassword } from '../components/PasswordRequirements'
 
@@ -56,15 +55,6 @@ const showBtnStyle = {
 }
 
 export default function Register() {
-  const [searchParams] = useSearchParams()
-  const promoCode = searchParams.get('code') || ''
-
-  // Stash the beta code so it survives the redirect to /complete-setup,
-  // which happens after account creation and drops the URL query string.
-  if (promoCode) {
-    sessionStorage.setItem('toolsmith_promo_code', promoCode)
-  }
-
   const [step, setStep] = useState(1)
   const [fullName, setFullName] = useState('')
   const [orgName, setOrgName] = useState('')
@@ -134,7 +124,6 @@ export default function Register() {
     }
   ]
 
-  const visiblePlans = promoCode ? plans.filter(p => p.id === 'lite_monthly') : plans
   const selectedPlan = plans.find(p => p.id === plan)
 
   async function handleRegister(e) {
@@ -188,8 +177,7 @@ const stripeResponse = await fetch('/api/create-checkout-session', {
     'Authorization': `Bearer ${autoSignInData.session.access_token}`
   },
   body: JSON.stringify({
-    priceId: selectedPlan.priceId,
-    promoCode: promoCode || undefined
+    priceId: selectedPlan.priceId
   })
 })
 
@@ -226,30 +214,8 @@ const stripeResponse = await fetch('/api/create-checkout-session', {
             The Toolsmith CMMS
           </h1>
           <p style={{ color: '#9a9db5', fontSize: '0.95rem' }}>
-            {promoCode
-              ? 'You\'re joining the Lite beta. Free for 60 days, no card required.'
-              : 'Start your 14-day free trial. No credit card required.'}
+            Start your 14-day free trial. No credit card required.
           </p>
-          {promoCode && (
-            <div style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              marginTop: '1rem',
-              background: 'rgba(152,195,121,0.1)',
-              border: '1px solid rgba(152,195,121,0.3)',
-              color: '#98c379',
-              padding: '0.4rem 1rem',
-              borderRadius: '20px',
-              fontSize: '0.78rem',
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase',
-              fontWeight: 500
-            }}>
-              <span>✓</span>
-              <span>Beta code {promoCode} applied at checkout</span>
-            </div>
-          )}
         </div>
 
         {/* STEP INDICATOR */}
@@ -312,7 +278,7 @@ const stripeResponse = await fetch('/api/create-checkout-session', {
               gap: '1rem',
               marginBottom: '2rem'
             }}>
-              {visiblePlans.map(p => (
+              {plans.map(p => (
                 <div
                   key={p.id}
                   onClick={() => setPlan(p.id)}
@@ -387,9 +353,7 @@ const stripeResponse = await fetch('/api/create-checkout-session', {
                 fontSize: '0.82rem',
                 marginBottom: '1.5rem'
               }}>
-                {promoCode
-                  ? 'Beta: free for 60 days, no card required. Cancel any time.'
-                  : '14-day free trial on all plans. Cancel any time.'}
+                14-day free trial on all plans. Cancel any time.
               </p>
               <button
                 onClick={() => setStep(2)}
@@ -561,7 +525,7 @@ const stripeResponse = await fetch('/api/create-checkout-session', {
                   marginBottom: '1rem'
                 }}
               >
-                {loading ? 'Creating your account...' : (promoCode ? 'Join the Beta' : 'Start Free Trial')}
+                {loading ? 'Creating your account...' : 'Start Free Trial'}
               </button>
 
               <button
@@ -592,9 +556,8 @@ const stripeResponse = await fetch('/api/create-checkout-session', {
               marginTop: '1.25rem',
               lineHeight: '1.6'
             }}>
-              {promoCode
-                ? "By joining the beta you agree to our terms of service. No card is required, and you won't be charged during the beta or your 6 free months after."
-                : 'By starting your trial you agree to our terms of service. Your card will not be charged until your 14-day trial ends.'}
+              By starting your trial you agree to our terms of service.
+              Your card will not be charged until your 14-day trial ends.
             </p>
           </div>
         )}

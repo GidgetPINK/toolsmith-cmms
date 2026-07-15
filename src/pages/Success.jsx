@@ -1,21 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
 
 export default function Success({ profile }) {
   const [countdown, setCountdown] = useState(5)
-  const [isBeta, setIsBeta] = useState(false)
   const navigate = useNavigate()
-
-  useEffect(() => {
-    if (!profile?.organization_id) return
-    supabase
-      .from('organizations')
-      .select('is_beta')
-      .eq('id', profile.organization_id)
-      .single()
-      .then(({ data }) => setIsBeta(!!data?.is_beta))
-  }, [profile])
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -79,10 +67,8 @@ export default function Success({ profile }) {
           lineHeight: '1.75',
           marginBottom: '0.75rem'
         }}>
-          {isBeta
-            ? "You're officially in the beta. Welcome to The Toolsmith"
-            : 'Your 14-day free trial has started. Welcome to The Toolsmith'}
-          {' '}CMMS{profile?.full_name ? ', ' + profile.full_name.split(' ')[0] : ''}.
+          Your 14-day free trial has started. Welcome to The Toolsmith
+          CMMS{profile?.full_name ? ', ' + profile.full_name.split(' ')[0] : ''}.
         </p>
         <p style={{
           color: '#9a9db5',
@@ -90,10 +76,8 @@ export default function Success({ profile }) {
           lineHeight: '1.6',
           marginBottom: '2rem'
         }}>
-          {isBeta
-            ? "No card was required to join. You're free through the beta and your six months after it wraps up."
-            : 'Your card will not be charged until your trial ends.'}
-          {' '}You can cancel any time from your account settings.
+          Your card will not be charged until your trial ends.
+          You can cancel any time from your account settings.
         </p>
         <button
           onClick={() => navigate('/')}
