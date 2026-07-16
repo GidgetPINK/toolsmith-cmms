@@ -551,10 +551,10 @@ const stripeResponse = await fetch('/api/create-checkout-session', {
                   marginBottom: '1rem'
                 }}
               >
-                {loading ? 'Creating your account...' : 'Start Free Trial'}
+                {loading ? 'Creating your account...' : (isBeta ? 'Join the Beta' : 'Start Free Trial')}
               </button>
 
-              <button
+              {!isBeta && <button
                 type="button"
                 onClick={() => setStep(1)}
                 style={{
@@ -572,7 +572,7 @@ const stripeResponse = await fetch('/api/create-checkout-session', {
                 }}
               >
                 Back to Plan Selection
-              </button>
+              </button>}
             </form>
 
             <p style={{
@@ -583,7 +583,9 @@ const stripeResponse = await fetch('/api/create-checkout-session', {
               lineHeight: '1.6'
             }}>
               By starting your trial you agree to our terms of service.
-              Your card will not be charged until your 14-day trial ends.
+              {isBeta
+                ? "No card required. You won't be charged during the beta or your six free months of Pro after."
+                : 'Your card will not be charged until your 14-day trial ends.'}
             </p>
           </div>
         )}
