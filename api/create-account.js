@@ -17,7 +17,11 @@ export default async function handler(req, res) {
     return res.status(429).json({ error: 'Too many signup attempts. Please try again later.' })
   }
 
-  const { email, password, fullName, orgName } = req.body
+  const rawBody = req.body
+  const email = (rawBody.email || '').trim().toLowerCase()
+  const password = (rawBody.password || '').trim()
+  const fullName = (rawBody.fullName || '').trim()
+  const orgName = (rawBody.orgName || '').trim()
 
   if (!email || !password || !fullName || !orgName) {
     return res.status(400).json({ error: 'All fields are required' })

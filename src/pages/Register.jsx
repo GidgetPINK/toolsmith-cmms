@@ -158,8 +158,8 @@ export default function Register() {
         if (betaData.error) throw new Error(betaData.error)
 
         const { error: betaSignInError } = await supabase.auth.signInWithPassword({
-          email,
-          password
+          email: email.trim().toLowerCase(),
+          password: password.trim()
         })
         if (betaSignInError) throw betaSignInError
 
@@ -177,16 +177,16 @@ export default function Register() {
       if (accountData.error) throw new Error(accountData.error)
 
       const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password
+        email: email.trim().toLowerCase(),
+        password: password.trim()
       })
 
       if (signInError) throw signInError
 
       // Make sure the new user is signed in so we have a session token
 const { data: autoSignInData, error: autoSignInError } = await supabase.auth.signInWithPassword({
-  email,
-  password
+  email: email.trim().toLowerCase(),
+  password: password.trim()
 })
 
 if (autoSignInError || !autoSignInData?.session) {
