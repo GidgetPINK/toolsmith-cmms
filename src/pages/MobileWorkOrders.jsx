@@ -64,6 +64,7 @@ export default function MobileWorkOrders({ profile }) {
   const [upcomingPms, setUpcomingPms] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('all')
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     fetchAll()
@@ -73,7 +74,7 @@ export default function MobileWorkOrders({ profile }) {
     setLoading(true)
     const cutoff = getUpcomingCutoff()
     const [woRes, profRes, assetRes, orgRes, pmRes] = await Promise.all([
-      supabase.from('work_orders').select('*').neq('status', 'closed').order('created_at', { ascending: false }),
+      supabase.from('work_orders').select('*').order('created_at', { ascending: false }),
       supabase.from('profiles').select('*'),
       supabase.from('assets').select('*'),
       supabase.from('organizations').select('*').eq('id', profile.organization_id).single(),
@@ -107,6 +108,19 @@ export default function MobileWorkOrders({ profile }) {
     return asset ? asset.name : 'No asset'
   }
 
+  function searchableDate(iso) {
+    if (!iso) return ''
+    const d = new Date(iso)
+    if (isNaN(d.getTime())) return ''
+    return [
+      d.toLocaleDateString('en-US'),
+      d.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }),
+      d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+      d.toISOString().split('T')[0]
+    ].join(' ').toLowerCase()
+  }
+
   function openPmAsset(pm) {
     navigate(`/m/assets/${pm.asset_id}`)
   }
@@ -119,16 +133,31 @@ export default function MobileWorkOrders({ profile }) {
   const firstName = profile?.full_name?.split(' ')[0] || 'there'
   const isPro = organization?.is_upgraded === true
 
-  const filtered = filter === 'all'
-    ? workOrders
-    : workOrders.filter(wo => wo.priority === filter)
+  const q = searchQuery.trim().toLowerCase()
+
+  const activeWorkOrders = workOrders.filter(wo => wo.status !== 'closed')
+
+  const filtered = q
+    ? workOrders.filter(wo => {
+        const techName = wo.assigned_to ? getTechName(wo.assigned_to) : ''
+        const assetName = wo.asset_id ? getAssetName(wo.asset_id) : ''
+        return (wo.title || '').toLowerCase().includes(q) ||
+               (wo.description || '').toLowerCase().includes(q) ||
+               techName.toLowerCase().includes(q) ||
+               assetName.toLowerCase().includes(q) ||
+               (wo.apartment_number || '').toLowerCase().includes(q) ||
+               searchableDate(wo.created_at).includes(q)
+      })
+    : (filter === 'all'
+        ? activeWorkOrders
+        : activeWorkOrders.filter(wo => wo.priority === filter))
 
   const counts = {
-    critical: workOrders.filter(wo => wo.priority === 'critical').length,
-    high: workOrders.filter(wo => wo.priority === 'high').length,
-    standard: workOrders.filter(wo => wo.priority === 'standard').length,
-    routine: workOrders.filter(wo => wo.priority === 'routine').length,
-    total: workOrders.length
+    critical: activeWorkOrders.filter(wo => wo.priority === 'critical').length,
+    high: activeWorkOrders.filter(wo => wo.priority === 'high').length,
+    standard: activeWorkOrders.filter(wo => wo.priority === 'standard').length,
+    routine: activeWorkOrders.filter(wo => wo.priority === 'routine').length,
+    total: activeWorkOrders.length
   }
 
   return (
@@ -378,6 +407,32 @@ export default function MobileWorkOrders({ profile }) {
             )}
           </div>
         )}
+
+        {/* SEARCH */}
+        <div style={{ marginBottom: '1rem' }}>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            placeholder="Search by title, description, tech, apartment, or date..."
+            style={{
+              width: '100%',
+              padding: '0.65rem 1rem',
+              background: 'rgba(255,255,255,0.03)',
+              border: '1px solid rgba(201,168,76,0.2)',
+              borderRadius: '8px',
+              color: '#f8f6f1',
+              fontSize: '0.9rem',
+              fontFamily: 'Inter, sans-serif',
+              boxSizing: 'border-box'
+            }}
+          />
+          {searchQuery.trim() && (
+            <p style={{ fontSize: '0.72rem', color: '#9a9db5', margin: '0.4rem 0 0' }}>
+              Searching all work orders including completed and closed. Clear the search to return to the active feed.
+            </p>
+          )}
+        </div>
 
         {/* NEW WORK ORDER BUTTON */}
         <button
