@@ -63,6 +63,7 @@ export default function Queue({ profile }) {
   const [assets, setAssets] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('open')
+  const [searchQuery, setSearchQuery] = useState('')
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const navigate = useNavigate()
 
@@ -102,24 +103,32 @@ export default function Queue({ profile }) {
 
   const firstName = profile?.full_name?.split(' ')[0] || 'there'
 
-  const filtered = workOrders
-    .filter(wo => {
-      if (filter === 'open') return wo.status !== 'closed'
-      if (filter === 'closed') return wo.status === 'closed'
-      return true
-    })
-    .sort((a, b) => {
-      if (filter === 'open') {
-        return (PRIORITY_ORDER[a.priority] ?? 99) - (PRIORITY_ORDER[b.priority] ?? 99)
-      }
-      return new Date(b.created_at) - new Date(a.created_at)
-    })
+  const isFinished = wo => wo.status === 'completed' || wo.status === 'closed'
 
-  const openCount = workOrders.filter(wo => wo.status !== 'closed').length
+  const q = searchQuery.trim().toLowerCase()
+
+  const filtered = (q
+    ? workOrders.filter(wo =>
+        (wo.title || '').toLowerCase().includes(q) ||
+        (wo.description || '').toLowerCase().includes(q)
+      )
+    : workOrders.filter(wo => {
+        if (filter === 'open') return !isFinished(wo)
+        if (filter === 'finished') return isFinished(wo)
+        return true
+      })
+  ).sort((a, b) => {
+    if (!q && filter === 'open') {
+      return (PRIORITY_ORDER[a.priority] ?? 99) - (PRIORITY_ORDER[b.priority] ?? 99)
+    }
+    return new Date(b.created_at) - new Date(a.created_at)
+  })
+
+  const openCount = workOrders.filter(wo => !isFinished(wo)).length
   const criticalCount = workOrders.filter(
-    wo => wo.priority === 'critical' && wo.status !== 'closed'
+    wo => wo.priority === 'critical' && !isFinished(wo)
   ).length
-  const closedCount = workOrders.filter(wo => wo.status === 'closed').length
+  const finishedCount = workOrders.filter(isFinished).length
 
   return (
     <div style={{
@@ -264,7 +273,7 @@ export default function Queue({ profile }) {
           {[
             { label: 'Open', value: openCount, color: '#c9a84c' },
             { label: 'Critical', value: criticalCount, color: '#e06c75' },
-            { label: 'Completed', value: closedCount, color: '#9a9db5' }
+            { label: 'Completed', value: finishedCount, color: '#9a9db5' }
           ].map(stat => (
             <div key={stat.label} style={{
               background: '#1e2245',
@@ -293,6 +302,32 @@ export default function Queue({ profile }) {
           ))}
         </div>
 
+        {/* SEARCH */}
+        <div style={{ marginBottom: '1rem' }}>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            placeholder="Search all work orders by title or description..."
+            style={{
+              width: '100%',
+              padding: '0.65rem 1rem',
+              background: 'rgba(255,255,255,0.03)',
+              border: '1px solid rgba(201,168,76,0.2)',
+              borderRadius: '8px',
+              color: '#f8f6f1',
+              fontSize: '0.9rem',
+              fontFamily: 'Inter, sans-serif',
+              boxSizing: 'border-box'
+            }}
+          />
+          {searchQuery.trim() && (
+            <p style={{ fontSize: '0.72rem', color: '#9a9db5', margin: '0.4rem 0 0' }}>
+              Searching all work orders including completed and closed. Clear the search to return to your queue.
+            </p>
+          )}
+        </div>
+
         {/* FILTERS + NEW WO BUTTON */}
         <div style={{
           display: 'flex',
@@ -305,7 +340,7 @@ export default function Queue({ profile }) {
           <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
             {[
               { value: 'open', label: 'Open' },
-              { value: 'closed', label: 'Completed' },
+              { value: 'finished', label: 'Completed' },
               { value: 'all', label: 'All' }
             ].map(f => (
               <button
