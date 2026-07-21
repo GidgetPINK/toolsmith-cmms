@@ -228,6 +228,19 @@ export default function Dashboard({ profile }) {
     return asset ? asset.name : 'No asset'
   }
 
+  function searchableDate(iso) {
+    if (!iso) return ''
+    const d = new Date(iso)
+    if (isNaN(d.getTime())) return ''
+    return [
+      d.toLocaleDateString('en-US'),
+      d.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }),
+      d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+      d.toISOString().split('T')[0]
+    ].join(' ').toLowerCase()
+  }
+
   const firstName = profile?.full_name?.split(' ')[0] || 'there'
   const isPro = organization?.is_upgraded === true
 
@@ -236,8 +249,14 @@ export default function Dashboard({ profile }) {
   const filtered = searchQuery.trim()
     ? workOrders.filter(wo => {
         const q = searchQuery.toLowerCase()
+        const techName = wo.assigned_to ? getTechName(wo.assigned_to) : ''
+        const assetName = wo.asset_id ? getAssetName(wo.asset_id) : ''
         return (wo.title || '').toLowerCase().includes(q) ||
-               (wo.description || '').toLowerCase().includes(q)
+               (wo.description || '').toLowerCase().includes(q) ||
+               techName.toLowerCase().includes(q) ||
+               assetName.toLowerCase().includes(q) ||
+               (wo.apartment_number || '').toLowerCase().includes(q) ||
+               searchableDate(wo.created_at).includes(q)
       })
     : (filter === 'all'
         ? activeWorkOrders
@@ -386,7 +405,7 @@ export default function Dashboard({ profile }) {
               type="text"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Search all work orders by title or description..."
+              placeholder="Search by title, description, tech, apartment, or date..."
               style={{
                 width: '100%',
                 padding: '0.65rem 1rem',

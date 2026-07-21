@@ -5,8 +5,21 @@ import Sidebar from '../components/Sidebar'
 import MobileBottomNav from '../components/MobileBottomNav'
 import PartsPicker from '../components/PartsPicker'
 import WorkOrderChat from '../components/WorkOrderChat'
+import WorkOrderChangeLog from '../components/WorkOrderChangeLog'
 
 export default function WorkOrderForm({ profile }) {
+  const TRACKED_FIELDS = {
+    title: 'Title',
+    description: 'Description',
+    priority: 'Priority',
+    status: 'Status',
+    asset_id: 'Asset',
+    assigned_to: 'Assigned to',
+    apartment_number: 'Apartment',
+    reporter: 'Reporter',
+    compliance_category: 'Compliance category'
+  }
+
   const { id } = useParams()
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
@@ -32,6 +45,15 @@ export default function WorkOrderForm({ profile }) {
   const [loading, setLoading] = useState(false)
   const [fetching, setFetching] = useState(!isNew)
   const [error, setError] = useState(null)
+  const [closedAt, setClosedAt] = useState(null)
+  const [closedById, setClosedById] = useState(null)
+  const [closedByName, setClosedByName] = useState('')
+  const [completedAt, setCompletedAt] = useState(null)
+  const [completedById, setCompletedById] = useState(null)
+  const [completedByName, setCompletedByName] = useState('')
+  const [originalValues, setOriginalValues] = useState(null)
+  const [createdAt, setCreatedAt] = useState(null)
+  const [createdByName, setCreatedByName] = useState('')
 
   const [showUnassignedNudge, setShowUnassignedNudge] = useState(false)
   const [pendingNavigate, setPendingNavigate] = useState(false)
@@ -85,7 +107,7 @@ export default function WorkOrderForm({ profile }) {
     setFetching(true)
     const { data } = await supabase
       .from('work_orders')
-      .select('*')
+      .select('*, closed_by_profile:closed_by ( full_name ), completed_by_profile:completed_by ( full_name ), created_by_profile:created_by ( full_name )')
       .eq('id', id)
       .single()
     if (data) {
@@ -93,6 +115,25 @@ export default function WorkOrderForm({ profile }) {
       setDescription(data.description || '')
       setPriority(data.priority)
       setStatus(data.status)
+      setClosedAt(data.closed_at || null)
+      setClosedById(data.closed_by || null)
+      setClosedByName(data.closed_by_profile?.full_name || '')
+      setCompletedAt(data.completed_at || null)
+      setCompletedById(data.completed_by || null)
+      setCompletedByName(data.completed_by_profile?.full_name || '')
+      setCreatedAt(data.created_at || null)
+      setCreatedByName(data.created_by_profile?.full_name || '')
+      setOriginalValues({
+        title: data.title || '',
+        description: data.description || '',
+        priority: data.priority || '',
+        status: data.status || '',
+        asset_id: data.asset_id || '',
+        assigned_to: data.assigned_to || '',
+        apartment_number: data.apartment_number || '',
+        reporter: data.reporter || '',
+        compliance_category: data.compliance_category || ''
+      })
       setAssetId(data.asset_id || '')
       setAssignedTo(data.assigned_to || '')
       setOriginalAssignedTo(data.assigned_to || '')
@@ -235,7 +276,18 @@ export default function WorkOrderForm({ profile }) {
       apartment_number: apartmentNumber || null,
       reporter: reporter || null,
       compliance_category: complianceCategory || null,
-      closed_at: status === 'closed' ? new Date().toISOString() : null
+      closed_at: status === 'closed' ? (closedAt || new Date().toISOString()) : null,
+      closed_by: status === 'closed' ? (closedById || profile.id) : null,
+      completed_at: (status === 'completed' || status === 'closed')
+        ? (completedAt || (status === 'completed' ? new Date().toISOString() : null))
+        : null,
+      completed_by: (status === 'completed' || status === 'closed')
+        ? (completedById || (status === 'completed' ? profile.id : null))
+        : null
+    }
+
+    if (isNew) {
+      payload.created_by = profile.id
     }
 
     let result
@@ -270,6 +322,50 @@ export default function WorkOrderForm({ profile }) {
           console.warn('Could not send assignment notification:', err)
         }
       }
+
+      if (!isNew && originalValues) {
+        const nextValues = {
+          title: title || '',
+          description: description || '',
+          priority: priority || '',
+          status: status || '',
+          asset_id: assetId || '',
+          assigned_to: assignedTo || '',
+          apartment_number: apartmentNumber || '',
+          reporter: reporter || '',
+          compliance_category: complianceCategory || ''
+        }
+
+        const displayValue = (field, val) => {
+          if (!val) return ''
+          if (field === 'asset_id') {
+            const a = assets.find(x => x.id === val)
+            return a ? a.name : 'Unknown asset'
+          }
+          if (field === 'assigned_to') {
+            const t = technicians.find(x => x.id === val)
+            return t ? t.full_name : 'Unknown user'
+          }
+          return String(val)
+        }
+
+        const rows = Object.keys(TRACKED_FIELDS)
+          .filter(f => (originalValues[f] || '') !== (nextValues[f] || ''))
+          .map(f => ({
+            work_order_id: id,
+            organization_id: profile.organization_id,
+            changed_by: profile.id,
+            field: f,
+            old_value: displayValue(f, originalValues[f]),
+            new_value: displayValue(f, nextValues[f])
+          }))
+
+        if (rows.length > 0) {
+          const { error: histError } = await supabase.from('work_order_history').insert(rows)
+          if (histError) console.warn('Change log write failed:', histError.message)
+        }
+      }
+
       navigate('/')
     }
   }
@@ -414,6 +510,7 @@ export default function WorkOrderForm({ profile }) {
           }}>
             {isNew ? 'Create Work Order' : title}
           </h1>
+
         </div>
 
         <form onSubmit={handleSubmit}>
@@ -978,6 +1075,15 @@ export default function WorkOrderForm({ profile }) {
                 workOrderId={id}
                 profile={profile}
                 organizationId={profile?.organization_id}
+              />
+              <WorkOrderChangeLog
+                workOrderId={id}
+                createdAt={createdAt}
+                createdByName={createdByName}
+                completedAt={completedAt}
+                completedByName={completedByName}
+                closedAt={closedAt}
+                closedByName={closedByName}
               />
             </div>
           )}
