@@ -26,7 +26,18 @@ Files: `src/pages/Dashboard.jsx`, and mirror in `src/pages/MobileWorkOrders.jsx`
 1. **Exclude completed and closed.** `activeWorkOrders` is currently `status !== 'closed'`, so completed work still appears in the feed and counts toward TOTAL OPEN. Change to exclude both.
 2. **Sort oldest first.** The fetch uses `.order('created_at', { ascending: false })`. Flip to `true` so aging open work rises to the top instead of being buried.
 
-**Decision needed first:** if completed work orders disappear from the Dashboard, how does a manager find them to close them? Right now search is the only path, and it requires knowing a search term. Options: a Completed filter chip, a separate review queue, or accept search-only. Worth deciding before building, because it affects the four-status workflow.
+**Direction (April, July 20):** Finished work should not take space on the Dashboard away from current work. Searching is an acceptable way to retrieve it later.
+
+**Open idea to discuss: 24-hour grace period.** Rather than disappearing the instant it is marked, a completed or closed work order stays on the Dashboard for 24 hours, then clears automatically. Gives the manager a chance to see and review recent finishes without permanently cluttering the feed.
+
+Now buildable, since `completed_at` and `closed_at` are recorded as of July 20. The filter becomes roughly: show if not finished, OR finished less than 24 hours ago.
+
+Points to settle:
+- Is the window measured from `completed_at` or `closed_at` when both exist?
+- Should items inside the grace window look different (dimmed, or a "Recently completed" divider) so they read as done rather than active?
+- Do they count toward the TOTAL OPEN card during the window? Probably not, since the card label says open.
+- What about a manager who is off Friday through Monday? The 24-hour window means work finished Friday is gone before they return. A "Completed" filter chip would cover that gap without cluttering the default view. Consider doing both.
+- Same rules need to apply in `MobileWorkOrders.jsx` or the two screens will disagree.
 
 ### Queue search fields
 
