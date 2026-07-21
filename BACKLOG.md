@@ -4,7 +4,51 @@ Deferred features, bug fixes, and product decisions that need attention but aren
 
 When picking up an item from this file, move it to the relevant phase plan or open a ticket, then remove it from here.
 
-Last updated: June 2026
+Last updated: July 20, 2026
+
+---
+
+## Next session (queued July 20, 2026)
+
+Picked up in this order.
+
+### Reports page: two bugs
+
+File: `src/pages/Reports.jsx`. Pro-only, so no beta tester will hit these.
+
+1. **Completed status missing.** `STATUSES` offers open, in_progress, closed. The Completed status was added July 17 and Reports predates it. A completed work order also renders with the grey fallback badge instead of green. Fix `STATUSES` and `statusBadge()`.
+2. **Priority filter never matches.** `PRIORITIES` uses `urgent`, `high`, `standard`, `low`. Work orders are created in `WorkOrderForm.jsx` with `critical`, `high`, `standard`, `routine`. Filtering by Urgent or Low returns an empty report with no error, which reads as "no work was done." Worse of the two.
+
+### Dashboard list: hide finished work, oldest first
+
+Files: `src/pages/Dashboard.jsx`, and mirror in `src/pages/MobileWorkOrders.jsx`.
+
+1. **Exclude completed and closed.** `activeWorkOrders` is currently `status !== 'closed'`, so completed work still appears in the feed and counts toward TOTAL OPEN. Change to exclude both.
+2. **Sort oldest first.** The fetch uses `.order('created_at', { ascending: false })`. Flip to `true` so aging open work rises to the top instead of being buried.
+
+**Decision needed first:** if completed work orders disappear from the Dashboard, how does a manager find them to close them? Right now search is the only path, and it requires knowing a search term. Options: a Completed filter chip, a separate review queue, or accept search-only. Worth deciding before building, because it affects the four-status workflow.
+
+### Queue search fields
+
+File: `src/pages/Queue.jsx`. Search covers title and description only. Dashboard and MobileWorkOrders also match apartment number, created date, and asset name. Bring Queue up to match, minus tech name (the Queue loads only the signed-in tech's own work orders, so it would be meaningless).
+
+### Asset history shows created date only
+
+File: `src/pages/Dashboard.jsx`, AssetFlyout, around the line rendering `Assigned: {getTechName(...)} · created date`. Add the closed date so asset history reflects when work actually finished.
+
+### Blog post #2 (marketing site)
+
+Repo: `~/Desktop/toolsmith-site` (paste files as raw text, not accessible to Claude). Title: "5 Signs Your Team Has Outgrown Spreadsheets". Tag: Guides. CTA to `/register`. Add to the Field Notes grid and to `sitemap.xml`, then request indexing in Search Console.
+
+### Change Log polish (only if it bothers you after using it)
+
+New component `src/components/WorkOrderChangeLog.jsx`. Two things that may want changing once you've lived with it: it sits in the 320px chat column which is narrow for before/after values, and entries are oldest-first so recent activity requires scrolling. Both are small changes.
+
+---
+
+## Resolved (was in this file, now shipped)
+
+- **Status workflow: add Completed status** — shipped July 17. Four-status model is live: Open, In Progress, Completed, Closed. The old entry under "Open product decisions" below is stale and can be deleted.
 
 ---
 
