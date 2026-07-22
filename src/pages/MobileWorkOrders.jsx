@@ -74,7 +74,7 @@ export default function MobileWorkOrders({ profile }) {
     setLoading(true)
     const cutoff = getUpcomingCutoff()
     const [woRes, profRes, assetRes, orgRes, pmRes] = await Promise.all([
-      supabase.from('work_orders').select('*').order('created_at', { ascending: false }),
+      supabase.from('work_orders').select('*').order('created_at', { ascending: true }),
       supabase.from('profiles').select('*'),
       supabase.from('assets').select('*'),
       supabase.from('organizations').select('*').eq('id', profile.organization_id).single(),
@@ -135,7 +135,7 @@ export default function MobileWorkOrders({ profile }) {
 
   const q = searchQuery.trim().toLowerCase()
 
-  const activeWorkOrders = workOrders.filter(wo => wo.status !== 'closed')
+  const activeWorkOrders = workOrders.filter(wo => wo.status !== 'closed' && wo.status !== 'completed')
 
   const filtered = q
     ? workOrders.filter(wo => {

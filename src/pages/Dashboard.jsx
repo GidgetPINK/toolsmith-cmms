@@ -153,7 +153,7 @@ export default function Dashboard({ profile }) {
       supabase
         .from('work_orders')
         .select('*')
-        .order('created_at', { ascending: false }),
+        .order('created_at', { ascending: true }),
       supabase.from('profiles').select('*'),
       supabase.from('assets').select('*').order('name'),
       supabase
@@ -244,7 +244,7 @@ export default function Dashboard({ profile }) {
   const firstName = profile?.full_name?.split(' ')[0] || 'there'
   const isPro = organization?.is_upgraded === true
 
-  const activeWorkOrders = workOrders.filter(wo => wo.status !== 'closed')
+  const activeWorkOrders = workOrders.filter(wo => wo.status !== 'closed' && wo.status !== 'completed')
 
   const filtered = searchQuery.trim()
     ? workOrders.filter(wo => {
