@@ -8,15 +8,16 @@ import autoTable from 'jspdf-autotable'
 
 const STATUSES = [
   { value: 'open', label: 'Open' },
-  { value: 'in_progress', label: 'In Progress' },
+  { value: 'in progress', label: 'In Progress' },
+  { value: 'completed', label: 'Completed' },
   { value: 'closed', label: 'Closed' }
 ]
 
 const PRIORITIES = [
-  { value: 'urgent', label: 'Urgent' },
+  { value: 'critical', label: 'Critical' },
   { value: 'high', label: 'High' },
   { value: 'standard', label: 'Standard' },
-  { value: 'low', label: 'Low' }
+  { value: 'routine', label: 'Routine' }
 ]
 
 const REPORTERS = ['Resident', 'Family Member', 'Staff', 'Other']
@@ -24,7 +25,8 @@ const REPORTERS = ['Resident', 'Family Member', 'Staff', 'Other']
 function statusBadge(status) {
   const map = {
     open: { bg: 'rgba(255,255,255,0.08)', color: '#9a9db5', label: 'Open' },
-    in_progress: { bg: 'rgba(201,168,76,0.15)', color: '#c9a84c', label: 'In Progress' },
+    'in progress': { bg: 'rgba(201,168,76,0.15)', color: '#c9a84c', label: 'In Progress' },
+    completed: { bg: 'rgba(126,201,138,0.15)', color: '#7ec98a', label: 'Completed' },
     closed: { bg: 'rgba(108,182,224,0.15)', color: '#6cb6e0', label: 'Closed' }
   }
   return map[status] || { bg: 'rgba(255,255,255,0.08)', color: '#9a9db5', label: status }
@@ -151,7 +153,7 @@ export default function Reports({ profile }) {
     return results.map(wo => ({
       Title: wo.title || '',
       Description: wo.description || '',
-      Status: wo.status === 'in_progress' ? 'In Progress' : (wo.status?.charAt(0).toUpperCase() + wo.status?.slice(1)) || '',
+      Status: wo.status === 'in progress' ? 'In Progress' : ((wo.status?.charAt(0).toUpperCase() + wo.status?.slice(1)) || ''),
       Priority: wo.priority?.charAt(0).toUpperCase() + wo.priority?.slice(1) || '',
       Created: formatDateForCsv(wo.created_at),
       Closed: formatDateForCsv(wo.closed_at),
@@ -228,7 +230,7 @@ export default function Reports({ profile }) {
 
       // Filter summary line
       const filters = []
-      if (filterStatus) filters.push('Status: ' + (filterStatus === 'in_progress' ? 'In Progress' : filterStatus.charAt(0).toUpperCase() + filterStatus.slice(1)))
+      if (filterStatus) filters.push('Status: ' + (filterStatus === 'in progress' ? 'In Progress' : filterStatus.charAt(0).toUpperCase() + filterStatus.slice(1)))
       if (filterPriority) filters.push('Priority: ' + filterPriority.charAt(0).toUpperCase() + filterPriority.slice(1))
       if (filterTech) {
         const t = technicians.find(t => t.id === filterTech)
