@@ -137,8 +137,13 @@ export default function MobileWorkOrders({ profile }) {
 
   const activeWorkOrders = workOrders.filter(wo => wo.status !== 'closed' && wo.status !== 'completed')
 
+  const STATUS_WORDS = ['open', 'in progress', 'completed', 'closed']
   const filtered = q
     ? workOrders.filter(wo => {
+        const statusMatches = STATUS_WORDS.filter(w => w.startsWith(q))
+        if (q.length >= 2 && statusMatches.length === 1) {
+          return (wo.status || '').toLowerCase() === statusMatches[0]
+        }
         const techName = wo.assigned_to ? getTechName(wo.assigned_to) : ''
         const assetName = wo.asset_id ? getAssetName(wo.asset_id) : ''
         return (wo.title || '').toLowerCase().includes(q) ||

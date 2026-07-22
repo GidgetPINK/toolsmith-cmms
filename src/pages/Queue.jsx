@@ -107,10 +107,13 @@ export default function Queue({ profile }) {
 
   const q = searchQuery.trim().toLowerCase()
 
+  const STATUS_WORDS = ['open', 'in progress', 'completed', 'closed']
   const filtered = (q
     ? workOrders.filter(wo =>
-        (wo.title || '').toLowerCase().includes(q) ||
-        (wo.description || '').toLowerCase().includes(q)
+        (q.length >= 2 && STATUS_WORDS.filter(w => w.startsWith(q)).length === 1)
+          ? (wo.status || '').toLowerCase() === STATUS_WORDS.filter(w => w.startsWith(q))[0]
+          : (wo.title || '').toLowerCase().includes(q) ||
+            (wo.description || '').toLowerCase().includes(q)
       )
     : workOrders.filter(wo => {
         if (filter === 'open') return !isFinished(wo)

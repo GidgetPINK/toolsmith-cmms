@@ -248,7 +248,12 @@ export default function Dashboard({ profile }) {
 
   const filtered = searchQuery.trim()
     ? workOrders.filter(wo => {
-        const q = searchQuery.toLowerCase()
+        const q = searchQuery.trim().toLowerCase()
+        const STATUS_WORDS = ['open', 'in progress', 'completed', 'closed']
+        const statusMatches = STATUS_WORDS.filter(w => w.startsWith(q))
+        if (q.length >= 2 && statusMatches.length === 1) {
+          return (wo.status || '').toLowerCase() === statusMatches[0]
+        }
         const techName = wo.assigned_to ? getTechName(wo.assigned_to) : ''
         const assetName = wo.asset_id ? getAssetName(wo.asset_id) : ''
         return (wo.title || '').toLowerCase().includes(q) ||
