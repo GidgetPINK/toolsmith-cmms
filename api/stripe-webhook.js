@@ -181,6 +181,44 @@ if (organizationId && session.subscription) {
         const errorData = await emailResponse.json()
         console.error('Welcome email failed to send:', errorData)
       }
+
+      // Notify April of the new paid signup
+      try {
+        const when = new Date().toLocaleString('en-US', {
+          timeZone: 'America/Chicago',
+          dateStyle: 'medium',
+          timeStyle: 'short'
+        })
+        const alertResponse = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.RESEND_API_KEY}`
+          },
+          body: JSON.stringify({
+            from: 'The Toolsmith <orders@thetoolsmithapp.com>',
+            to: ['april.smith@thetoolsmithapp.com'],
+            reply_to: managerEmail,
+            subject: `New ${planName} signup: ${managerProfile.full_name}`,
+            html: `
+              <div style="font-family:Arial,sans-serif;color:#1a1a2e;line-height:1.6;">
+                <h2 style="margin:0 0 16px;">New paid signup</h2>
+                <p style="margin:0 0 8px;"><strong>Name:</strong> ${managerProfile.full_name}</p>
+                <p style="margin:0 0 8px;"><strong>Email:</strong> ${managerEmail}</p>
+                <p style="margin:0 0 8px;"><strong>Plan:</strong> ${planName}</p>
+                <p style="margin:0 0 16px;"><strong>Signed up:</strong> ${when} (Central)</p>
+                <p style="margin:0;color:#555;font-size:14px;">Reply to this email to reach them directly.</p>
+              </div>
+            `
+          })
+        })
+        if (!alertResponse.ok) {
+          const errorData = await alertResponse.json()
+          console.error('Paid signup alert failed to send:', errorData)
+        }
+      } catch (alertError) {
+        console.error('Paid signup alert threw:', alertError)
+      }
     }
   } catch (emailError) {
     // Don't fail the webhook if email fails

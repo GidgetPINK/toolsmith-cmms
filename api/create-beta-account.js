@@ -100,6 +100,47 @@ export default async function handler(req, res) {
       console.error('Beta welcome email threw:', emailError)
     }
 
+    // Notify April that someone joined the beta
+    try {
+      if (process.env.RESEND_API_KEY) {
+        const when = new Date().toLocaleString('en-US', {
+          timeZone: 'America/Chicago',
+          dateStyle: 'medium',
+          timeStyle: 'short'
+        })
+        const alertResponse = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.RESEND_API_KEY}`
+          },
+          body: JSON.stringify({
+            from: 'The Toolsmith <orders@thetoolsmithapp.com>',
+            to: ['april.smith@thetoolsmithapp.com'],
+            reply_to: email,
+            subject: `New beta signup: ${orgName}`,
+            html: `
+              <div style="font-family:Arial,sans-serif;color:#1a1a2e;line-height:1.6;">
+                <h2 style="margin:0 0 16px;">New beta signup</h2>
+                <p style="margin:0 0 8px;"><strong>Organization:</strong> ${orgName}</p>
+                <p style="margin:0 0 8px;"><strong>Name:</strong> ${fullName}</p>
+                <p style="margin:0 0 8px;"><strong>Email:</strong> ${email}</p>
+                <p style="margin:0 0 8px;"><strong>Plan:</strong> Lite beta</p>
+                <p style="margin:0 0 16px;"><strong>Signed up:</strong> ${when} (Central)</p>
+                <p style="margin:0;color:#555;font-size:14px;">Reply to this email to reach them directly.</p>
+              </div>
+            `
+          })
+        })
+        if (!alertResponse.ok) {
+          const errorData = await alertResponse.json()
+          console.error('Beta signup alert failed to send:', errorData)
+        }
+      }
+    } catch (alertError) {
+      console.error('Beta signup alert threw:', alertError)
+    }
+
     return res.status(200).json({
       success: true,
       userId,
