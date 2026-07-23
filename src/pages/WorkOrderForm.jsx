@@ -417,7 +417,7 @@ export default function WorkOrderForm({ profile }) {
 
   if (fetching) return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#1a1a2e' }}>
-      <Sidebar profile={profile} />
+      <Sidebar profile={profile} organization={organization} />
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <p style={{ color: '#9a9db5', fontFamily: 'Inter, sans-serif' }}>Loading...</p>
       </div>
@@ -434,7 +434,7 @@ export default function WorkOrderForm({ profile }) {
       color: '#f8f6f1'
     }}>
 
-      <Sidebar profile={profile} />
+      <Sidebar profile={profile} organization={organization} />
 
       <div style={{ flex: 1, minWidth: 0, overflow: 'auto' }}>
 
