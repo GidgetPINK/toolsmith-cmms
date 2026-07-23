@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { Home, Wrench, Package, BarChart3, Shield, LogOut, MoreHorizontal } from 'lucide-react'
 
 export default function MobileBottomNav({ profile }) {
   const navigate = useNavigate()
@@ -10,14 +11,14 @@ export default function MobileBottomNav({ profile }) {
   const isManager = profile?.role === 'manager'
   const tabs = isManager
     ? [
-        { path: '/m/work-orders', label: 'Home', icon: '⌂' },
-        { path: '/m/assets', label: 'Assets', icon: '⚙' },
-        { path: '/parts', label: 'Parts', icon: '▦' },
-        { path: '/reports', label: 'Reports', icon: '⊞' }
+        { path: '/m/work-orders', label: 'Home', Icon: Home },
+        { path: '/m/assets', label: 'Assets', Icon: Wrench },
+        { path: '/parts', label: 'Parts', Icon: Package },
+        { path: '/reports', label: 'Reports', Icon: BarChart3 }
       ]
     : [
-        { path: '/m/work-orders', label: 'Home', icon: '⌂' },
-        { path: '/m/assets', label: 'Assets', icon: '⚙' }
+        { path: '/m/work-orders', label: 'Home', Icon: Home },
+        { path: '/m/assets', label: 'Assets', Icon: Wrench }
       ]
 
   function isActive(tabPath) {
@@ -91,7 +92,7 @@ export default function MobileBottomNav({ profile }) {
                 textAlign: 'left'
               }}
             >
-              <span style={{ fontSize: '1.05rem', color: '#c9a84c' }}>⚑</span>
+              <Shield size={18} strokeWidth={2} color="#c9a84c" />
               <span>Admin</span>
             </button>
             <div style={{ height: '1px', background: 'rgba(201,168,76,0.15)', margin: '0.35rem 0.5rem' }}></div>
@@ -113,7 +114,7 @@ export default function MobileBottomNav({ profile }) {
                 textAlign: 'left'
               }}
             >
-              <span style={{ fontSize: '1rem', color: '#9a9db5' }}>⇥</span>
+              <LogOut size={16} strokeWidth={2} color="#9a9db5" />
               <span>Sign out</span>
             </button>
           </div>
@@ -159,7 +160,7 @@ export default function MobileBottomNav({ profile }) {
                 fontWeight: active ? 600 : 500
               }}
             >
-              <span style={{ fontSize: '1.5rem', lineHeight: 1, color: 'inherit' }}>{tab.icon}</span>
+              <tab.Icon size={22} strokeWidth={active ? 2.4 : 2} />
               <span>{tab.label}</span>
             </button>
           )
@@ -187,7 +188,7 @@ export default function MobileBottomNav({ profile }) {
             fontWeight: moreActive ? 600 : 500
           }}
         >
-          <span style={{ fontSize: '1.5rem', lineHeight: 1, color: 'inherit' }}>⋯</span>
+          <MoreHorizontal size={22} strokeWidth={2} />
           <span>More</span>
         </button>
       </nav>
