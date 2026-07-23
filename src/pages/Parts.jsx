@@ -339,9 +339,27 @@ export default function Parts({ profile }) {
           <div style={emptyState} className="parts-empty-state">
             <p style={emptyText}>
               Your parts inventory is empty.<br />
-              Add your first part to get started.
+              Add your first part, or bulk import a list you already have.
             </p>
-            <button style={primaryBtn} onClick={openCreateFlyout}>+ Add part</button>
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <button style={primaryBtn} onClick={openCreateFlyout}>+ Add part</button>
+              <button onClick={() => setBulkImportOpen(true)} style={{
+                background: 'transparent',
+                color: '#c9a84c',
+                border: '1px solid rgba(201,168,76,0.4)',
+                borderRadius: '8px',
+                padding: '0.7rem 1.25rem',
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                cursor: 'pointer',
+                fontFamily: 'Inter, sans-serif',
+                whiteSpace: 'nowrap'
+              }}>
+                Bulk import
+              </button>
+            </div>
           </div>
         ) : (
           <>
