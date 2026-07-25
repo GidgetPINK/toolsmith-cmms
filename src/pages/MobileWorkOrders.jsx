@@ -191,7 +191,7 @@ export default function MobileWorkOrders({ profile }) {
           fontSize: '1.1rem',
           fontWeight: '600'
         }}>
-          The Toolsmith CMMS
+          The Toolsmith
         </span>
         <button
           onClick={handleSignOut}

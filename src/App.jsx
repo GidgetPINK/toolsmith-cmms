@@ -83,7 +83,7 @@ function DisabledScreen() {
           fontWeight: '600',
           marginBottom: '1rem'
         }}>
-          The Toolsmith CMMS
+          The Toolsmith
         </h1>
         <p style={{
           color: '#f8f6f1',

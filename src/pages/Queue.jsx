@@ -164,7 +164,7 @@ export default function Queue({ profile }) {
             fontSize: '1.3rem',
             fontWeight: '600'
           }}>
-            The Toolsmith CMMS
+            The Toolsmith
           </span>
           <div
             className="desktop-nav"

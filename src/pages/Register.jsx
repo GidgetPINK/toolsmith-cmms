@@ -235,7 +235,7 @@ const stripeResponse = await fetch('/api/create-checkout-session', {
             fontWeight: '600',
             marginBottom: '0.5rem'
           }}>
-            The Toolsmith CMMS
+            The Toolsmith
           </h1>
           <p style={{ color: '#9a9db5', fontSize: '0.95rem' }}>
             {isBeta

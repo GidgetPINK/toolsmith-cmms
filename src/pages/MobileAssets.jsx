@@ -98,7 +98,7 @@ export default function MobileAssets({ profile }) {
         fontSize: '1.1rem',
         fontWeight: 600
       }}>
-        The Toolsmith CMMS
+        The Toolsmith
       </span>
     </nav>
   )
