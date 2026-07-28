@@ -20,6 +20,7 @@ import Reports from './pages/Reports'
 import MobileWorkOrders from './pages/MobileWorkOrders'
 import MobileAssets from './pages/MobileAssets'
 import MobileAssetDetail from './pages/MobileAssetDetail'
+import AssetDetail from './pages/AssetDetail'
 import CompletePaymentSetup from './pages/CompletePaymentSetup'
 import SubscriptionRequired from './pages/SubscriptionRequired'
 import GidgetButton from './components/GidgetButton'
@@ -449,6 +450,16 @@ function App() {
               <Navigate to="/subscription-required" replace />
             ) : (
               <MobileAssetDetail profile={profile} />
+            )
+          }
+        />
+        <Route
+          path="/asset/:id"
+          element={
+            !session ? (
+              <Navigate to="/login" replace />
+            ) : (
+              <AssetDetail profile={profile} />
             )
           }
         />
