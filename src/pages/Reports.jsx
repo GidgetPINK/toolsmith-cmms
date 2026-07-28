@@ -74,6 +74,10 @@ export default function Reports({ profile }) {
   const [assets, setAssets] = useState([])
   const [orgName, setOrgName] = useState('')
   const [organization, setOrganization] = useState(null)
+  const [askText, setAskText] = useState('')
+  const [askLoading, setAskLoading] = useState(false)
+  const [askSummary, setAskSummary] = useState('')
+  const [askError, setAskError] = useState('')
 
   const [results, setResults] = useState([])
   const [loading, setLoading] = useState(false)
@@ -164,6 +168,45 @@ export default function Reports({ profile }) {
       Compliance: wo.compliance_category || '',
       Reporter: wo.reporter || ''
     }))
+  }
+
+  async function handleAskGidget() {
+    const text = askText.trim()
+    if (!text || askLoading) return
+    setAskLoading(true)
+    setAskError('')
+    setAskSummary('')
+    try {
+      const { data: sess } = await supabase.auth.getSession()
+      const token = sess?.session?.access_token
+      if (!token) { setAskError('Please sign in again.'); setAskLoading(false); return }
+
+      const resp = await fetch('/api/gidget-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ mode: 'report_filters', request: text })
+      })
+      const data = await resp.json()
+      if (!resp.ok) {
+        setAskError(data.error || 'Could not interpret that request.')
+        setAskLoading(false)
+        return
+      }
+
+      const f = data.filters || {}
+      if (f.dateFrom) setDateFrom(f.dateFrom)
+      if (f.dateTo) setDateTo(f.dateTo)
+      setFilterStatus(f.filterStatus || '')
+      setFilterPriority(f.filterPriority || '')
+      setFilterTech(f.filterTech || '')
+      setFilterAsset(f.filterAsset || '')
+      setFilterApartment(f.filterApartment || '')
+      setFilterCompliance(f.filterCompliance || '')
+      setAskSummary(data.summary || 'Filters set. Review them below before running.')
+    } catch (err) {
+      setAskError('Something went wrong. Please try again.')
+    }
+    setAskLoading(false)
   }
 
   function downloadCsv() {
@@ -376,6 +419,49 @@ export default function Reports({ profile }) {
         <p style={eyebrow}>Work Order Reports</p>
         <h1 style={heading}>Export work history</h1>
         <p style={subhead}>Filter your work orders and export to CSV or PDF for state surveyors, compliance audits, or internal review.</p>
+
+        {/* ASK GIDGET */}
+        <div style={{ ...card, border: '1px solid rgba(201,168,76,0.35)' }}>
+          <p style={cardLabel}>Ask Gidget</p>
+          <p style={{ fontSize: '0.82rem', color: '#9a9db5', margin: '0 0 0.75rem', lineHeight: 1.5 }}>
+            Describe the report in plain language and Gidget will set the filters below. Review them before running.
+          </p>
+          <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
+            <input
+              type="text"
+              value={askText}
+              onChange={e => setAskText(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') handleAskGidget() }}
+              placeholder="e.g. completed fire safety work orders in the last 90 days"
+              maxLength={500}
+              style={{ ...input, flex: 1, minWidth: '240px' }}
+            />
+            <button
+              onClick={handleAskGidget}
+              disabled={askLoading || !askText.trim()}
+              style={{
+                background: askLoading ? '#3a3d55' : 'linear-gradient(135deg,#c9a84c,#e8c97a)',
+                color: askLoading ? '#9a9db5' : '#1a1a2e',
+                border: 'none', borderRadius: '8px', padding: '0.6rem 1.4rem',
+                fontSize: '0.85rem', fontWeight: 600, letterSpacing: '0.04em',
+                cursor: askLoading || !askText.trim() ? 'default' : 'pointer',
+                fontFamily: 'Inter, sans-serif', whiteSpace: 'nowrap'
+              }}
+            >
+              {askLoading ? 'Thinking...' : 'Set filters'}
+            </button>
+          </div>
+          {askSummary && (
+            <p style={{ fontSize: '0.82rem', color: '#7ec98a', margin: '0.75rem 0 0', lineHeight: 1.5 }}>
+              {askSummary}
+            </p>
+          )}
+          {askError && (
+            <p style={{ fontSize: '0.82rem', color: '#e06c75', margin: '0.75rem 0 0' }}>
+              {askError}
+            </p>
+          )}
+        </div>
 
         {/* FILTERS */}
         <div style={card}>
