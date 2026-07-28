@@ -281,7 +281,107 @@ export default async function handler(req, res) {
     }
 
     // Validate body
-    const { messages, contextType, contextData } = req.body || {}
+    const { messages, contextType, contextData, mode } = req.body || {}
+
+    // ---- Report-filter mode (narrow, structured-JSON feature for /reports) ----
+    // Reuses the auth, rate limit, and Pro gate already checked above.
+    if (mode === 'report_filters') {
+      if (profile.role !== 'manager') {
+        return res.status(403).json({ error: 'Reports are available to managers' })
+      }
+      const request = (req.body?.request || '').toString()
+      if (!request.trim()) {
+        return res.status(400).json({ error: 'request text required' })
+      }
+      if (request.length > 500) {
+        return res.status(400).json({ error: 'Request is too long' })
+      }
+
+      const orgId = profile.organization_id
+      const STATUSES = ['open', 'in progress', 'completed', 'closed']
+      const PRIORITIES = ['critical', 'high', 'standard', 'routine']
+      const COMPLIANCE = ['Fire Safety', 'Emergency Systems', 'Water Safety', 'Structural', 'Sanitation', '__any__', '__none__']
+
+      const [{ data: techs }, { data: assetRows }] = await Promise.all([
+        supabaseAdmin.from('profiles').select('id, full_name').eq('organization_id', orgId),
+        supabaseAdmin.from('assets').select('id, name').eq('organization_id', orgId)
+      ])
+      const techList = (techs || []).map(t => ({ id: t.id, name: t.full_name }))
+      const assetList = (assetRows || []).map(a => ({ id: a.id, name: a.name }))
+      const todayStr = new Date().toISOString().split('T')[0]
+
+      const rfSystem = `You translate a facilities manager's plain-language report request into report filter values. Today is ${todayStr}.
+
+Return ONLY a JSON object, no prose. Omit any key you cannot map with confidence rather than guessing:
+- dateFrom, dateTo: "YYYY-MM-DD". Resolve relative dates using today's date.
+- filterStatus: one of ${JSON.stringify(STATUSES)}
+- filterPriority: one of ${JSON.stringify(PRIORITIES)}
+- filterTech: an id from the technician list, matched by name
+- filterAsset: an id from the asset list, matched by name
+- filterApartment: letters/numbers only
+- filterCompliance: one of ${JSON.stringify(COMPLIANCE)}
+- summary: one sentence describing what you set, naming the resolved dates.
+
+Only use tech and asset values from these exact lists. If a named tech or asset is not in the list, omit that filter and say so in the summary.
+Technicians: ${JSON.stringify(techList)}
+Assets: ${JSON.stringify(assetList)}`
+
+      const rfResp = await fetch(ANTHROPIC_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': process.env.ANTHROPIC_API_KEY,
+          'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify({
+          model: MODEL,
+          max_tokens: 512,
+          system: rfSystem,
+          messages: [{ role: 'user', content: request.trim() }]
+        })
+      })
+
+      if (!rfResp.ok) {
+        console.error('Report-filter AI error:', rfResp.status)
+        return res.status(502).json({ error: 'AI service error' })
+      }
+
+      const rfData = await rfResp.json()
+      let rfRaw = (rfData.content?.[0]?.text || '').trim()
+      rfRaw = rfRaw.replace(/^\`\`\`json\s*/i, '').replace(/\`\`\`$/, '').trim()
+
+      let parsed
+      try {
+        parsed = JSON.parse(rfRaw)
+      } catch {
+        return res.status(502).json({ error: 'Could not interpret that request. Try rephrasing.' })
+      }
+
+      const isValidDate = d => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d) && !isNaN(new Date(d).getTime())
+      const validTechIds = new Set(techList.map(t => t.id))
+      const validAssetIds = new Set(assetList.map(a => a.id))
+
+      const clean = {}
+      if (isValidDate(parsed.dateFrom)) clean.dateFrom = parsed.dateFrom
+      if (isValidDate(parsed.dateTo)) clean.dateTo = parsed.dateTo
+      if (STATUSES.includes(parsed.filterStatus)) clean.filterStatus = parsed.filterStatus
+      if (PRIORITIES.includes(parsed.filterPriority)) clean.filterPriority = parsed.filterPriority
+      if (validTechIds.has(parsed.filterTech)) clean.filterTech = parsed.filterTech
+      if (validAssetIds.has(parsed.filterAsset)) clean.filterAsset = parsed.filterAsset
+      if (typeof parsed.filterApartment === 'string') {
+        const apt = parsed.filterApartment.replace(/[^A-Za-z0-9]/g, '')
+        if (apt) clean.filterApartment = apt
+      }
+      if (COMPLIANCE.includes(parsed.filterCompliance)) clean.filterCompliance = parsed.filterCompliance
+
+      const summary = typeof parsed.summary === 'string'
+        ? parsed.summary.slice(0, 300)
+        : 'Filters set. Review them below before running.'
+
+      return res.status(200).json({ filters: clean, summary })
+    }
+    // ---- End report-filter mode ----
+
     if (!Array.isArray(messages) || messages.length === 0) {
       return res.status(400).json({ error: 'messages array required' })
     }
