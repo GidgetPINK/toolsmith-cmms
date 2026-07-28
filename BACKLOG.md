@@ -380,6 +380,11 @@ These improve the product but aren't blocking.
 
 ---
 
+## Pre-scale (watch before real Pro traffic)
+
+### Per-org Gidget usage cap
+Every Gidget feature (chat, and now Ask Gidget report filters) calls the Anthropic API on our own key, so cost scales with Pro usage. Today it's fine: gated to Pro, rate-limited to 15-20 calls/min per user, and the beta is Lite-only so only internal accounts call it. Before we have a meaningful number of paying Pro customers, add a per-organization monthly Gidget call cap so a single heavy user can't run up an outsized bill, and check the Anthropic usage dashboard to confirm a typical Pro user's monthly cost fits comfortably under the $49 price. Rate limiting prevents bursts; this prevents sustained per-org overuse. Not urgent during beta.
+
 ## Post-launch (deferred infrastructure)
 
 These were noted earlier but parked until after initial launch.
