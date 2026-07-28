@@ -15,9 +15,34 @@ function convertRoutesToLinks(text) {
   return result
 }
 
+const GIDGET_STORAGE_KEY = 'gidget_chat_v1'
+const GIDGET_TIMEOUT_MS = 20 * 60 * 1000 // clear after 20 min of inactivity
+
+function loadSavedMessages() {
+  try {
+    const raw = sessionStorage.getItem(GIDGET_STORAGE_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    if (!parsed || !Array.isArray(parsed.messages)) return []
+    if (!parsed.updatedAt || Date.now() - parsed.updatedAt > GIDGET_TIMEOUT_MS) {
+      sessionStorage.removeItem(GIDGET_STORAGE_KEY)
+      return []
+    }
+    return parsed.messages
+  } catch {
+    return []
+  }
+}
+
+function saveMessages(messages) {
+  try {
+    sessionStorage.setItem(GIDGET_STORAGE_KEY, JSON.stringify({ messages, updatedAt: Date.now() }))
+  } catch {}
+}
+
 export default function GidgetChatPanel({ contextType, contextData, onClose, initialMessage }) {
   const navigate = useNavigate()
-  const [messages, setMessages] = useState([])
+  const [messages, setMessages] = useState(() => loadSavedMessages())
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
@@ -25,11 +50,15 @@ export default function GidgetChatPanel({ contextType, contextData, onClose, ini
   const inputRef = useRef(null)
 
   useEffect(() => {
-    if (initialMessage) {
+    if (initialMessage && messages.length === 0) {
       sendMessage(initialMessage, true)
     }
     setTimeout(() => inputRef.current?.focus(), 150)
   }, [])
+
+  useEffect(() => {
+    if (messages.length > 0) saveMessages(messages)
+  }, [messages])
 
   useEffect(() => {
     if (scrollRef.current) {
