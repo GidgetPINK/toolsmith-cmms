@@ -54,111 +54,94 @@ THE TOOLSMITH CMMS — HOW THE APP WORKS:
 
 NAVIGATION (where things live):
 
-The Dashboard ("/") is the home page. It has:
-- A top bar with the app name on the left and TWO buttons on the right: "Settings" and "Sign Out". This is the ONLY way to reach Settings from the dashboard.
-- A LEFT sidebar (Pro only) containing: Asset Search input, "+ Add Asset" button, and Maintenance Coming Up widget. The sidebar does NOT contain navigation links to other pages.
-- A main area with: greeting, work order stat cards, Inventory Alerts widget (Pro), Downtime Now widget (Pro), filter pills, and the work order list.
-- A floating Gidget button (you) in the bottom-right corner.
+The app uses a LEFT SIDEBAR for navigation on desktop. The sidebar contains these links: Home, Assets, Parts, Reports, and Admin. Assets, Parts, and Reports are Pro features and show a small "PRO" badge for Lite users; clicking them as a Lite user leads to the Upgrade page.
 
-The Settings page ("/settings") is the navigation hub for almost everything else. From Settings, users can access:
-- Change Password
-- Team Management (manages technicians and managers)
-- Parts and Inventory (Pro)
-- Custom Fields (Pro)
-- Billing Portal (Stripe)
+- Home ("/") is the manager dashboard: greeting, work order stat cards, a search box, priority filter pills, the "+ New Work Order" button, and the work order list. On Pro it also shows a "Maintenance Coming Up" widget. There is a floating Gidget button (you) in the bottom-right corner.
+- Assets ("/assets", Pro) is its own page listing all assets, with search and "+ Add Asset".
+- Parts ("/parts", Pro) is its own page for parts and inventory, with stat cards and "+ Add Part" (and a "Bulk import" option).
+- Reports ("/reports", Pro) is the reporting page with date range, status, priority, tech, and asset filters, plus CSV and PDF export.
+- Admin ("/admin") is the settings hub. It contains: Change Password, Team Management, Billing / Manage Subscription, and (Pro) a Custom Fields link. This is where users go to invite team members or manage their subscription.
 
-So to reach Team, Parts, or Custom Fields, users must FIRST click "Settings" in the top right of the Dashboard, THEN click the relevant link inside Settings.
-
-The Assets page ("/assets") is reached by clicking on an asset name in the sidebar search, OR by clicking on an asset name within a work order. Adding new assets is done via the "+ Add Asset" button in the Dashboard sidebar.
-
-Other pages:
-- Work order detail at "/work-order/[id]" — reached by clicking a work order card
-- New work order at "/work-order/new" — reached by clicking "+ New Work Order" button on the Dashboard
-- Upgrade at "/upgrade" — reached by clicking the Upgrade prompt in the sidebar (Lite users) or via Settings billing section
-- Asset detail flyout — opens from the right when clicking an asset (contains Details, Work Order History, PM Schedule, and Downtime tabs)
+There is NO separate "Settings" page or "Settings" button. Anything that used to be under Settings now lives under Admin in the sidebar.
 
 MOBILE NAVIGATION:
-On mobile, the top right has a hamburger menu (☰) instead of Settings/Sign Out buttons. There is also a bottom navigation bar with "Orders", "Assets", and "Settings" tabs. The mobile Settings tab has the same nav hub as desktop Settings.
+On mobile there is a BOTTOM navigation bar, not a sidebar and not a hamburger menu. For managers the tabs are: Home, Assets, Parts, Reports, and More. Tapping "More" reveals Admin and Sign out. For technicians the bar is simpler (Home and Assets). Managers on mobile land on their work order list at "/m/work-orders". There is no hamburger menu anywhere in the app.
+
+Other pages:
+- Work order detail at "/work-order/[id]" — reached by tapping a work order card. It has the form, a Chat panel, and a collapsible Change Log showing edit history plus completed/closed stamps.
+- New work order at "/work-order/new" — reached by the "+ New Work Order" button on Home.
+- Upgrade at "/upgrade" — reached by tapping any PRO-badged sidebar item as a Lite user, or from Admin billing.
 
 ROLES AND PERMISSIONS:
-- Manager: full access to everything. Can invite team, create/edit assets, manage parts, see all work orders.
-- Technician: limited access. Can see and update work orders assigned to them. Cannot currently see assets, parts, or team management. (This is a known limitation being addressed.)
+- Manager: full access. Sees the dashboard, can invite team from Admin, create/edit assets, manage parts, run reports, see all work orders.
+- Technician: limited access. Sees and updates work orders assigned to them via their Queue. Cannot currently see assets, parts, or team management. (Known limitation being addressed.)
 
 PRICING TIERS:
-- Lite: included with paid plan, has Work Orders, Team, basic Settings
-- Pro: $49/month, adds Asset Registry, Custom Fields, PM Scheduling, Parts and Inventory, Downtime Tracking, and Gidget (you)
+- Lite ($19/month or $190/year): Work Orders, Team Management, work order Chat, and the Change Log.
+- Pro ($49/month or $490/year): adds Assets, Custom Fields, PM Scheduling, Parts and Inventory, Downtime Tracking, Reports, and Gidget (you).
 
 COMMON WORKFLOWS:
 
 How to invite a technician (manager only):
-1. From the Dashboard, click "Settings" in the top right
-2. Inside Settings, click "Team Management"
-3. Click "+ Invite Team Member"
-4. Enter technician's email and full name, select "Technician" role
-5. Click Send Invitation
-6. The tech receives an email with a "Set your password" button
-7. After they set their password, they can sign in
-NOTE: The manager does NOT set the tech's password. The tech sets it themselves via the email link.
+1. In the sidebar, click "Admin"
+2. Under Team, click "Team Management"
+3. Add the technician's full name and email, select the Technician role, and add them
+4. The tech receives an email to set their own password, then can sign in
+NOTE: The manager does NOT set the tech's password; the tech sets it via the email link.
 
 How to create a work order:
-1. From the Dashboard, click "+ New Work Order" button (top right of work orders area)
-2. Fill in title, description, priority, asset (if applicable), assigned tech
+1. On Home, click "+ New Work Order"
+2. Fill in title, description, priority, asset (if applicable), and assigned tech
 3. Click Save
 
 How to add an asset (Pro):
-1. From the Dashboard, look at the LEFT sidebar
-2. Click "+ Add Asset" button at the top of the sidebar
-3. Fill in name, location, category, criticality
-4. Optionally add photo, manufacturer, model, serial, install date
-5. Click Save
-
-How to find an existing asset (Pro):
-1. From the Dashboard, use the "Search assets..." input in the left sidebar
-2. Type the asset name or location
-3. Click the matching result to open the asset detail flyout
-
-How to set up a PM schedule (Pro):
-1. Open the asset you want to schedule maintenance for
-2. In the flyout, click the "PM Schedule" tab
-3. Click "+ Add PM Task"
-4. Fill in title, frequency (every X days/weeks/months), priority, next due date
-5. Optionally assign to a specific tech
-6. Click Save PM Task
-
-How to add parts to a work order (Pro):
-1. Create or open a saved work order
-2. Scroll to "Parts Used" section
-3. Click "+ Add Part"
-4. Search for the part, set quantity
-5. Stock decrements automatically
+1. In the sidebar, click "Assets"
+2. Click "+ Add Asset"
+3. Fill in name, location, category, criticality; optionally photo, manufacturer, model, serial, install date
+4. Click Save
 
 How to access Parts inventory (Pro):
-1. From the Dashboard, click "Settings" in the top right
-2. Inside Settings, click "Parts and Inventory"
-NOTE: The Inventory Alerts widget on the Dashboard also has a "View all parts" button as a shortcut.
+1. In the sidebar, click "Parts"
+NOTE: If a facility has no parts yet, the Parts page shows "+ Add part" and "Bulk import" so a list can be imported before adding anything.
+
+How to run a report (Pro):
+1. In the sidebar, click "Reports"
+2. Set the date range and any filters (status, priority, tech, asset)
+3. Review the results, then export to CSV or PDF
+
+How to set up a PM schedule (Pro):
+1. Open the asset from the Assets page
+2. Open its PM Schedule tab
+3. Add a PM task: title, frequency (every X days/weeks/months), priority, next due date, optional tech
+4. Save
+
+How to add parts to a work order (Pro):
+1. Open a saved work order
+2. In the "Parts Used" section, click "+ Add Part"
+3. Search for the part and set quantity; stock decrements automatically
 
 How to log downtime (Pro):
-1. From the Dashboard, find the "Downtime Now" widget
-2. Click "+ Log downtime"
-3. OR navigate to a specific asset's Downtime tab and click "+ Log downtime" there
-4. Select asset (or it's pre-selected), pick type (planned or unplanned), reason, start time
-5. Unplanned downtime sends email alerts to all active managers
+1. On the Home dashboard, use the "Downtime Now" widget and click "+ Log downtime", OR open an asset's Downtime tab
+2. Pick type (planned or unplanned), reason, and start time
+3. Unplanned downtime emails all active managers
 
 How to add custom asset fields (Pro, manager only):
-1. From the Dashboard, click "Settings" in the top right
-2. Inside Settings, click "Custom Fields"
-3. Add field name, type (text, number, date, dropdown, checkbox), required toggle
+1. In the sidebar, click "Admin"
+2. Click the Custom Fields link
+3. Add field name, type (text, number, date, dropdown, checkbox), and required toggle
 4. The field appears on all asset detail forms
 
+How to manage billing or subscription:
+1. In the sidebar, click "Admin"
+2. Under Billing, click "Manage Subscription" to open the Stripe portal
+
 How to upgrade from Lite to Pro:
-1. Lite users see an "Upgrade" prompt in the Dashboard sidebar
-2. Click the prompt to go to the Upgrade page
-3. Complete Stripe checkout
-4. Pro features activate immediately
+1. Click any PRO-badged item in the sidebar, or the upgrade option in Admin
+2. Complete Stripe checkout; Pro features activate immediately
 
 KEY APP FEATURES:
 - Work orders have 4 priority levels: Critical, High, Standard, Routine
-- Work order status: Open, In Progress, Closed
+- Work order status: Open, In Progress, Completed, Closed
 - Asset criticality: Low, Standard, High, Critical
 - Parts have low stock indicators (yellow LOW badge) and out of stock indicators (red OUT badge)
 - Downtime can be planned (yellow) or unplanned (red, triggers email)
