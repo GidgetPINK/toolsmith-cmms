@@ -210,7 +210,8 @@ export default function Dashboard({ profile }) {
 
   function generateWorkOrderFromPm(pm, e) {
     if (e) e.stopPropagation()
-    navigate(`/work-order/new?asset=${pm.asset_id}&from_pm=${pm.id}`)
+    const assetPart = pm.asset_id ? `asset=${pm.asset_id}&` : ''
+    navigate(`/work-order/new?${assetPart}from_pm=${pm.id}`)
   }
 
   function closeFlyout() {

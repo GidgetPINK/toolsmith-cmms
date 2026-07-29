@@ -39,6 +39,10 @@ export default function WorkOrderForm({ profile }) {
   const [complianceDetailsOpen, setComplianceDetailsOpen] = useState(false)
   const [pmScheduleId, setPmScheduleId] = useState(null)
   const [pmPreFilled, setPmPreFilled] = useState(false)
+  const [isRecurring, setIsRecurring] = useState(false)
+  const [recurFreqValue, setRecurFreqValue] = useState('1')
+  const [recurFreqUnit, setRecurFreqUnit] = useState('months')
+  const [recurNextDate, setRecurNextDate] = useState('')
   const [assets, setAssets] = useState([])
   const [technicians, setTechnicians] = useState([])
   const [organization, setOrganization] = useState(null)
@@ -78,7 +82,7 @@ export default function WorkOrderForm({ profile }) {
     }
     // Pre-fill asset from flyout "Create Work Order" button
     const prefilledAsset = searchParams.get('asset')
-    if (isNew && prefilledAsset) {
+    if (isNew && prefilledAsset && prefilledAsset !== 'undefined' && prefilledAsset !== 'null') {
       setAssetId(prefilledAsset)
     }
     // Pre-fill everything from a PM Task
@@ -288,6 +292,41 @@ export default function WorkOrderForm({ profile }) {
 
     if (isNew) {
       payload.created_by = profile.id
+    }
+
+    // Recurring: create the parent schedule first, then link this work order to it.
+    if (isNew && isRecurring && !pmPreFilled && organization?.is_upgraded) {
+      const freq = parseInt(recurFreqValue)
+      if (!freq || freq < 1) {
+        setError('Enter how often this should repeat (a number of 1 or more).')
+        setLoading(false)
+        return
+      }
+      if (!recurNextDate) {
+        setError('Enter the first date this recurring work order is due.')
+        setLoading(false)
+        return
+      }
+      const schedulePayload = {
+        asset_id: assetId || null,
+        organization_id: profile.organization_id,
+        title: title,
+        description: description || null,
+        frequency_value: freq,
+        frequency_unit: recurFreqUnit,
+        next_due_at: recurNextDate,
+        priority: priority,
+        assigned_to: assignedTo || null,
+        is_active: true,
+        updated_at: new Date().toISOString()
+      }
+      const schedRes = await supabase.from('pm_schedules').insert(schedulePayload).select().single()
+      if (schedRes.error) {
+        setError('Could not create the schedule: ' + schedRes.error.message)
+        setLoading(false)
+        return
+      }
+      payload.pm_schedule_id = schedRes.data.id
     }
 
     let result
@@ -716,6 +755,58 @@ export default function WorkOrderForm({ profile }) {
               />
             )}
           </div>
+
+          {isNew && !pmPreFilled && (
+            <div style={{ marginBottom: '1.75rem', padding: '1rem 1.15rem', background: 'rgba(201,168,76,0.05)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: '10px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', cursor: organization?.is_upgraded ? 'pointer' : 'not-allowed' }}>
+                <input
+                  type="checkbox"
+                  checked={isRecurring}
+                  disabled={!organization?.is_upgraded}
+                  onChange={e => setIsRecurring(e.target.checked)}
+                  style={{ width: '18px', height: '18px', accentColor: '#c9a84c', cursor: organization?.is_upgraded ? 'pointer' : 'not-allowed' }}
+                />
+                <span style={{ fontSize: '0.92rem', color: '#f8f6f1', fontWeight: 500 }}>
+                  {organization?.is_upgraded ? 'Repeat this work order on a schedule' : '\uD83D\uDD12 Repeat on a schedule \u2014 Pro Feature'}
+                </span>
+              </label>
+
+              {isRecurring && organization?.is_upgraded && (
+                <div style={{ marginTop: '1rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
+                  <div>
+                    <label style={labelStyle}>Repeat every</label>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <input
+                        type="number"
+                        min="1"
+                        value={recurFreqValue}
+                        onChange={e => setRecurFreqValue(e.target.value)}
+                        style={{ ...inputStyle, width: '80px' }}
+                      />
+                      <select value={recurFreqUnit} onChange={e => setRecurFreqUnit(e.target.value)} style={inputStyle}>
+                        <option value="days">days</option>
+                        <option value="weeks">weeks</option>
+                        <option value="months">months</option>
+                        <option value="years">years</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <label style={labelStyle}>First due date</label>
+                    <input
+                      type="date"
+                      value={recurNextDate}
+                      onChange={e => setRecurNextDate(e.target.value)}
+                      style={inputStyle}
+                    />
+                  </div>
+                  <p style={{ gridColumn: '1 / -1', fontSize: '0.78rem', color: '#9a9db5', margin: 0, lineHeight: 1.5 }}>
+                    Saving creates this work order now and a schedule that will repeat it. {assetId ? 'It stays linked to the selected asset.' : 'No asset is required.'}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
 
           {!isNew && organization?.is_upgraded && (
             <div style={{ marginBottom: '1.75rem' }}>
