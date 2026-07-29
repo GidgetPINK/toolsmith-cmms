@@ -14,14 +14,12 @@ export default function Assets({ profile }) {
   const [pmScheduleCount, setPmScheduleCount] = useState(0)
   const [openWoCount, setOpenWoCount] = useState(0)
   const [loading, setLoading] = useState(true)
-  const [showAddForm, setShowAddForm] = useState(false)
   const [showAssetList, setShowAssetList] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [name, setName] = useState('')
   const [location, setLocation] = useState('')
   const [category, setCategory] = useState('')
   const [error, setError] = useState(null)
-  const [submitting, setSubmitting] = useState(false)
   const navigate = useNavigate()
   const { unreadIds, hasMessagesIds } = useUnreadMessages(profile?.id)
 
@@ -73,34 +71,6 @@ export default function Assets({ profile }) {
     }
 
     setLoading(false)
-  }
-
-  async function handleAddAsset(e) {
-    e.preventDefault()
-    setSubmitting(true)
-    setError(null)
-
-    const { error } = await supabase
-      .from('assets')
-      .insert({
-        name,
-        location,
-        category,
-        organization_id: profile.organization_id
-      })
-
-    if (error) {
-      setError(error.message)
-      setSubmitting(false)
-      return
-    }
-
-    setName('')
-    setLocation('')
-    setCategory('')
-    setShowAddForm(false)
-    setSubmitting(false)
-    fetchAll()
   }
 
   async function handleDeleteAsset(id) {
@@ -314,106 +284,6 @@ export default function Assets({ profile }) {
                 + New Asset
               </button>
             </div>
-
-            {/* ADD ASSET FORM (unchanged behavior, inline) */}
-            {showAddForm && (
-              <div style={{
-                background: '#1e2245',
-                border: '1px solid rgba(201,168,76,0.18)',
-                borderRadius: '12px',
-                padding: '1.75rem',
-                marginBottom: '1.75rem'
-              }}>
-                <h3 style={{
-                  fontFamily: 'Georgia, serif',
-                  fontSize: '1.1rem',
-                  fontWeight: '600',
-                  marginBottom: '1.5rem'
-                }}>
-                  New Asset
-                </h3>
-                <form onSubmit={handleAddAsset}>
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr 1fr',
-                    gap: '1.25rem',
-                    marginBottom: '1.5rem'
-                  }}>
-                    <div>
-                      <label style={labelStyle}>Asset Name</label>
-                      <input
-                        type="text"
-                        value={name}
-                        onChange={e => setName(e.target.value)}
-                        required
-                        placeholder="Air Compressor Unit 1"
-                        style={inputStyle}
-                      />
-                    </div>
-                    <div>
-                      <label style={labelStyle}>Location</label>
-                      <input
-                        type="text"
-                        value={location}
-                        onChange={e => setLocation(e.target.value)}
-                        placeholder="Building A"
-                        style={inputStyle}
-                      />
-                    </div>
-                    <div>
-                      <label style={labelStyle}>Category</label>
-                      <select
-                        value={category}
-                        onChange={e => setCategory(e.target.value)}
-                        style={{ ...inputStyle, cursor: 'pointer' }}
-                      >
-                        <option value="">Select category</option>
-                        <option value="Mechanical">Mechanical</option>
-                        <option value="Electrical">Electrical</option>
-                        <option value="HVAC">HVAC</option>
-                        <option value="Plumbing">Plumbing</option>
-                        <option value="Vehicle">Vehicle</option>
-                        <option value="Safety">Safety</option>
-                        <option value="Other">Other</option>
-                      </select>
-                    </div>
-                  </div>
-                  {error && (
-                    <p style={{
-                      color: '#e06c75',
-                      fontSize: '0.85rem',
-                      marginBottom: '1rem',
-                      padding: '0.75rem',
-                      background: 'rgba(224,108,117,0.1)',
-                      borderRadius: '6px',
-                      border: '1px solid rgba(224,108,117,0.2)'
-                    }}>
-                      {error}
-                    </p>
-                  )}
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    style={{
-                      background: 'linear-gradient(135deg, #c9a84c, #e8c97a)',
-                      border: 'none',
-                      color: '#1a1a2e',
-                      padding: '0.65rem 1.75rem',
-                      borderRadius: '6px',
-                      cursor: submitting ? 'not-allowed' : 'pointer',
-                      fontSize: '0.82rem',
-                      fontWeight: '700',
-                      letterSpacing: '0.06em',
-                      textTransform: 'uppercase',
-                      opacity: submitting ? 0.6 : 1,
-                      fontFamily: 'Inter, sans-serif'
-                    }}
-                  >
-                    {submitting ? 'Adding...' : 'Add Asset'}
-                  </button>
-                </form>
-              </div>
-            )}
 
             {/* BROWSE ALL ASSETS LIST (togglable) */}
             {showAssetList && (
