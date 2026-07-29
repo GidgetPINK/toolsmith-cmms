@@ -22,6 +22,24 @@ Design agreed with April (July 28). Goal: schedule recurring work from the work 
 ### Phase 2 — Work order form toggle (NEXT, highest care, most-used form)
 "Repeat this work order" toggle in WorkOrderForm → frequency picker + first-occurrence date. On save of a new recurring WO: create a pm_schedules row (asset_id = WO's asset or null) plus the first work order linked via pm_schedule_id.
 
+### Phase 3 (REVISED) — Scheduled auto-generation via daily cron
+April wants work orders to auto-generate ON the due date whether or not anyone opens the app. Generate-on-load (create when dashboard opens) was rejected — a compliance WO must exist on its due date even if no one logs in. So: a daily cron that finds active schedules where next_due_at <= today, creates their work orders (mirror existing from_pm generate logic), and advances each schedule's next_due_at by frequency. This also finally builds the advance loop that asset PMs never had.
+
+Confirmed constraints (researched July 29):
+- Vercel Hobby cron = once-per-day max; more-frequent expressions fail at deploy. Daily is exactly what we need.
+- Fires anytime within the scheduled hour (e.g. 0 6 * * * runs 06:00–06:59). Fine for "exists on the right day."
+- UTC only. April is Central. Pick an overnight-Central UTC time (e.g. 0 6 * * * = midnight-ish Central) so WOs are waiting in the morning.
+- Cron endpoint counts against the 12-function limit — MUST fold into an existing endpoint (like the Gidget report-filter fold), config in vercel.json points path at it with a mode flag.
+- Secure with auto-provisioned CRON_SECRET (Authorization: Bearer) so only Vercel's scheduler can trigger it, not a random URL hit.
+
+Build order:
+1. Generation function (folded into existing endpoint): due-schedule query + WO creation + next_due_at advance.
+2. vercel.json crons entry, once daily.
+3. Test by triggering the endpoint manually (with the secret) BEFORE trusting the timer.
+4. THEN remove the mobile "Maintenance Coming Up" widget — only after auto-gen is proven, or schedules silently stop producing work.
+
+NOTE: this is backend infra (timer + secret + vercel.json + function-limit). Start fresh, not at end of a long session. A half-working cron fails invisibly.
+
 ### Phase 3 — Advance-on-close loop (also fixes half-built PM feature)
 When a WO with non-null pm_schedule_id closes/completes, advance parent schedule's next_due_at by frequency and generate the next WO. Mirror the existing from_pm generation pattern.
 
