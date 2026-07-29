@@ -505,10 +505,49 @@ export default function WorkOrderForm({ profile }) {
               <p style={{ color: '#c9a84c', fontSize: '0.88rem', fontWeight: '600', marginBottom: '0.15rem' }}>
                 Generated from a PM Task
               </p>
-              <p style={{ color: '#e8c97a', fontSize: '0.8rem', lineHeight: '1.5' }}>
+              <p style={{ color: '#e8c97a', fontSize: '0.8rem', lineHeight: '1.5', marginBottom: pmScheduleId ? '0.5rem' : 0 }}>
                 Title, description, priority, asset, and assignee pre-filled from the schedule. Adjust anything before saving.
               </p>
+              {pmScheduleId && (
+                <button
+                  type="button"
+                  onClick={() => navigate(`/schedule/${pmScheduleId}`)}
+                  style={{ background: 'none', border: 'none', color: '#c9a84c', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', padding: 0, textDecoration: 'underline', fontFamily: 'Inter, sans-serif' }}
+                >
+                  View Master Schedule →
+                </button>
+              )}
             </div>
+          </div>
+        )}
+
+        {/* MASTER SCHEDULE LINK (for existing recurring work orders, not freshly generated) */}
+        {!isNew && pmScheduleId && (
+          <div style={{
+            background: 'rgba(201,168,76,0.08)',
+            border: '1px solid rgba(201,168,76,0.35)',
+            borderRadius: '10px',
+            padding: '0.85rem 1.1rem',
+            marginBottom: '1.5rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '0.7rem',
+            flexWrap: 'wrap'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <span style={{ color: '#c9a84c', fontSize: '1.1rem', lineHeight: 1 }}>🔁</span>
+              <p style={{ color: '#c9a84c', fontSize: '0.85rem', fontWeight: 600, margin: 0 }}>
+                Part of a recurring schedule
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate(`/schedule/${pmScheduleId}`)}
+              style={{ background: 'none', border: '1px solid rgba(201,168,76,0.4)', color: '#c9a84c', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', padding: '0.4rem 0.85rem', borderRadius: '7px', fontFamily: 'Inter, sans-serif', whiteSpace: 'nowrap' }}
+            >
+              View Master Schedule →
+            </button>
           </div>
         )}
 
