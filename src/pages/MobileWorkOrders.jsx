@@ -122,12 +122,13 @@ export default function MobileWorkOrders({ profile }) {
   }
 
   function openPmAsset(pm) {
-    navigate(`/m/assets/${pm.asset_id}`)
+    navigate(`/schedule/${pm.id}`)
   }
 
   function generateWorkOrderFromPm(pm, e) {
     if (e) e.stopPropagation()
-    navigate(`/work-order/new?asset=${pm.asset_id}&from_pm=${pm.id}`)
+    const assetPart = pm.asset_id ? `asset=${pm.asset_id}&` : ''
+    navigate(`/work-order/new?${assetPart}from_pm=${pm.id}`)
   }
 
   const firstName = profile?.full_name?.split(' ')[0] || 'there'

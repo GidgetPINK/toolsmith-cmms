@@ -19,8 +19,8 @@ import Admin from './pages/Admin'
 import Reports from './pages/Reports'
 import MobileWorkOrders from './pages/MobileWorkOrders'
 import MobileAssets from './pages/MobileAssets'
-import MobileAssetDetail from './pages/MobileAssetDetail'
 import AssetDetail from './pages/AssetDetail'
+import ScheduleDetail from './pages/ScheduleDetail'
 import CompletePaymentSetup from './pages/CompletePaymentSetup'
 import SubscriptionRequired from './pages/SubscriptionRequired'
 import GidgetButton from './components/GidgetButton'
@@ -449,7 +449,17 @@ function App() {
             ) : needsSubscription ? (
               <Navigate to="/subscription-required" replace />
             ) : (
-              <MobileAssetDetail profile={profile} />
+              <AssetDetail profile={profile} />
+            )
+          }
+        />
+        <Route
+          path="/schedule/:id"
+          element={
+            !session ? (
+              <Navigate to="/login" replace />
+            ) : (
+              <ScheduleDetail profile={profile} />
             )
           }
         />
@@ -473,7 +483,7 @@ function App() {
             ) : needsSubscription ? (
               <Navigate to="/subscription-required" replace />
             ) : (
-              <MobileAssetDetail profile={profile} />
+              <AssetDetail profile={profile} />
             )
           }
         />
