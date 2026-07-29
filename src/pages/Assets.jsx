@@ -296,7 +296,7 @@ export default function Assets({ profile }) {
                 {showAssetList ? 'Hide list' : `Browse all ${assets.length}`}
               </button>
               <button
-                onClick={() => setShowAddForm(!showAddForm)}
+                onClick={() => navigate('/asset/new')}
                 style={{
                   background: 'linear-gradient(135deg, #c9a84c, #e8c97a)',
                   border: 'none',
@@ -311,7 +311,7 @@ export default function Assets({ profile }) {
                   fontFamily: 'Inter, sans-serif'
                 }}
               >
-                {showAddForm ? 'Cancel' : '+ New Asset'}
+                + New Asset
               </button>
             </div>
 
