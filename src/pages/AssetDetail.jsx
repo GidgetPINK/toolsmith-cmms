@@ -81,6 +81,19 @@ export default function AssetDetail({ profile }) {
   const [tab, setTab] = useState('details')
   const [loading, setLoading] = useState(!isCreating)
   const [organizationId, setOrganizationId] = useState(profile?.organization_id || null)
+  const [organization, setOrganization] = useState(null)
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth < 768)
+  useEffect(() => {
+    function onResize() { setIsMobile(window.innerWidth < 768) }
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+  useEffect(() => {
+    const orgId = profile?.organization_id
+    if (!orgId) return
+    supabase.from('organizations').select('name, is_upgraded').eq('id', orgId).single()
+      .then(({ data }) => setOrganization(data || null))
+  }, [profile?.organization_id])
 
   // Asset form state
   const [name, setName] = useState('')
@@ -408,7 +421,7 @@ export default function AssetDetail({ profile }) {
     }
 
     setSubmitting(false)
-    navigate('/m/assets')
+    navigate(isMobile ? '/m/assets' : '/assets')
   }
 
   async function handleDelete() {
@@ -422,7 +435,7 @@ export default function AssetDetail({ profile }) {
     const { error: delError } = await supabase.from('assets').delete().eq('id', id)
     if (delError) { setError(delError.message); setDeleting(false); return }
     setDeleting(false)
-    navigate('/m/assets')
+    navigate(isMobile ? '/m/assets' : '/assets')
   }
 
   function getTechName(techId) {
@@ -438,13 +451,17 @@ export default function AssetDetail({ profile }) {
 
   return (
     <div style={{
+      display: isMobile ? 'block' : 'flex',
       minHeight: '100vh',
       background: '#1a1a2e',
       fontFamily: 'Inter, sans-serif',
       color: '#f8f6f1',
-      paddingBottom: '90px'
+      paddingBottom: isMobile ? '90px' : 0
     }}>
+      {!isMobile && <Sidebar profile={profile} organization={organization} />}
+      <div style={isMobile ? {} : { flex: 1, minWidth: 0, overflow: 'auto', maxWidth: '900px', margin: '0 auto', width: '100%', padding: '0 1.5rem' }}>
       <nav style={{
+        display: isMobile ? 'flex' : 'none',
         background: 'rgba(26,26,46,0.95)',
         borderBottom: '1px solid rgba(201,168,76,0.18)',
         position: 'sticky',
@@ -455,7 +472,7 @@ export default function AssetDetail({ profile }) {
         alignItems: 'center',
         gap: '0.6rem'
       }}>
-        <button onClick={() => navigate('/m/assets')} style={{ background: 'none', border: '1px solid rgba(201,168,76,0.3)', color: '#c9a84c', padding: '0.35rem 0.75rem', borderRadius: '6px', fontSize: '0.75rem', cursor: 'pointer', fontFamily: 'Inter, sans-serif', flexShrink: 0 }}>
+        <button onClick={() => navigate(isMobile ? '/m/assets' : '/assets')} style={{ background: 'none', border: '1px solid rgba(201,168,76,0.3)', color: '#c9a84c', padding: '0.35rem 0.75rem', borderRadius: '6px', fontSize: '0.75rem', cursor: 'pointer', fontFamily: 'Inter, sans-serif', flexShrink: 0 }}>
           ← Back
         </button>
         <span style={{ fontFamily: 'Georgia, serif', color: '#f8f6f1', fontSize: '0.95rem', fontWeight: '600', flex: 1, textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -806,7 +823,8 @@ export default function AssetDetail({ profile }) {
           </>
         )}
       </div>
-      <MobileBottomNav profile={profile} />
+      {isMobile && <MobileBottomNav profile={profile} />}
+      </div>
     </div>
   )
 }
