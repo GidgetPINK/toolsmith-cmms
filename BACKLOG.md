@@ -8,6 +8,33 @@ Last updated: July 20, 2026
 
 ---
 
+## IN PROGRESS: Recurring work orders (schedule on the work order, asset optional)
+
+Design agreed with April (July 28). Goal: schedule recurring work from the work order form, with or without an asset. Model A (a schedule generates real work orders on a cadence; each generated WO flows through the normal dashboard). Cue = a subtle Repeat icon on generated WO cards; clicking opens the parent schedule to edit/pause/stop (no separate Schedules list for now). A scheduled WO that HAS an asset still stores asset_id so it feeds that asset's history.
+
+**Key discovery:** we are NOT building a second system. The existing PM engine (`pm_schedules` + `pm_schedule_id` on work_orders) is ~75% of this; we generalize + finish it rather than duplicate.
+
+**Also discovered:** existing asset PMs have NO auto-advance anywhere in the codebase. A PM generates a WO via `/work-order/new?asset=X&from_pm=Y`, but closing it never moves `next_due_at` (manual edit required). The "mark complete, next one schedules automatically" promise was never finished. Phase 3 fixes this for asset PMs AND new non-asset schedules at once.
+
+### Phase 1 — Schema (DONE July 28)
+`ALTER TABLE pm_schedules ALTER COLUMN asset_id DROP NOT NULL;` done. Engine can now hold non-asset schedules. Existing PMs unaffected. `pm_schedule_id` already on work_orders (WorkOrderForm ~140 read, ~275 write). No new table.
+
+### Phase 2 — Work order form toggle (NEXT, highest care, most-used form)
+"Repeat this work order" toggle in WorkOrderForm → frequency picker + first-occurrence date. On save of a new recurring WO: create a pm_schedules row (asset_id = WO's asset or null) plus the first work order linked via pm_schedule_id.
+
+### Phase 3 — Advance-on-close loop (also fixes half-built PM feature)
+When a WO with non-null pm_schedule_id closes/completes, advance parent schedule's next_due_at by frequency and generate the next WO. Mirror the existing from_pm generation pattern.
+
+### Phase 4 — Dashboard cue + management
+lucide `Repeat` icon on generated WO cards (Dashboard + MobileWorkOrders). Click opens parent schedule. NULL-SAFE FIXES FIRST: Dashboard ~207 `assets.find(a => a.id === pm.asset_id)` and ~213 `asset=${pm.asset_id}` break on null asset_id — guard before non-asset schedules hit the "coming up" widget.
+
+### Open decisions
+- Advance on "completed" or "closed"?
+- Generate next WO immediately on close, or lazily when due?
+- Where non-asset schedules are managed before Phase 4.
+
+---
+
 ## Next session (queued July 20, 2026)
 
 Picked up in this order.
