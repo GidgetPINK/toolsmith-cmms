@@ -35,9 +35,26 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
 
   if (req.method === 'OPTIONS') return res.status(200).end()
+
+  // ---- CRON via GET: Vercel Cron sends a GET with CRON_SECRET in the Authorization header, no body ----
+  if (req.method === 'GET') {
+    const cronSecret = process.env.CRON_SECRET
+    const authHeader = req.headers.authorization || ''
+    const sentToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : ''
+    if (!cronSecret || sentToken !== cronSecret) {
+      return res.status(401).json({ error: 'Unauthorized' })
+    }
+    try {
+      return await handleGenerateDueSchedules(req, res)
+    } catch (err) {
+      console.error('cron generate error:', err)
+      return res.status(500).json({ error: 'Generation failed' })
+    }
+  }
+
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
-  // ---- CRON: scheduled work order generation ----
+  // ---- CRON via POST (manual testing): scheduled work order generation ----
   // Machine-triggered, authenticated ONLY by CRON_SECRET (no user token).
   // Checked before user auth so it's the sole path to generation.
   if ((req.body || {}).type === 'generate_due_schedules') {
