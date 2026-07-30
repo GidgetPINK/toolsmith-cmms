@@ -45,15 +45,7 @@ export default async function handler(req, res) {
     const authHeader = req.headers.authorization || ''
     const sentToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : ''
     if (!cronSecret || sentToken !== cronSecret) {
-      return res.status(401).json({
-        error: 'Unauthorized',
-        debug: {
-          envSecretPresent: !!cronSecret,
-          envSecretLength: cronSecret ? cronSecret.length : 0,
-          sentTokenLength: sentToken.length,
-          headerPrefixOk: authHeader.startsWith('Bearer ')
-        }
-      })
+      return res.status(401).json({ error: 'Unauthorized' })
     }
     try {
       return await handleGenerateDueSchedules(req, res)
