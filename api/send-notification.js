@@ -37,6 +37,23 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
+  // ---- CRON: scheduled work order generation ----
+  // Machine-triggered, authenticated ONLY by CRON_SECRET (no user token).
+  // Checked before user auth so it's the sole path to generation.
+  if ((req.body || {}).type === 'generate_due_schedules') {
+    const cronSecret = process.env.CRON_SECRET
+    const authHeader = req.headers.authorization || ''
+    if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+      return res.status(401).json({ error: 'Unauthorized' })
+    }
+    try {
+      return await handleGenerateDueSchedules(req, res)
+    } catch (err) {
+      console.error('generate_due_schedules error:', err)
+      return res.status(500).json({ error: 'Generation failed' })
+    }
+  }
+
   try {
     // Authenticate the caller
     const authHeader = req.headers.authorization
@@ -372,4 +389,86 @@ function escapeHtml(s) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;')
+}
+
+
+// ============================================================
+// SCHEDULED WORK ORDER GENERATION (cron, CRON_SECRET-gated)
+// ============================================================
+
+async function handleGenerateDueSchedules(req, res) {
+  // Today's date in UTC (YYYY-MM-DD). A schedule is "due" if next_due_at <= today.
+  const today = new Date().toISOString().split('T')[0]
+
+  // Find active schedules that are due or overdue.
+  const { data: dueSchedules, error: fetchError } = await supabaseAdmin
+    .from('pm_schedules')
+    .select('*')
+    .eq('is_active', true)
+    .lte('next_due_at', today)
+
+  if (fetchError) {
+    console.error('Failed to fetch due schedules:', fetchError)
+    return res.status(500).json({ error: 'Could not fetch schedules' })
+  }
+
+  const results = { generated: 0, advanced: 0, failed: 0, details: [] }
+
+  for (const sched of (dueSchedules || [])) {
+    try {
+      // 1) Create ONE work order from this schedule.
+      const woPayload = {
+        title: sched.title,
+        description: sched.description || null,
+        priority: sched.priority || 'standard',
+        status: 'open',
+        asset_id: sched.asset_id || null,
+        assigned_to: sched.assigned_to || null,
+        organization_id: sched.organization_id,
+        pm_schedule_id: sched.id
+      }
+      const { error: woError } = await supabaseAdmin.from('work_orders').insert(woPayload)
+      if (woError) {
+        results.failed++
+        results.details.push({ schedule: sched.id, error: woError.message })
+        continue
+      }
+      results.generated++
+
+      // 2) Advance next_due_at to the next FUTURE date (one step past today).
+      //    Repeatedly add the frequency until strictly after today, so overdue
+      //    schedules generate once and jump to the next proper cycle (no pile-up).
+      const unit = sched.frequency_unit
+      const value = sched.frequency_value || 1
+      let next = new Date(sched.next_due_at + 'T00:00:00Z')
+      const todayDate = new Date(today + 'T00:00:00Z')
+      let guard = 0
+      do {
+        if (unit === 'days') next.setUTCDate(next.getUTCDate() + value)
+        else if (unit === 'weeks') next.setUTCDate(next.getUTCDate() + value * 7)
+        else if (unit === 'months') next.setUTCMonth(next.getUTCMonth() + value)
+        else if (unit === 'years') next.setUTCFullYear(next.getUTCFullYear() + value)
+        else next.setUTCMonth(next.getUTCMonth() + value) // fallback: months
+        guard++
+      } while (next <= todayDate && guard < 1000)
+
+      const nextStr = next.toISOString().split('T')[0]
+      const { error: advError } = await supabaseAdmin
+        .from('pm_schedules')
+        .update({ next_due_at: nextStr, updated_at: new Date().toISOString() })
+        .eq('id', sched.id)
+
+      if (advError) {
+        results.failed++
+        results.details.push({ schedule: sched.id, error: 'WO created but advance failed: ' + advError.message })
+      } else {
+        results.advanced++
+      }
+    } catch (err) {
+      results.failed++
+      results.details.push({ schedule: sched.id, error: String(err) })
+    }
+  }
+
+  return res.status(200).json({ ok: true, date: today, ...results })
 }
