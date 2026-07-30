@@ -43,8 +43,17 @@ export default async function handler(req, res) {
   if ((req.body || {}).type === 'generate_due_schedules') {
     const cronSecret = process.env.CRON_SECRET
     const authHeader = req.headers.authorization || ''
-    if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
-      return res.status(401).json({ error: 'Unauthorized' })
+    const sentToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : ''
+    if (!cronSecret || sentToken !== cronSecret) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        debug: {
+          envSecretPresent: !!cronSecret,
+          envSecretLength: cronSecret ? cronSecret.length : 0,
+          sentTokenLength: sentToken.length,
+          headerPrefixOk: authHeader.startsWith('Bearer ')
+        }
+      })
     }
     try {
       return await handleGenerateDueSchedules(req, res)
