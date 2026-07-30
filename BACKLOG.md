@@ -22,7 +22,22 @@ Design agreed with April (July 28). Goal: schedule recurring work from the work 
 ### Phase 2 — Work order form toggle (NEXT, highest care, most-used form)
 "Repeat this work order" toggle in WorkOrderForm → frequency picker + first-occurrence date. On save of a new recurring WO: create a pm_schedules row (asset_id = WO's asset or null) plus the first work order linked via pm_schedule_id.
 
-### Phase 3 (REVISED) — Scheduled auto-generation via daily cron
+### Phase 3 — Scheduled auto-generation via daily cron (DONE July 29)
+Daily cron generates work orders for due schedules automatically, no user needed.
+- Generation logic folded into `api/send-notification.js` (12-function limit), gated by CRON_SECRET.
+- Responds to BOTH: POST with {type:'generate_due_schedules'} (manual testing) and GET (Vercel cron sends GET + secret in Authorization header, no body).
+- Logic: finds active schedules where next_due_at <= today (UTC); creates ONE work order each (status open, linked via pm_schedule_id); advances next_due_at to next future date (overdue schedules generate once, jump to next cycle — no pile-up). Duplicate-safe: a schedule advances past today so the next day's run won't regenerate it.
+- vercel.json cron: /api/send-notification at "0 6 * * *" (6am UTC = midnight Central). Confirmed registered in Vercel Crons tab. GET path confirmed not swallowed by the SPA rewrite.
+- Tested: manual POST generated correctly, advanced dates, no duplicate on rerun, rejected wrong secret. CRON_SECRET gremlin was a stray £ (c2a3) in the value — regenerated clean with openssl.
+- This also finally delivered the asset-PM auto-advance that was never built.
+
+### Phase 4 — Remove mobile "Maintenance Coming Up" widget (NOW UNBLOCKED)
+Auto-generation exists, so the widget is no longer the generate path. Safe to remove the parent-schedule list from MobileWorkOrders so the team sees today's work. Schedules remain reachable via the "View Master Schedule" link inside their generated work orders (shipped July 29).
+
+### Vercel Pro upgrade (post-revenue cleanup)
+Two features are now folded into shared endpoints to dodge the 12-function Hobby cap: Gidget report filters (in gidget-chat.js) and cron generation (in send-notification.js). This is accumulating design debt. When there's revenue for $20/mo Pro, un-fold these into dedicated endpoints and gain per-minute cron precision. Not urgent; fold works fine.
+
+### OLD Phase 3 (superseded)
 April wants work orders to auto-generate ON the due date whether or not anyone opens the app. Generate-on-load (create when dashboard opens) was rejected — a compliance WO must exist on its due date even if no one logs in. So: a daily cron that finds active schedules where next_due_at <= today, creates their work orders (mirror existing from_pm generate logic), and advances each schedule's next_due_at by frequency. This also finally builds the advance loop that asset PMs never had.
 
 Confirmed constraints (researched July 29):
