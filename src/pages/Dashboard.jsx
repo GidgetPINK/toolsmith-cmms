@@ -31,7 +31,7 @@ const STATUS_COLOR = {
   closed: '#6a6d85'
 }
 
-const CATEGORIES = ['Mechanical', 'Electrical', 'HVAC', 'Plumbing', 'Vehicle', 'Safety', 'Other']
+import { CATEGORIES } from '../constants/categories'
 const CRITICALITY_LEVELS = ['Low', 'Standard', 'High', 'Critical']
 const PRIORITY_OPTIONS = ['critical', 'high', 'standard', 'routine']
 const FREQUENCY_UNITS = ['days', 'weeks', 'months', 'years']

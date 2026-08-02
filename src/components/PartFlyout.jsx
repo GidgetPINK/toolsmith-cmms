@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import StockAdjustmentModal from './StockAdjustmentModal'
 
-const CATEGORIES = ['Mechanical', 'Electrical', 'HVAC', 'Plumbing', 'Vehicle', 'Safety', 'Other']
+import { CATEGORIES } from '../constants/categories'
 const UNITS = ['each', 'box', 'case', 'foot', 'gallon', 'pound', 'liter', 'meter']
 
 function formatAdjustmentDate(isoString) {

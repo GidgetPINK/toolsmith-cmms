@@ -17,7 +17,7 @@ const COLUMNS = [
   'notes'
 ]
 
-const VALID_CATEGORIES = ['Mechanical', 'Electrical', 'HVAC', 'Plumbing', 'Vehicle', 'Safety', 'Other']
+import { CATEGORIES as VALID_CATEGORIES } from '../constants/categories'
 const VALID_UNITS = ['each', 'box', 'case', 'foot', 'gallon', 'pound', 'liter', 'meter']
 
 const EXAMPLE_ROWS = [

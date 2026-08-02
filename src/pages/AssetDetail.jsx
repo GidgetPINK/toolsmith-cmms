@@ -5,7 +5,7 @@ import MobileBottomNav from '../components/MobileBottomNav'
 import Sidebar from '../components/Sidebar'
 import AssetDowntimeTab from '../components/AssetDowntimeTab'
 
-const CATEGORIES = ['Mechanical', 'Electrical', 'HVAC', 'Plumbing', 'Vehicle', 'Safety', 'Other']
+import { CATEGORIES } from '../constants/categories'
 const CRITICALITY_LEVELS = ['Low', 'Standard', 'High', 'Critical']
 const PRIORITY_OPTIONS = ['critical', 'high', 'standard', 'routine']
 const FREQUENCY_UNITS = ['days', 'weeks', 'months', 'years']
