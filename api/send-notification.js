@@ -452,36 +452,9 @@ async function handleGenerateDueSchedules(req, res) {
         continue
       }
       results.generated++
-
-      // 2) Advance next_due_at to the next FUTURE date (one step past today).
-      //    Repeatedly add the frequency until strictly after today, so overdue
-      //    schedules generate once and jump to the next proper cycle (no pile-up).
-      const unit = sched.frequency_unit
-      const value = sched.frequency_value || 1
-      let next = new Date(sched.next_due_at + 'T00:00:00Z')
-      const todayDate = new Date(today + 'T00:00:00Z')
-      let guard = 0
-      do {
-        if (unit === 'days') next.setUTCDate(next.getUTCDate() + value)
-        else if (unit === 'weeks') next.setUTCDate(next.getUTCDate() + value * 7)
-        else if (unit === 'months') next.setUTCMonth(next.getUTCMonth() + value)
-        else if (unit === 'years') next.setUTCFullYear(next.getUTCFullYear() + value)
-        else next.setUTCMonth(next.getUTCMonth() + value) // fallback: months
-        guard++
-      } while (next <= todayDate && guard < 1000)
-
-      const nextStr = next.toISOString().split('T')[0]
-      const { error: advError } = await supabaseAdmin
-        .from('pm_schedules')
-        .update({ next_due_at: nextStr, updated_at: new Date().toISOString() })
-        .eq('id', sched.id)
-
-      if (advError) {
-        results.failed++
-        results.details.push({ schedule: sched.id, error: 'WO created but advance failed: ' + advError.message })
-      } else {
-        results.advanced++
-      }
+      // Advancing next_due_at is now handled by the DB trigger advance_pm_after_wo_insert,
+      // which fires on every schedule-linked work order insert (cron or manual). No advance here.
+      results.advanced++
     } catch (err) {
       results.failed++
       results.details.push({ schedule: sched.id, error: String(err) })
