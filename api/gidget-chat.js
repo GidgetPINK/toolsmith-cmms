@@ -283,6 +283,23 @@ export default async function handler(req, res) {
       return res.status(403).json({ error: 'Gidget is a Pro feature' })
     }
 
+    // Per-org monthly usage cap (counts both chat and report_filters).
+    // 1000 calls / org / calendar month. Atomic increment-and-check.
+    const GIDGET_MONTHLY_CAP = 1000
+    const yearMonth = new Date().toISOString().slice(0, 7) // 'YYYY-MM'
+    const { data: usageCount, error: usageError } = await supabaseAdmin
+      .rpc('increment_gidget_usage', { org: profile.organization_id, ym: yearMonth })
+    if (usageError) {
+      console.error('Gidget usage tracking error:', usageError)
+      // Fail open on tracking errors so a tracking hiccup never blocks a paying user,
+      // but log it so we notice.
+    } else if (usageCount > GIDGET_MONTHLY_CAP) {
+      return res.status(429).json({
+        error: "You've reached this month's limit for the AI assistant. It will reset at the start of next month.",
+        capReached: true
+      })
+    }
+
     // Validate body
     const { messages, contextType, contextData, mode } = req.body || {}
 
