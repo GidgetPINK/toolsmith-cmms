@@ -368,6 +368,11 @@ export default function Dashboard({ profile }) {
             <h1 style={{ fontFamily: 'Inter, sans-serif', fontSize: '1.4rem', fontWeight: '400', color: '#f8f6f1', letterSpacing: '0.01em' }}>
               Hi, {firstName}!
             </h1>
+            {organization?.name && (
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', fontWeight: '400', color: '#9a9db5', margin: '0.15rem 0 0', letterSpacing: '0.02em' }}>
+                {organization.name}
+              </p>
+            )}
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '0.75rem', marginBottom: '2rem' }} className="stat-grid-inner">
