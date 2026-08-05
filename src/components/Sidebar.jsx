@@ -18,12 +18,13 @@ export default function Sidebar({ profile, organization }) {
     return location.pathname === path || location.pathname.startsWith(path + '/')
   }
 
+  const isManager = profile?.role === 'manager'
   const navItems = [
     { path: '/', label: 'Home', Icon: Home, proOnly: false },
     { path: '/assets', label: 'Assets', Icon: Wrench, proOnly: true },
-    { path: '/parts', label: 'Parts', Icon: Package, proOnly: true },
-    { path: '/reports', label: 'Reports', Icon: BarChart3, proOnly: true },
-  ]
+    { path: '/parts', label: 'Parts', Icon: Package, proOnly: true, managerOnly: true },
+    { path: '/reports', label: 'Reports', Icon: BarChart3, proOnly: true, managerOnly: true },
+  ].filter(item => !item.managerOnly || isManager)
 
   const bottomItems = [
     { path: '/admin', label: 'Admin', Icon: Shield, proOnly: false },

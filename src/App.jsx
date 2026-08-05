@@ -356,8 +356,6 @@ function App() {
               <Navigate to="/complete-setup" replace />
             ) : needsSubscription ? (
               <Navigate to="/subscription-required" replace />
-            ) : profile?.role !== 'manager' ? (
-              <Navigate to="/" replace />
             ) : (
               <Assets profile={profile} />
             )
