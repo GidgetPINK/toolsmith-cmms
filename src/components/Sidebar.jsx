@@ -43,7 +43,7 @@ export default function Sidebar({ profile, organization }) {
     const Icon = item.Icon
     return (
       <a
-        onClick={() => navigate(locked ? '/upgrade' : item.path)}
+        onClick={() => navigate(item.path)}
         style={{
           display: 'flex',
           alignItems: 'center',

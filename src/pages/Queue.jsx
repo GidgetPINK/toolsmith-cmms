@@ -60,6 +60,7 @@ const mobileNavBtnStyle = {
 export default function Queue({ profile }) {
   const { unreadIds, hasMessagesIds } = useUnreadMessages(profile?.id)
   const [workOrders, setWorkOrders] = useState([])
+  const [organization, setOrganization] = useState(null)
   const [assets, setAssets] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('open')
@@ -74,6 +75,10 @@ export default function Queue({ profile }) {
   async function fetchAll() {
     if (!profile?.id) return
     setLoading(true)
+    if (profile?.organization_id) {
+      supabase.from('organizations').select('*').eq('id', profile.organization_id).single()
+        .then(({ data }) => { if (data) setOrganization(data) })
+    }
     const [woRes, assetRes] = await Promise.all([
       supabase
         .from('work_orders')
@@ -141,7 +146,7 @@ export default function Queue({ profile }) {
       fontFamily: 'Inter, sans-serif',
       color: '#f8f6f1'
     }}>
-      <Sidebar profile={profile} />
+      <Sidebar profile={profile} organization={organization} />
       <div style={{ flex: 1, minWidth: 0, overflow: 'auto' }}>
 
       {/* NAV */}
