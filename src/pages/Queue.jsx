@@ -266,6 +266,11 @@ export default function Queue({ profile }) {
           }}>
             Hi, {firstName}!
           </h1>
+          {organization?.name && (
+            <p style={{ fontSize: '0.85rem', color: '#9a9db5', margin: '0.15rem 0 0' }}>
+              {organization.name}
+            </p>
+          )}
           <p style={{ color: '#9a9db5', fontSize: '0.88rem' }}>
             Your assigned work orders, sorted by priority
           </p>
